@@ -62,3 +62,6 @@ typings/
 # lock files
 yarn.lock
 package-lock.json
+
+# editor
+.vscode/chrome
