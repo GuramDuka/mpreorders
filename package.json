@@ -35,5 +35,13 @@
     "preact-router": "^2.5.5",
     "promise-polyfill": "7.0.0",
     "unfetch": "^3.0.0"
+  },
+  "proxy": {
+    "/api/backend": {
+      "target": "http://31.210.212.158:65480/opt/hs/react",
+      "pathRewrite": {
+        "^/api/backend": "/"
+      }
+    }
   }
 }
