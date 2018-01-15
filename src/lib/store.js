@@ -1,244 +1,254 @@
 //------------------------------------------------------------------------------
-import { createStore } from 'redux';
+import root from 'window-or-global';
 //------------------------------------------------------------------------------
 export function copy(src) {
-  let dst = src;
+	let dst = src;
 
-  if (src === undefined || src === null) {
-  }
-  else if (src.constructor === Object) {
-    dst = {};
+	if (src === undefined || src === null) {
+	}
+	else if (src.constructor === Object) {
+		dst = {};
 
-    for (const n in src)
-      dst[n] = copy(src[n]);
-  }
-  else if (src.constructor === Array)
-    dst = Array.from(src);
-  else if (src.constructor === String)
-    dst = src.valueOf();
-  else if (src.constructor === Number)
-    dst = src.valueOf();
-  else if (src.constructor === Boolean)
-    dst = src.valueOf();
-  else if (src.constructor === Date)
-    dst = new Date(src.valueOf());
-  else
-    dst = new src.constructor(src.valueOf());
+		// eslint-disable-next-line
+		for (const n in src)
+			dst[n] = copy(src[n]);
+	}
+	else if (src.constructor === Array)
+		dst = Array.from(src);
+	else if (src.constructor === String)
+		dst = src.valueOf();
+	else if (src.constructor === Number)
+		dst = src.valueOf();
+	else if (src.constructor === Boolean)
+		dst = src.valueOf();
+	else if (src.constructor === Date)
+		dst = new Date(src.valueOf());
+	else
+		dst = new src.constructor(src.valueOf());
 
-  return dst;
+	return dst;
 }
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 class State {
-  constructor(initialState) {
-    // if( initialState === undefined || initialState === null
-    //     || (initialState.constructor !== Object
-    //         && initialState.constructor !== Array) )
-    //     throw new Error('initial state must have Object or Array type');
+	constructor(initialState) {
+		// if( initialState === undefined || initialState === null
+		//     || (initialState.constructor !== Object
+		//         && initialState.constructor !== Array) )
+		//     throw new Error('initial state must have Object or Array type');
 
-    this.root = initialState;
-  }
+		this.root = initialState;
+	}
 
-  dispatch(begin) {
-    if (begin) {
-      if (this.mutated !== undefined)
-        throw new Error('already dispatched');
-      this.mutated = new Map();
-      return this;
-    }
-    const s = this.mutated.size;
-    delete this.mutated;
-    return s === 0 ? this : new State(this.root);
-  }
+	dispatch(begin) {
+		if (begin) {
+			if (this.mutated !== undefined)
+				throw new Error('already dispatched');
+			this.mutated = new Map();
+			return this;
+		}
+		const s = this.mutated.size;
+		delete this.mutated;
 
-  // version() {
-  // 	const a = new Uint32Array(3);
-  // 	window.crypto.getRandomValues(a);
-  // 	return a[0].toString() + a[1].toString() + a[2].toString();
-  // }
+		if (s === 0)
+			return this;
 
-  mutateNode(node) {
-    if (this.mutated.get(node) === undefined) {
-      node = node.constructor === Object ? Object.assign({}, node)
-        : node.constructor === Array ? Array.from(node) : undefined;
-      if (process.env.NODE_ENV === 'development')
-        if (node === undefined)
-          throw new Error('value must have Object or Array type');
-      this.mutated.set(node, true);
-    }
-    return node;
-  }
+		const ns = new State(this.root);
 
-  getNode(path, key, createNode, mutateParents, manipulator, arg0) {
-    if (!Array.isArray(path)) {
-      const p = path.toString();
-      const s = p.split('.');
-      path = s.length === 0 ? [p] : s;
-    }
+		root.localStorage.setItem('state', stringify(ns.root));
 
-    const l = path.length;
-    let node = this.root;
+		return ns;
+	}
 
-    if (l === 0) {
-      if (mutateParents !== 0)
-        this.root = node = this.mutateNode(node);
-    }
-    else for (let i = 0; i < l; i++) {
-      const k = path[i];
-      let next = node[k];
+	// version() {
+	// 	const a = new Uint32Array(3);
+	// 	root.crypto.getRandomValues(a);
+	// 	return a[0].toString() + a[1].toString() + a[2].toString();
+	// }
 
-      if (next === undefined && createNode) {
-        node[k] = next = (i + 1 < l && k.constructor === String) || (i + 1 === l && key.constructor === String) ? {}
-          : ((i + 1 < l && k.constructor === Number) || (i + 1 === l && key.constructor === Number) ? [] : undefined);
-        if (process.env.NODE_ENV === 'development')
-          if (next === undefined)
-            throw new Error('path key must have String or Number type');
-        this.mutated.set(next, true);
-      }
+	mutateNode(node) {
+		if (this.mutated.get(node) === undefined) {
+			node = node.constructor === Object ? Object.assign({}, node)
+				: node.constructor === Array ? Array.from(node) : undefined;
+			if (process.env.NODE_ENV === 'development')
+				if (node === undefined)
+					throw new Error('value must have Object or Array type');
+			this.mutated.set(node, true);
+		}
+		return node;
+	}
 
-      if (next === undefined)
-        break;
+	getNode(path, key, createNode, mutateParents, manipulator, arg0) {
+		if (!Array.isArray(path)) {
+			const p = path.toString();
+			const s = p.split('.');
+			path = s.length === 0 ? [p] : s;
+		}
 
-      if (l - mutateParents <= i && this.mutated.get(next) === undefined)
-        node[k] = next = this.mutateNode(next);
+		const l = path.length;
+		let node = this.root;
 
-      node = next;
-    }
+		if (l === 0) {
+			if (mutateParents !== 0)
+				this.root = node = this.mutateNode(node);
+		}
+		else for (let i = 0; i < l; i++) {
+			const k = path[i];
+			let next = node[k];
 
-    return manipulator.call(this, node, key, arg0);
-  }
+			if (next === undefined && createNode) {
+				node[k] = next = (i + 1 < l && k.constructor === String) || (i + 1 === l && key.constructor === String) ? {}
+					: ((i + 1 < l && k.constructor === Number) || (i + 1 === l && key.constructor === Number) ? [] : undefined);
+				if (process.env.NODE_ENV === 'development')
+					if (next === undefined)
+						throw new Error('path key must have String or Number type');
+				this.mutated.set(next, true);
+			}
 
-  static mSetIn(node, key, value) {
-    node[key] = value;
-  }
+			if (next === undefined)
+				break;
 
-  setIn(path, key, value, mutateParents = 1) {
-    this.getNode(path, key, true, mutateParents, State.mSetIn, value);
-    return this;
-  }
+			if (l - mutateParents <= i && this.mutated.get(next) === undefined)
+				node[k] = next = this.mutateNode(next);
 
-  static mMergeIn(node, key, value) {
-    let v = node[key];
-    
-    if( v === undefined )
-      node[key] = v = {};
+			node = next;
+		}
 
-    for (const k in value)
-      v[k] = value[k];
-  }
-  
-  mergeIn(path, key, iterable, mutateParents = 1) {
-    this.getNode(path, key, true, mutateParents, State.mMergeIn, iterable);
-    return this;
-  }
+		return manipulator.call(this, node, key, arg0);
+	}
 
-  static mUpdateIn(node, key, functor) {
-    node[key] = functor(node[key]);
-  }
+	static mSetIn(node, key, value) {
+		node[key] = value;
+	}
 
-  updateIn(path, key, functor, mutateParents = 1) {
-    this.getNode(path, key, true, mutateParents, State.mUpdateIn, functor);
-    return this;
-  }
+	setIn(path, key, value, mutateParents = 1) {
+		this.getNode(path, key, true, mutateParents, State.mSetIn, value);
+		return this;
+	}
 
-  static mEditIn(node, key, functor) {
-    let v = node[key];
-    
-    if( v === undefined )
-      node[key] = v = {};
+	static mMergeIn(node, key, value) {
+		let v = node[key];
 
-    functor(v, key, node);
-  }
+		if (v === undefined)
+			node[key] = v = {};
 
-  editIn(path, key, functor, mutateParents = 1) {
-    this.getNode(path, key, true, mutateParents, State.mEditIn, functor);
-    return this;
-  }
+		// eslint-disable-next-line
+		for (const k in value)
+			v[k] = value[k];
+	}
 
-  static mDeleteIn(node, key) {
-    delete node[key];
-  }
+	mergeIn(path, key, iterable, mutateParents = 1) {
+		this.getNode(path, key, true, mutateParents, State.mMergeIn, iterable);
+		return this;
+	}
 
-  deleteIn(path, key, mutateParents = 1) {
-    this.getNode(path, key, true, mutateParents, State.mDeleteIn);
-    return this;
-  }
+	static mUpdateIn(node, key, functor) {
+		node[key] = functor(node[key]);
+	}
 
-  static mToggleIn(node, key) {
-    if (!!node[key])
-      delete node[key];
-    else
-      node[key] = true;
-  }
+	updateIn(path, key, functor, mutateParents = 1) {
+		this.getNode(path, key, true, mutateParents, State.mUpdateIn, functor);
+		return this;
+	}
 
-  toggleIn(path, key, mutateParents = 1) {
-    this.getNode(path, key, true, mutateParents, State.mToggleIn);
-    return this;
-  }
+	static mEditIn(node, key, functor) {
+		let v = node[key];
 
-  static mGetIn(node, key, defaultValue) {
-    if (key === undefined)
-      return node;
+		if (v === undefined)
+			node[key] = v = {};
 
-    const value = node[key];
-    return value === undefined ? defaultValue : value;
-  }
+		functor(v, key, node);
+	}
 
-  getIn(path, key, defaultValue) {
-    return this.getNode(path, key, false, 0, State.mGetIn, defaultValue);
-  }
+	editIn(path, key, functor, mutateParents = 1) {
+		this.getNode(path, key, true, mutateParents, State.mEditIn, functor);
+		return this;
+	}
 
-  mapIn(path, key, defaultValue = {}) {
-    return this.getNode(path, key, false, 0, State.mGetIn, defaultValue);
-  }
+	static mDeleteIn(node, key) {
+		delete node[key];
+	}
+
+	deleteIn(path, key, mutateParents = 1) {
+		this.getNode(path, key, true, mutateParents, State.mDeleteIn);
+		return this;
+	}
+
+	static mToggleIn(node, key) {
+		if (node[key])
+			delete node[key];
+		else
+			node[key] = true;
+	}
+
+	toggleIn(path, key, mutateParents = 1) {
+		this.getNode(path, key, true, mutateParents, State.mToggleIn);
+		return this;
+	}
+
+	static mGetIn(node, key, defaultValue) {
+		if (key === undefined)
+			return node;
+
+		const value = node[key];
+		return value === undefined ? defaultValue : value;
+	}
+
+	getIn(path, key, defaultValue) {
+		return this.getNode(path, key, false, 0, State.mGetIn, defaultValue);
+	}
+
+	mapIn(path, key, defaultValue = {}) {
+		return this.getNode(path, key, false, 0, State.mGetIn, defaultValue);
+	}
 }
 //------------------------------------------------------------------------------
 export const nullLink = '00000000-0000-0000-0000-000000000000';
 //------------------------------------------------------------------------------
 export function sscat(delimiter, ...args) {
-  let s = '';
+	let s = '';
 
-  for (const arg of args) {
-    if (arg === undefined || arg === null)
-      continue;
+	for (const arg of args) {
+		if (arg === undefined || arg === null)
+			continue;
 
-    const a = arg.toString().trim();
-    if (a.length !== 0)
-      s += delimiter + a;
-  }
+		const a = arg.toString().trim();
+		if (a.length !== 0)
+			s += delimiter + a;
+	}
 
-  return s.substr(delimiter.length).trim();
+	return s.substr(delimiter.length).trim();
 }
 //------------------------------------------------------------------------------
 const defaultState = {
-  metadataVersion: 7,
-  header: {
-    collapsed: true
-  },
-  body: {
-    viewStack: [{ view: 'products' }],
-    view: 'products',
-  },
-  searcher: {
-    order: {
-      field: 'Наименование',
-      direction: 'asc'
-    }
-  },
-  products: {
-    list: {
-      breadcrumb: [{ name: '', link: nullLink }],
-      view: {
-        type: 'Номенклатура',
-        order: {
-          field: 'Наименование',
-          direction: 'asc'
-        },
-        parent: nullLink,
-        groups: true,
-        elements: true,
-        /*filter: 'Таблица.ЭтоГруппа ИЛИ Таблица.ОстатокОбщий <> 0',
+	metadataVersion: 7,
+	header: {
+		collapsed: true
+	},
+	body: {
+		viewStack: [{ view: 'products' }],
+		view: 'products'
+	},
+	searcher: {
+		order: {
+			field: 'Наименование',
+			direction: 'asc'
+		}
+	},
+	products: {
+		list: {
+			breadcrumb: [{ name: '', link: nullLink }],
+			view: {
+				type: 'Номенклатура',
+				order: {
+					field: 'Наименование',
+					direction: 'asc'
+				},
+				parent: nullLink,
+				groups: true,
+				elements: true
+				/*filter: 'Таблица.ЭтоГруппа ИЛИ Таблица.ОстатокОбщий <> 0',
         joinsFilter: 'Таблица.ЭтоГруппа ИЛИ Соединение.Цена > 0',
         fields: [
             'Код',
@@ -275,50 +285,45 @@ const defaultState = {
                 fields: 'Потомки.КП'
             }
         ]*/
-      }
-    }
-  }
+			}
+		}
+	}
 };
 //------------------------------------------------------------------------------
-export const store = createStore(
-  (state, action) => action.type.constructor === Function ? action.type(state) : state,
-  new State((() => {
-    let state = localStorage.getItem('reduxState');
-    if (state !== null) {
-      // eslint-disable-next-line
-      state = eval(state);
-      if (defaultState.metadataVersion !== state.metadataVersion)
-        state = defaultState;
-    }
-    else
-      state = defaultState;
+export let store = new State((() => {
+	let state = root.localStorage.getItem('state');
+	if (state !== null) {
+		// eslint-disable-next-line
+		state = eval(state);
+		if (defaultState.metadataVersion !== state.metadataVersion)
+			state = defaultState;
+	}
+	else
+		state = defaultState;
 
-    return state;
-  })())
-);
+	return state;
+})());
 //------------------------------------------------------------------------------
 function stringify(obj) {
-  const placeholder = '____PLACEHOLDER____';
-  const fns = [];
-  const json = JSON.stringify(obj, (key, value) => {
-    if (value !== undefined && value !== null && value.constructor === Function) {
-      fns.push(value);
-      value = placeholder;
-    }
-    return value;
-  });
-  return '(' + json.replace(new RegExp(`"${placeholder}"`, 'g'), () => fns.shift()) + ')';
-};
-//------------------------------------------------------------------------------
-store.subscribe(() =>
-  localStorage.setItem('reduxState', stringify(store.getState().root)));
-//------------------------------------------------------------------------------
-export default function disp(functor, async) {
-  if (async)
-    functor(store.getState().dispatch(true)).dispatch();
-  else
-    store.dispatch({
-      type: state => functor(state.dispatch(true)).dispatch()
-    });
+	const placeholder = '____PLACEHOLDER____';
+	const fns = [];
+	const json = JSON.stringify(obj, (key, value) => {
+		if (value !== undefined && value !== null && value.constructor === Function) {
+			fns.push(value);
+			value = placeholder;
+		}
+		return value;
+	});
+	return '(' + json.replace(new RegExp(`"${placeholder}"`, 'g'), () => fns.shift()) + ')';
 }
 //------------------------------------------------------------------------------
+export default function disp(functor, async) {
+	if (async)
+		functor(store.dispatch(true)).dispatch();
+	else
+		store.dispatch({
+			type: state => functor(state.dispatch(true)).dispatch()
+		});
+}
+//------------------------------------------------------------------------------
+ 
