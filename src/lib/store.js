@@ -291,7 +291,7 @@ const defaultState = {
 };
 //------------------------------------------------------------------------------
 export let store = new State((() => {
-	let state = root.localStorage.getItem('state');
+	let state = root.localStorage ? root.localStorage.getItem('state') : null;
 	if (state !== null) {
 		// eslint-disable-next-line
 		state = eval(state);

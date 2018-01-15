@@ -16,6 +16,17 @@
       "problemMatcher": [
         "$go"
       ]
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": [
+        "$go"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }
