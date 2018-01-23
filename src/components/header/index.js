@@ -74,22 +74,22 @@ export default class Header extends Component {
 						<List>
 							<List.LinkItem onClick={this.goHome}>
 								<List.ItemIcon>home</List.ItemIcon>
-								Home
+								Начало
 							</List.LinkItem>
 							<List.LinkItem onClick={this.goCategories}>
-								<List.ItemIcon>account_circle</List.ItemIcon>
+								<List.ItemIcon>view_stream</List.ItemIcon>
 								Категории
 							</List.LinkItem>
 							<List.LinkItem onClick={this.goProducts}>
-								<List.ItemIcon>account_circle</List.ItemIcon>
+								<List.ItemIcon>view_list</List.ItemIcon>
 								Каталог
 							</List.LinkItem>
 							<List.LinkItem onClick={this.goOrders}>
-								<List.ItemIcon>account_circle</List.ItemIcon>
+								<List.ItemIcon>reorder</List.ItemIcon>
 								Заказы
 							</List.LinkItem>
 							<List.LinkItem onClick={this.goCart}>
-								<List.ItemIcon>account_circle</List.ItemIcon>
+								<List.ItemIcon>shopping_cart</List.ItemIcon>
 								Корзина
 							</List.LinkItem>
 							<List.LinkItem onClick={this.goProfile}>
@@ -100,14 +100,16 @@ export default class Header extends Component {
 					</Drawer.TemporaryDrawerContent>
 				</Drawer.TemporaryDrawer>
 				<Dialog ref={this.dialogRef}>
-					<Dialog.Header>Settings</Dialog.Header>
+					<Dialog.Header>Настройки</Dialog.Header>
 					<Dialog.Body>
 						<div>
-							Enable dark theme <Switch onClick={this.toggleDarkTheme} />
+							<span>Включить темную тему</span>
+							&nbsp;&nbsp;&nbsp;&nbsp;
+							<Switch onClick={this.toggleDarkTheme} />
 						</div>
 					</Dialog.Body>
 					<Dialog.Footer>
-						<Dialog.FooterButton accept>okay</Dialog.FooterButton>
+						<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>
 					</Dialog.Footer>
 				</Dialog>
 			</div>
