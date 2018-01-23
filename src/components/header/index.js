@@ -1,4 +1,4 @@
-import { h, Component } from 'preact';
+import Component from '../../components/component';
 import { route } from 'preact-router';
 import Toolbar from 'preact-material-components/Toolbar';
 import Drawer from 'preact-material-components/Drawer';
@@ -21,19 +21,21 @@ export default class Header extends Component {
 	}
 
 	openDrawer = () => (this.drawer.MDComponent.open = true);
-
 	openSettings = () => this.dialog.MDComponent.show();
-
 	drawerRef = drawer => (this.drawer = drawer);
 	dialogRef = dialog => (this.dialog = dialog);
 
-	linkTo = path => () => {
+	linkTo = path => e => {
 		route(path);
 		this.closeDrawer();
-	};
+	}
 
 	goHome = this.linkTo('/');
-	goToMyProfile = this.linkTo('/profile');
+	goProfile = this.linkTo('/profile');
+	goCategories = this.linkTo('/categories');
+	goProducts = this.linkTo('/products');
+	goOrders = this.linkTo('/orders');
+	goCart = this.linkTo('/cart');
 
 	toggleDarkTheme = () => {
 		this.setState(
@@ -60,7 +62,7 @@ export default class Header extends Component {
 							<Toolbar.Icon menu onClick={this.openDrawer}>
 								menu
 							</Toolbar.Icon>
-							<Toolbar.Title>Preact app</Toolbar.Title>
+							<Toolbar.Title>Заказы</Toolbar.Title>
 						</Toolbar.Section>
 						<Toolbar.Section align-end onClick={this.openSettings}>
 							<Toolbar.Icon>settings</Toolbar.Icon>
@@ -74,9 +76,25 @@ export default class Header extends Component {
 								<List.ItemIcon>home</List.ItemIcon>
 								Home
 							</List.LinkItem>
-							<List.LinkItem onClick={this.goToMyProfile}>
+							<List.LinkItem onClick={this.goCategories}>
 								<List.ItemIcon>account_circle</List.ItemIcon>
-								Profile
+								Категории
+							</List.LinkItem>
+							<List.LinkItem onClick={this.goProducts}>
+								<List.ItemIcon>account_circle</List.ItemIcon>
+								Каталог
+							</List.LinkItem>
+							<List.LinkItem onClick={this.goOrders}>
+								<List.ItemIcon>account_circle</List.ItemIcon>
+								Заказы
+							</List.LinkItem>
+							<List.LinkItem onClick={this.goCart}>
+								<List.ItemIcon>account_circle</List.ItemIcon>
+								Корзина
+							</List.LinkItem>
+							<List.LinkItem onClick={this.goProfile}>
+								<List.ItemIcon>account_circle</List.ItemIcon>
+								Профиль
 							</List.LinkItem>
 						</List>
 					</Drawer.TemporaryDrawerContent>

@@ -1,131 +1,294 @@
 //------------------------------------------------------------------------------
-import root from 'window-or-global';
-//------------------------------------------------------------------------------
-export function copyObject(src, template) {
-	let dst = src;
-
-	// if( src.constructor === Date   || src.constructor === RegExp || src.constructor === Function ||
-	//     src.constructor === String || src.constructor === Number || src.constructor === Boolean )
-	//     return new src.constructor(src);
-    
-	if ( src === undefined || src === null ) {
-	}
-	else if ( src.constructor === Object ) {
-		dst = new src.constructor();
-
-		if ( template === undefined ) {
-			for ( let n in src )
-			//if( src.hasOwnProperty(n) )
-				dst[n] = copyObject(src[n]);
-		}
-		else {
-			for ( let n in template ) {
-				let v = src[n];
-				dst[n] = copyObject(v !== undefined ? v : template[n]);
-			}
-		}
-	}
-	else if ( src.constructor === Array ) {
-		dst = new src.constructor();
-
-		for ( let v of src )
-			dst.push(copyObject(v));
-	}
-	else
-		dst = new src.constructor(src);
-    
-	return dst;
+export function isPrimitiveValue(v) {
+	return v === undefined
+		|| v === null
+		|| v === Infinity
+		|| Number.isNaN(v)
+		|| v.constructor === Boolean || v instanceof Boolean
+		|| v.constructor === String || v instanceof String
+		|| v.constructor === Number || v instanceof Number
+		|| v.constructor === Symbol || v instanceof Symbol;
 }
 //------------------------------------------------------------------------------
-// last argument is template, all rest them objects merge
-export function mergeObjectsProps(...args) {
-	const argc = args.length - 1;
-	const template = argc === -1 ? undefined : args[argc];
-	let dst = {};
+export function sscat(delimiter, ...args) {
+	let s = '';
 
-	for ( let i = 0; i <= argc; i++ ) {
-		const src = args[i];
-        
-		if ( src === undefined || src === null || src.constructor !== Object )
+	for (const arg of args) {
+		if (isPrimitiveValue(arg))
 			continue;
 
-		// eslint-disable-next-line
-		for ( let n in template ) {
-			let v = src[n];
-			if ( dst[n] === undefined && v !== undefined )
-				dst[n] = v;
-		}
+		const a = arg.toString().trim();
+
+		if (a.length !== 0)
+			s += delimiter + a;
 	}
+
+	return s.substr(delimiter.length).trim();
+}
+//------------------------------------------------------------------------------
+function equ(a, b) {
+	return a === b;
+}
+//------------------------------------------------------------------------------
+export function shallowEqual(a, b, equal = equ) {
+	if (a === b)
+		return true;
+
+	if (isPrimitiveValue(a) || isPrimitiveValue(b))
+		return a === b;
+
+	let i, isA = Array.isArray(a), isB = Array.isArray(b);
+
+	if (isA && isB) {
+		if (a.length !== b.length)
+			return false;
+
+		for (i = a.length - 1; i >= 0; i--)
+			if (!equal(a[i], b[i], equal))
+				return false;
+
+		return true;
+	}
+
+	if (isA !== isB)
+		return false;
+
+	isA = a.constructor === Object || a instanceof Object;
+	isB = b.constructor === Object || b instanceof Object;
+
+	if (isA && isB) {
+		const keys = Object.keys(a);
+
+		if (keys.length !== Object.keys(b).length)
+			return false;
+
+		for (i = keys.length - 1; i >= 0; i--) {
+			const key = keys[i];
+
+			if (!equal(a[key], b[key], equal))
+				return false;
+		}
+
+		return true;
+	}
+
+	if (isA !== isB)
+		return false;
+
+	isA = a.constructor === Set || a instanceof Set;
+	isB = b.constructor === Set || b instanceof Set;
+
+	if (isA && isB) {
+		if (a.size !== b.size)
+			return false;
+
+		const values = a.values();
+
+		for (const v of values)
+			if (!equal(v, b.get(v), equal))
+				return false;
+	}
+
+	if (isA !== isB)
+		return false;
+
+	isA = a.constructor === Map || a instanceof Map;
+	isB = b.constructor === Map || b instanceof Map;
+
+	if (isA && isB) {
+		if (a.size !== b.size)
+			return false;
+
+		const keys = a.keys();
+
+		for (const key of keys)
+			if (!equal(a.get(key), b.get(key), equal))
+				return false;
+	}
+
+	if (isA !== isB)
+		return false;
+
+	isA = a.constructor === Date || a instanceof Date;
+	isB = b.constructor === Date || b instanceof Date;
+
+	if (isA && isB)
+		return a.getTime() === b.getTime();
+
+	if (isA !== isB)
+		return false;
+
+	isA = a.constructor === RegExp || a instanceof RegExp;
+	isB = b.constructor === RegExp || b instanceof RegExp;
+
+	if (isA && isB)
+		return a.toString() === b.toString();
+
+	if (isA !== isB)
+		return false;
+
+	return false;
+}
+//------------------------------------------------------------------------------
+export function equal(a, b) {
+	return shallowEqual(a, b, shallowEqual);
+}
+//------------------------------------------------------------------------------
+export function copy(src) {
+	let dst = src;
+
+	if (src === undefined || src === null) {
+	}
+	else if (Array.isArray(src)) {
+		dst = [];
+
+		for (const v of src)
+			dst.push(copy(v));
+	}
+	else if (src.constructor === Object || src instanceof Object) {
+		dst = {};
+
+		// eslint-disable-next-line
+		for (const n in src)
+			dst[n] = copy(src[n]);
+	}
+	else if (src.constructor === Map || src instanceof Map) {
+		dst = new Map();
+		src.forEach((v, k) => dst.set(k, v));
+	}
+	else if (src.constructor === Set || src instanceof Set) {
+		dst = new Set();
+		src.forEach(v => dst.add(v));
+	}
+	else if (src.constructor === String || src instanceof String)
+		dst = src.valueOf();
+	else if (src.constructor === Number || src instanceof Number)
+		dst = src.valueOf();
+	else if (src.constructor === Boolean || src instanceof Boolean)
+		dst = src.valueOf();
+	else if (src.constructor === Date || src instanceof Date)
+		dst = new Date(src.valueOf());
+	else
+		dst = new src.constructor(src.valueOf());
 
 	return dst;
 }
 //------------------------------------------------------------------------------
-// last argument is template, all rest them objects join
-export function joinObjectsProps(...args) {
-	const argc = args.length - 1;
-	const template = argc === -1 ? undefined : args[argc];
-	let dst = {};
+export function transform(raw, store) {
+	let data;
 
-	for ( let i = 0; i <= argc; i++ ) {
-		const src = args[i];
-        
-		if ( src.constructor === Object ) {
-			for ( let n in template )
-				if ( src[n] !== undefined )
-					dst[n] = src[n];
-		}
-		else if ( src.constructor === Array ) {
+	if (Array.isArray(raw)) {
+		data = raw.map(v => transform(v));
+	}
+	else {
+		const { cols } = raw;
+
+		data = {};
+
 		// eslint-disable-next-line
-        for ( let qrc in src )
-				for ( let n in template )
-					if ( qrc[n] !== undefined )
-						dst[n] = qrc[n];
+		for (const k in raw) {
+			if (k !== 'rows' && k !== 'grps') {
+				data[k] = copy(raw[k]);
+				continue;
+			}
+
+			const recs = raw[k];
+
+			if (recs === undefined)
+				continue;
+
+			const nr = [];
+
+			for (let i = recs.length - 1; i >= 0; i--) {
+				const now = {}, row = recs[i], { r, t } = row;
+
+				for (let j = r.length - 1; j >= 0; j--) {
+					const n = cols[j];
+
+					switch (t[j]) {
+						case 0: // null
+							now[n] = null;
+							break;
+						case 1: // undefined
+							now[n] = undefined;
+							break;
+						case 2: // string
+							now[n] = r[j];
+							break;
+						case 3: // boolean
+							now[n] = r[j] !== 0;
+							break;
+						case 4: // numeric
+							now[n] = r[j];
+							break;
+						case 5: // date
+							now[n] = new Date(Date.parse(r[j]));
+							break;
+						case 6: // link
+							now[n] = r[j];
+							break;
+						default:
+							throw new Error('Unsupported value type in row transformation');
+					}
+				}
+
+				nr[i] = now;
+			}
+
+			data[k] = nr;
 		}
 	}
 
-	return dst;
-}
-//------------------------------------------------------------------------------
-export function scrollXY() {
-	const supportPageOffset = root.pageXOffset !== undefined;
-	const isCSS1Compat = ((document.compatMode || '') === 'CSS1Compat');
+	if (!!store === false)
+		data.nostore = true;
 
-	return {
-		x: supportPageOffset ? root.pageXOffset : isCSS1Compat ? document.documentElement.scrollLeft : document.body.scrollLeft,
-		y: supportPageOffset ? root.pageYOffset : isCSS1Compat ? document.documentElement.scrollTop : document.body.scrollTop
-	};
+	return data;
 }
 //------------------------------------------------------------------------------
-export function windowSize() {
-	//root.devicePixelRatio = 1;
-	return [
-		root.innerWidth || document.documentElement.clientWidth || document.body.clientWidth,
-		root.innerHeight || document.documentElement.clientHeight || document.body.clientHeight,
-		root.devicePixelRatio
-	];
+function encode(val) {
+	return encodeURIComponent(val)
+		.replace(/%40/gi, '@')
+		.replace(/%3A/gi, ':')
+		.replace(/%24/g, '$')
+		.replace(/%2C/gi, ',')
+		//.replace(/%20/g, '+')
+		.replace(/%5B/gi, '[')
+		.replace(/%5D/gi, ']');
 }
 //------------------------------------------------------------------------------
-// http://blog.grayghostvisuals.com/js/detecting-scroll-position/
-export function isVisibleInWindow(e, complete) {
-	const r = e.getBoundingClientRect();
-	const h = root.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-	// completely visible elements return true:
-	if ( complete )
-		return r.top >= 0 && r.bottom <= h;
-	// Partially visible elements return true:
-	return r.top < h && r.bottom >= 0;
+function parseValue(k, v) {
+	if (v.constructor === Date || v instanceof Date)
+		v = v.toISOString();
+	else if (v.constructor === Object || v instanceof Object)
+		v = JSON.stringify(v);
+	else if (v.constructor === Set || v instanceof Set)
+		v = JSON.stringify([...v]);
+	else if (v.constructor === Map || v instanceof Map)
+		v = JSON.stringify([...v]);
+	return encode(k) + '=' + encode(v);
 }
 //------------------------------------------------------------------------------
-// Determine if an element is in the visible viewport
-export function isInViewport(element) {
-	let rect = element.getBoundingClientRect();
-	let html = document.documentElement;
-	return (
-		rect.top >= 0 &&
-    rect.left >= 0 &&
-    rect.bottom <= (root.innerHeight || html.clientHeight) &&
-    rect.right <= (root.innerWidth || html.clientWidth)
-	);
+export function serializeURIParams(params) {
+	const parts = [];
+
+	// eslint-disable-next-line
+	for (let key in params) {
+		let val = params[key];
+
+		if (val === undefined || val === null)
+			continue;
+
+		const isArray = Array.isArray(val);
+
+		if (isArray)
+			key += '[]';
+		else
+			val = [val];
+
+		for (const v of val)
+			parts.push(parseValue(key, v));
+	}
+
+	return parts;
 }
-//The above function could be used by adding a “scroll” event listener to the window and then calling isInViewport().
 //------------------------------------------------------------------------------

@@ -5,12 +5,20 @@
       "type": "chrome",
       "request": "launch",
       "name": "Chrome",
-      "url": "https://127.0.0.1:8080",
+      "url": "http://127.0.0.1:8080",
       "webRoot": "${workspaceRoot}/src",
       "userDataDir": "${workspaceRoot}/.vscode/chrome",
       "sourceMapPathOverrides": {
         "webpack:///src/*": "${webRoot}/*"
       }
-    }
-  ]
+    },
+    {
+    "type": "firefox",
+    "request": "launch",
+    "name": "Firefox",
+    //"reAttach": true,
+    "firefoxExecutable": "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+    "url": "http://127.0.0.1:8080",
+    "webRoot": "${workspaceRoot}/src"
+  }]
 }

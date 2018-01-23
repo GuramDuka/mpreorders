@@ -1,4 +1,4 @@
-import { h, Component } from 'preact';
+import Component from '../../components/component';
 import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import style from './style';
@@ -23,11 +23,11 @@ export default class Profile extends Component {
 	// update the current time
 	updateTime = () => {
 		this.setState({ time: Date.now() });
-	};
+	}
 
 	increment = () => {
 		this.setState({ count: this.state.count + 1 });
-	};
+	}
 
 	// Note: `user` comes from the URL, courtesy of our router
 	render({ user }, { time, count }) {
