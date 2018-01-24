@@ -38,7 +38,10 @@ export default class Category extends Component {
 	}
 
 	piece = 40	// items
-	l2i = (l, p) => Math.trunc(l / p) + (l % p ? 1 : 0)
+	
+	l2i(l, p) {
+		return Math.trunc(l / p) + (l % p ? 1 : 0);
+	}
 
 	fetchStorePaths() {
 		const { storeListPath, piece, list, props, state } = this;
