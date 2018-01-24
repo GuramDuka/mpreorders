@@ -1,17 +1,18 @@
+//------------------------------------------------------------------------------
 import Component from '../../components/component';
 import { route } from 'preact-router';
 import Toolbar from 'preact-material-components/Toolbar';
+import 'preact-material-components/Toolbar/style.css';
 import Drawer from 'preact-material-components/Drawer';
-import List from 'preact-material-components/List';
+import 'preact-material-components/Drawer/style.css';
 import Dialog from 'preact-material-components/Dialog';
+import 'preact-material-components/Dialog/style.css';
 import Switch from 'preact-material-components/Switch';
 import 'preact-material-components/Switch/style.css';
-import 'preact-material-components/Dialog/style.css';
-import 'preact-material-components/Drawer/style.css';
+import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
-import 'preact-material-components/Toolbar/style.css';
 // import style from './style';
-
+//------------------------------------------------------------------------------
 export default class Header extends Component {
 	closeDrawer() {
 		this.drawer.MDComponent.open = false;
@@ -30,12 +31,12 @@ export default class Header extends Component {
 		this.closeDrawer();
 	}
 
-	goHome = this.linkTo('/');
-	goProfile = this.linkTo('/profile');
-	goCategories = this.linkTo('/categories');
-	goProducts = this.linkTo('/products');
-	goOrders = this.linkTo('/orders');
-	goCart = this.linkTo('/cart');
+	goHome = this.linkTo('/')
+	goProfile = this.linkTo('/profile')
+	goCategories = this.linkTo('/categories')
+	goProducts = this.linkTo('/products')
+	goOrders = this.linkTo('/orders')
+	goCart = this.linkTo('/cart')
 
 	toggleDarkTheme = () => {
 		this.setState(
@@ -116,3 +117,4 @@ export default class Header extends Component {
 		);
 	}
 }
+//------------------------------------------------------------------------------

@@ -175,29 +175,19 @@ export function copy(src) {
 }
 //------------------------------------------------------------------------------
 export function transform(raw, store) {
-	let data;
-
 	if (Array.isArray(raw)) {
-		data = raw.map(v => transform(v));
+		for (let i = raw.length - 1; i >= 0; i--)
+			raw[i] = transform(raw[i]);
 	}
 	else {
 		const { cols } = raw;
 
-		data = {};
-
 		// eslint-disable-next-line
-		for (const k in raw) {
-			if (k !== 'rows' && k !== 'grps') {
-				data[k] = copy(raw[k]);
-				continue;
-			}
-
+		for (const k of ['rows', 'grps']) {
 			const recs = raw[k];
 
 			if (recs === undefined)
 				continue;
-
-			const nr = [];
 
 			for (let i = recs.length - 1; i >= 0; i--) {
 				const now = {}, row = recs[i], { r, t } = row;
@@ -232,17 +222,15 @@ export function transform(raw, store) {
 					}
 				}
 
-				nr[i] = now;
+				recs[i] = now;
 			}
-
-			data[k] = nr;
 		}
 	}
 
 	if (!!store === false)
-		data.nostore = true;
+		raw.nostore = true;
 
-	return data;
+	return raw;
 }
 //------------------------------------------------------------------------------
 function encode(val) {

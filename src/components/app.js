@@ -1,4 +1,6 @@
 //------------------------------------------------------------------------------
+import debug from 'preact/devtools';
+//------------------------------------------------------------------------------
 import Component from './component';
 import { Router } from 'preact-router';
 import Header from './header';
@@ -22,8 +24,8 @@ export default class App extends Component {
 					<Home path="/" />
 					<Profile path="/profile/" user="me" />
 					<Profile path="/profile/:user" />
-					<Categories path="/categories/" />
 					<Category path="/categories/:category" />
+					<Categories path="/categories/" />
 				</Router>
 			</div>
 		);

@@ -17,7 +17,7 @@
     "request": "launch",
     "name": "Firefox",
     //"reAttach": true,
-    "firefoxExecutable": "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+    "firefoxExecutable": "C:\\Program Files\\Firefox Developer Edition\\firefox.exe",
     "url": "http://127.0.0.1:8080",
     "webRoot": "${workspaceRoot}/src"
   }]
