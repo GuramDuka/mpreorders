@@ -11,6 +11,8 @@ import Switch from 'preact-material-components/Switch';
 import 'preact-material-components/Switch/style.css';
 import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
+import TextField from 'preact-material-components/TextField';
+import 'preact-material-components/TextField/style.css';
 // import style from './style';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
@@ -22,9 +24,11 @@ export default class Header extends Component {
 	}
 
 	openDrawer = () => (this.drawer.MDComponent.open = true);
-	openSettings = () => this.dialog.MDComponent.show();
-	drawerRef = drawer => (this.drawer = drawer);
-	dialogRef = dialog => (this.dialog = dialog);
+	openSettings = () => this.settings.MDComponent.show();
+	openSearch = () => this.search.MDComponent.show();
+	drawerRef = e => this.drawer = e;
+	settingsRef = e => this.settings = e;
+	searchRef = e => this.search = e;
 
 	linkTo = path => e => {
 		route(path);
@@ -65,8 +69,9 @@ export default class Header extends Component {
 							</Toolbar.Icon>
 							<Toolbar.Title>Заказы</Toolbar.Title>
 						</Toolbar.Section>
-						<Toolbar.Section align-end onClick={this.openSettings}>
-							<Toolbar.Icon>settings</Toolbar.Icon>
+						<Toolbar.Section align-end>
+							<Toolbar.Icon onClick={this.openSearch}>search</Toolbar.Icon>
+							<Toolbar.Icon onClick={this.openSettings}>settings</Toolbar.Icon>
 						</Toolbar.Section>
 					</Toolbar.Row>
 				</Toolbar>
@@ -100,7 +105,7 @@ export default class Header extends Component {
 						</List>
 					</Drawer.TemporaryDrawerContent>
 				</Drawer.TemporaryDrawer>
-				<Dialog ref={this.dialogRef}>
+				<Dialog ref={this.settingsRef}>
 					<Dialog.Header>Настройки</Dialog.Header>
 					<Dialog.Body>
 						<div>
@@ -108,6 +113,20 @@ export default class Header extends Component {
 							&nbsp;&nbsp;&nbsp;&nbsp;
 							<Switch onClick={this.toggleDarkTheme} />
 						</div>
+					</Dialog.Body>
+					<Dialog.Footer>
+						<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>
+					</Dialog.Footer>
+				</Dialog>
+				<Dialog ref={this.searchRef}>
+					<Dialog.Header>Поиск</Dialog.Header>
+					<Dialog.Body>
+						<TextField
+							helperText="Вводите текст ..."
+							helperTextPersistent
+							fullwidth
+							trailingIcon="search"
+						/>
 					</Dialog.Body>
 					<Dialog.Footer>
 						<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>

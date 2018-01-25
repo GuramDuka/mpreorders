@@ -41,14 +41,14 @@ export default function (config, env, helpers) {
 
 	let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
 
-	let plugin = cfg.plugins.find(v => v.constructor === SWPrecacheWebpackPlugin);
+	// let plugin = cfg.plugins.find(v => v.constructor === SWPrecacheWebpackPlugin);
 
-	if (plugin)
-		plugin.options.minify = false;
+	// if (plugin)
+	// 	plugin.options.minify = false;
 
-	plugin = cfg.plugins.find(v => v.constructor === HtmlWebpackPlugin);
-	if (plugin)
-		plugin.options.minify = false;
+	// plugin = cfg.plugins.find(v => v.constructor === HtmlWebpackPlugin);
+	// if (plugin)
+	// 	plugin.options.minify = false;
 			
 	// plugin = cfg.plugins.find(v => v.constructor === webpack.DefinePlugin);
 	// if (plugin)

@@ -1,0 +1,38 @@
+/*
+ * https://codeburst.io/4-four-ways-to-style-react-components-ac6f323da822
+ * https://medium.com/@pioul/modular-css-with-react-61638ae9ea3e
+ */
+
+/*
+ * https://npm.taobao.org/package/postcss-modules-values
+ * make local aliases to imported values
+ */
+
+@value small as bp-small, medium as bp-medium, large as bp-large from "../../../assets/breackpoints.css";
+ 
+@media bp-small {
+	@value cardHeight: 120px;
+	@value imgHeight: 60px;
+}
+
+@media bp-medium {
+	@value cardHeight: 160px;
+	@value imgHeight: 60px;
+}
+
+@media bp-large {
+	@value cardHeight: 180px;
+	@value imgHeight: 60px;
+}
+
+:local(.card) {
+	width: 100%;
+	height: cardHeight;
+	overflow: hidden;
+}
+
+:local(.media) {
+	background-size: auto 100%;
+	background-repeat: no-repeat;
+	height: imgHeight;
+}

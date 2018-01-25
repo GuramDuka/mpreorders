@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import Component from '../../components/component';
 import style from './style';
-import { route } from 'preact-router';
+import Card from '../../components/product/card';
+import cardStyle from '../../components/product/card/style';
 import VirtualList from 'preact-virtual-list';
-import { copy, transform } from '../../lib/util';
-import { bfetch, icoUrl } from '../../backend/backend';
+import { transform } from '../../lib/util';
+import { bfetch } from '../../backend/backend';
 import disp from '../../lib/store';
 import { nullLink } from '../../const';
 //------------------------------------------------------------------------------
@@ -110,45 +110,7 @@ export default class Category extends Component {
 		this.willReceiveProps();
 	}
 
-	ico({ primaryImageLink }) {
-		if (primaryImageLink && primaryImageLink !== nullLink) {
-			//const w = ~~styles.icoWidth.substring(0, styles.icoWidth.length - 2);
-			//const h = ~~styles.icoHeight.substring(0, styles.icoHeight.length - 2);
-			// const r = icoR(row.ОсновноеИзображение, w, h, 16);
-			// return <Image url={icoUrl(row.ОсновноеИзображение, w, h, 16)} r={r} />;
-			// 	return <img alt="BROKEN"
-			// 	  src={icoUrl(row.primaryImageLink, undefined, h, 16)}
-			// 	  className={styles.regular} />;
-			//   }
-
-			//   return <img alt="" src={nopic} className={styles.regular} />;
-			return (
-				<Card.Media
-					image={icoUrl(primaryImageLink, undefined, undefined, 16)}
-					title="BROKEN"
-				/>);
-		}
-		return undefined;
-	}
-
-	card = row => {
-		return (
-			<Card>
-				{this.ico(row)}
-				<Card.Primary>
-					<Card.Title>Home card</Card.Title>
-					<Card.Subtitle>Welcome to home route</Card.Subtitle>
-				</Card.Primary>
-				<Card.SupportingText>
-					Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-				</Card.SupportingText>
-				<Card.Actions>
-					<Card.Action>OKAY</Card.Action>
-				</Card.Actions>
-			</Card>);
-	}
-
-	vlRenderRow = row => <div class={style.vlRow}>{row.name}</div>;
+	vlRenderRow = row => <Card data={row} />;
 
 	render(props, { list }) {
 		if (list === undefined)
@@ -159,7 +121,7 @@ export default class Category extends Component {
 				<VirtualList
 					data={list.rows}
 					renderRow={this.vlRenderRow}
-					rowHeight={~~style.vlRowHeight.substr(0, style.vlRowHeight.length - 2)}
+					rowHeight={~~cardStyle.cardHeight.substr(0, cardStyle.cardHeight.length - 2)}
 					overscanCount={10}
 				/>
 			</div>
