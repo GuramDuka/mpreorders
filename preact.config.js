@@ -1,5 +1,6 @@
 const webpack = require('webpack');
-//const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
 const preactCliSwPrecachePlugin = require('preact-cli-sw-precache');
 //const DotenvPlugin = require('webpack-dotenv-plugin');
 
@@ -25,11 +26,13 @@ export default function (config, env, helpers) {
 	const precacheConfig = {
 		runtimeCaching: [{
 			urlPattern: /^https:\/\/shintorg48.ru\/mpreorders\/api\/backend/,
-			handler: 'networkFirst',
+			handler: 'fastest',
 			options: {
 				cache: {
+					maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
 					maxEntries: 1000,
 					maxAgeSeconds: 86400,
+					networkTimeoutSeconds: 30,
 					name: 'backend-cache'
 				}
 			}
@@ -38,27 +41,24 @@ export default function (config, env, helpers) {
 
 	let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
 
-	//cfg.plugins.push(new webpack.DefinePlugin({'process.env': {
-	//	NODE_ENV: config.devServer ? 'development' : 'production'
-	//}}));
-	//cfg.plugins.push(new webpack.DefinePlugin({'process.env.ADD_SW': true}));
-	//cfg.plugins.push(new DotenvPlugin({sample: './.env.default', path: './.env'}));
-	//helpers.getPluginsByName(cfg, 'DefinePlugin')
+	let plugin = cfg.plugins.find(v => v.constructor === SWPrecacheWebpackPlugin);
 
-	//cfg.plugins.push(new SWPrecacheWebpackPlugin({
-	//		filename: 'sw.js',
-	//		navigateFallback: 'index.html',
-	//		navigateFallbackWhitelist: [/^(?!\/__).*/],
-	//		minify: false,
-	//		staticFileGlobsIgnorePatterns: [/polyfills(\..*)?\.js$/, /\.map$/, /push-manifest\.json$/, /.DS_Store/]
-	//	}));
-	//cfg.plugins.push(new webpack.DefinePlugin({
-	//		'process.env.ADD_SW': true
-	//	}));
+	if (plugin)
+		plugin.options.minify = false;
 
-	//console.log('--------------------------------------------------------------------------------');
-	//console.log(config.devServer);
-	//console.log('--------------------------------------------------------------------------------');
+	plugin = cfg.plugins.find(v => v.constructor === HtmlWebpackPlugin);
+	if (plugin)
+		plugin.options.minify = false;
+			
+	// plugin = cfg.plugins.find(v => v.constructor === webpack.DefinePlugin);
+	// if (plugin)
+	// 	console.log(plugin.definitions['process.env.NODE_ENV']);
+
+	// console.log('--------------------------------------------------------------------------------');
+	// cfg.plugins.forEach(v => console.log(v.constructor));
+	// console.log(cfg.plugins.find(v => v.constructor === HtmlWebpackPlugin));
+	// //cfg.plugins.forEach(v => console.log(v));
+	// console.log('--------------------------------------------------------------------------------');
 
 	return cfg;
 }
