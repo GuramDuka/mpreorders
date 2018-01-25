@@ -116,6 +116,8 @@ export function bfetch(opts, success, fail, start) {
 	if (headers && !headers.entries().next().done)
 		opts.headers = headers;
 
+	const data = {};
+
 	const fetchId = fetch(url, opts).then(response => {
 		const contentType = response.headers.get('content-type');
 
@@ -142,6 +144,8 @@ export function bfetch(opts, success, fail, start) {
 			return state;
 		});
 
+		data.headers = response.headers;
+
 		if (contentType) {
 			if (contentType.includes('application/json'))
 				return response.json();
@@ -150,19 +154,26 @@ export function bfetch(opts, success, fail, start) {
 			if (contentType.includes('image/'))
 				return response.arrayBuffer();
 		}
+
 		// will be caught below
 		throw new TypeError('Oops, we haven\'t right type of response! Status: '
 			+ response.status + ', ' + response.statusText + ', content-type: ' + contentType);
 	}).then(result => {
 		if (result === undefined || result === null ||
-			(result.constructor !== Object && result.constructor !== Array && result.constructor !== ArrayBuffer))
+			!(result.constructor === Object || result instanceof Object
+				|| Array.isArray(result)
+				|| result.constructor === ArrayBuffer || result instanceof ArrayBuffer))
 			throw new TypeError('Oops, we haven\'t got data! ' + result);
+
+		result.date = new Date(data.headers.get('date'));
+		
+		let xMaxAge = data.headers.get('cache-control');
+		xMaxAge = xMaxAge && xMaxAge.split(',').find(v => v.match(/max-age/gi));
+		xMaxAge = xMaxAge && xMaxAge.replace(/max-age|[= ]/gi, '');
+		result.maxAge = ~~xMaxAge; // fast convert string to integer
 
 		success && success.constructor === Function && success(result, opts);
 	}).catch(error => {
-		//if (process.env.NODE_ENV === 'development')
-		//console.log(error);
-
 		fail && fail.constructor === Function && fail(error, opts);
 	});
 

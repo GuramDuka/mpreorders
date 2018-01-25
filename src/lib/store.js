@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import wgl from 'window-or-global';
+import wog from 'window-or-global';
 import Deque from 'double-ended-queue';
 //import uuidv1 from 'uuid/v1';
 //import * as PubSub from 'pubsub-js';
@@ -50,7 +50,8 @@ class State {
 		let r = true;
 
 		if (messages && pushedSubscribers && messages.length !== 0 && pushedSubscribers.size !== 0)
-			pushedSubscribers.forEach((msgs, functor) => functor(msgs));
+			for (const [functor, msgs] of pushedSubscribers.entries())
+				functor(msgs);
 		else
 			r = false;
 
@@ -90,7 +91,7 @@ class State {
 
 		const { subscribers } = this;
 
-		topicSubscribers.forEach(subscriber => {
+		for (const subscriber of topicSubscribers.values()) {
 			const data = subscribers.get(subscriber);
 
 			if (data === undefined)
@@ -107,28 +108,29 @@ class State {
 				msgs[sPath] = msg;
 			else
 				msgs[alias] = msg.value;
-		});
+		}
 	}
 
 	subscribe(functor, path, alias) {
 		if (functor === undefined || functor === null)
 			throw new Error('invalid subscriber');
 
-		if (functor.constructor === Map) {
-			functor.forEach((data, functor) => this.subscribe(functor, data));
+		if (functor.constructor === Map || functor instanceof Map) {
+			for (const [key, value] of functor.entries())
+				this.subscribe(key, value);
 			return this;
 		}
 
-		if (path.constructor === Array) {
+		if (Array.isArray(path)) {
 			for (const data of path)
 				this.subscribe(functor, data);
 			return this;
 		}
 
-		if (path instanceof Object)
+		if (path.constructor === Object || path instanceof Object)
 			return this.subscribe(functor, path.path, path.alias);
 
-		if (functor.constructor !== Function)
+		if (!(functor.constructor === Function || functor instanceof Function))
 			throw new Error('invalid subscriber');
 
 		let t = this.topicsSubscribers.get(path);
@@ -156,12 +158,13 @@ class State {
 		if (functor === undefined || functor === null)
 			throw new Error('invalid subscriber');
 
-		if (functor.constructor === Map) {
-			functor.forEach((data, functor) => this.unsubscribe(functor, data));
+		if (functor.constructor === Map || functor instanceof Map) {
+			for (const [key, value] of functor.entries())
+				this.unsubscribe(key, value);
 			return this;
 		}
 
-		if (path.constructor === Array) {
+		if (Array.isArray(path)) {
 			for (const data of path)
 				this.unsubscribe(functor, data);
 			return this;
@@ -219,9 +222,9 @@ class State {
 	}
 
 	restore() {
-		// On preact build prerendering wgl.localStorage === undefined
+		// On preact build prerendering wog.localStorage === undefined
 		// Alternatively use 'preact build --no-prerender' to disable prerendering.
-		let state = wgl.localStorage && wgl.localStorage.getItem('state');
+		let state = wog.localStorage && wog.localStorage.getItem('state');
 
 		if (state !== undefined && state !== null) {
 			// eslint-disable-next-line
@@ -238,7 +241,7 @@ class State {
 
 	store() {
 		const { root } = this;
-		wgl.localStorage.setItem('state', State.stringify(root));
+		wog.localStorage.setItem('state', State.stringify(root));
 		root.version++;
 	}
 

@@ -1,18 +1,16 @@
 //------------------------------------------------------------------------------
-//import 'preact/debug';
 import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
-import { shallowEqual } from '../lib/util';
+import { shallowEqual, isDevelopment } from '../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Component extends PreactComponent {
-	constructor(props, context) {
-		super(props, context);
+	// public
 
-		const { willReceiveProps } = this;
-		willReceiveProps && willReceiveProps.call(this, props, context);
-	}
+	// constructor(props, context) {
+	// 	super(props, context);
+	// }
 
 	// 	before the component gets mounted to the DOM
 	componentWillMount() {
@@ -22,43 +20,23 @@ export default class Component extends PreactComponent {
 
 	// after the component gets mounted to the DOM
 	componentDidMount() {
-		const { didMount, storePaths } = this;
-
-		storePaths && subscribe(storePaths) && disp(state => {
-			storePaths.forEach(data => {
-				if (Array.isArray(data))
-					for (const { path } of data)
-						state = state.setIn(path, state.getIn(path));
-				else if (data.constructor === Object || data instanceof Object)
-					state = state.setIn(data.path, state.getIn(data.path));
-				else
-					state = state.setIn(data, state.getIn(data));
-
-				return state;
-			});
-
-			return state;
-		});
-
+		const { didMount } = this;
 		didMount && didMount.call(this);
+		this._reinitialize();
 	}
 
 	// prior to removal from the DOM
 	componentWillUnmount() {
-		const { props, willUnmount } = this;
-		const { storePaths } = props;
-
-		storePaths && unsubscribe(storePaths);
+		const { willUnmount } = this;
 		willUnmount && willUnmount.call(this);
-
-		// used in mergeState
-		delete this._icb;
+		this._deinitialize();
 	}
 
 	// before new props get accepted
 	componentWillReceiveProps(props, context) {
 		const { willReceiveProps } = this;
 		willReceiveProps && willReceiveProps.call(this, props, context);
+		this._reinitialize();
 	}
 
 	// before render(). Return false to skip render
@@ -83,39 +61,40 @@ export default class Component extends PreactComponent {
 		if (shallowEqual(this.state, state))
 			return;
 
-		if (this._icb === undefined && this.fetchStorePaths)
-			this._icb = () => {
-				const { storePaths } = this;
+		this.setState(state, callback);
+	}
 
-				if (storePaths) {
-					let def = false;
-					// check undefined stored value for initial fetching
-					for (const key of storePaths.keys()) {
-						if (def)
-							break;
+	// private
 
-						const data = storePaths.get(key);
+	// called from componentWillReceiveProps, componentDidMount
+	_reinitialize() {
+		this._deinitialize();
 
-						if (Array.isArray(data))
-							for (const { path, alias } of data) {
-								if (def)
-									break;
-								def = state[alias ? alias : path] !== undefined;
-							}
-						else if (data.constructor === Object || data instanceof Object)
-							def = state[data.alias ? data.alias : data.path] !== undefined;
-						else
-							def = state[data] !== undefined;
+		const { storePaths } = this;
 
-					}
+		storePaths && subscribe(storePaths) && (this._storeSubscription = true)
+			&& disp(state => {
+				for (const data of storePaths.values()) {
+					if (Array.isArray(data))
+						for (const { path } of data)
+							state = state.setIn(path, state.getIn(path));
+					else if (data.constructor === Object || data instanceof Object)
+						state = state.setIn(data.path, state.getIn(data.path));
+					else
+						state = state.setIn(data, state.getIn(data));
 
-					def || this.fetchStorePaths();
+					return state;
 				}
-				callback && callback.call(this);
-				this._icb = false;
-			};
 
-		this.setState(state, this._icb || callback);
+				return state;
+			});
+	}
+
+	// called from componentWillUnmount, _reinitialize
+	_deinitialize() {
+		const { storePaths } = this;
+		storePaths && this._storeSubscription
+			&& unsubscribe(storePaths) && delete this._storeSubscription;
 	}
 }
 //------------------------------------------------------------------------------

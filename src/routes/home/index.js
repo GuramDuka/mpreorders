@@ -7,7 +7,7 @@ import style from './style';
 export default class Home extends Component {
 	render() {
 		return (
-			<div class={style.home} className="mdc-toolbar-fixed-adjust">
+			<div class={[style.home, 'mdc-toolbar-fixed-adjust'].join(' ')}>
 				<h1>Home route</h1>
 				<Card>
 					<Card.Primary>

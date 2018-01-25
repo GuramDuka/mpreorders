@@ -13,14 +13,19 @@ import disp from '../../lib/store';
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Categories extends Component {
+	mergeState = state => {
+		super.mergeState(state);
+		state.categories === undefined && this.fetchData();
+	}
+
 	storePaths = new Map([
 		[
-			state => this.mergeState(state),
+			this.mergeState,
 			{ path: 'categories.list', alias: 'categories' }
 		]
 	])
 
-	fetchStorePaths() {
+	fetchData() {
 		const r = { r: { m: 'category', f: 'list', r: { target: 'products' } } };
 
 		bfetch(r, json =>
@@ -43,7 +48,7 @@ export default class Categories extends Component {
 			</List.Item>));
 
 		return (
-			<div class={style.categories} className="mdc-toolbar-fixed-adjust">
+			<div class={[style.categories, 'mdc-toolbar-fixed-adjust'].join(' ')}>
 				<List>
 					{items}
 				</List>

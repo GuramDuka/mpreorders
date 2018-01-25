@@ -11,39 +11,18 @@ import { nullLink } from '../../const';
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Category extends Component {
-	willReceiveProps(props, context) {
-		this.storeListPath = (this.storePrefix =
-			'categories.' + this.props.category + '.') + 'list';
-		const { storePrefix, storeListPath } = this;
-
-		this.storePaths = new Map([
-			[
-				state => this.mergeState(state),
-				[
-					{
-						path: storeListPath,
-						alias: 'list'
-					},
-					{
-						path: storePrefix + 'order',
-						alias: 'order'
-					},
-					{
-						path: storePrefix + '.filter',
-						alias: 'filter'
-					}
-				]
-			]
-		]);
+	mergeState = state => {
+		super.mergeState(state);
+		state.list === undefined && this.fetchData();
 	}
 
 	piece = 40	// items
-	
+
 	l2i(l, p) {
 		return Math.trunc(l / p) + (l % p ? 1 : 0);
 	}
 
-	fetchStorePaths() {
+	fetchData() {
 		const { storeListPath, piece, list, props, state } = this;
 		const { category } = props;
 		const { parent, order, filter } = state;
@@ -86,11 +65,11 @@ export default class Category extends Component {
 			if (src.length !== 0) {
 				// render first piece immediately, keep fetching in background
 				// copy helps shallowEqual in Component.mergeState detects when data change
-				if (index === 0)
-					disp(state => state.setIn(storeListPath, copy(data)));
+				//if (index === 0)
+				//	disp(state => state.setIn(storeListPath, copy(data)));
 
 				this.list = data;
-				this.fetchStorePaths();
+				this.fetchData();
 			}
 			else {
 				delete this.list;
@@ -99,19 +78,48 @@ export default class Category extends Component {
 		});
 	}
 
-	vlRenderRow = row => <div>{row.name}</div>;
+	willReceiveProps(props, context) {
+		this.storeListPath = (this.storePrefix =
+			'categories.' + this.props.category + '.') + 'list';
+		const { storePrefix, storeListPath } = this;
+
+		this.storePaths = new Map([
+			[
+				this.mergeState,
+				[
+					{
+						path: storeListPath,
+						alias: 'list'
+					},
+					{
+						path: storePrefix + 'order',
+						alias: 'order'
+					},
+					{
+						path: storePrefix + '.filter',
+						alias: 'filter'
+					}
+				]
+			]
+		]);
+	}
+
+	didMount() {
+		this.willReceiveProps();
+	}
+
+	vlRenderRow = row => <div class={style.vlRow}>{row.name}</div>;
 
 	render(props, { list }) {
-		console.log(list);
 		if (list === undefined)
 			return undefined;
 
 		return (
-			<div class={style.category} className="mdc-toolbar-fixed-adjust">
+			<div class={[style.category, 'mdc-toolbar-fixed-adjust'].join(' ')}>
 				<VirtualList
 					data={list.rows}
 					renderRow={this.vlRenderRow}
-					rowHeight={22}
+					rowHeight={~~style.vlRowHeight.substr(0, style.vlRowHeight.length - 2)}
 					overscanCount={10}
 				/>
 			</div>

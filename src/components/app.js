@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import debug from 'preact/devtools';
+//import debug from 'preact/devtools';
 //------------------------------------------------------------------------------
 import Component from './component';
 import { Router } from 'preact-router';

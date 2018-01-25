@@ -1,4 +1,20 @@
 //------------------------------------------------------------------------------
+import wog from 'window-or-global';
+//------------------------------------------------------------------------------
+export function isDevelopment() {
+	return (wog.process
+		&& wog.process.env
+		&& wog.process.env.NODE_ENV === 'development')
+		|| (wog.webpackJsonp && wog.webpackJsonp.name.length !== 0);
+}
+//------------------------------------------------------------------------------
+export function isProduction() {
+	return (wog.process
+		&& wog.process.env
+		&& wog.process.env.NODE_ENV === 'production')
+		|| (wog.webpackJsonp && wog.webpackJsonp.name.length === 0);
+}
+//------------------------------------------------------------------------------
 export function isPrimitiveValue(v) {
 	return v === undefined
 		|| v === null

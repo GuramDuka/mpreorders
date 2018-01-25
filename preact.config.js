@@ -1,4 +1,4 @@
-//const webpack = require('webpack');
+const webpack = require('webpack');
 //const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
 const preactCliSwPrecachePlugin = require('preact-cli-sw-precache');
 //const DotenvPlugin = require('webpack-dotenv-plugin');
@@ -31,6 +31,9 @@ export default function (config, env, helpers) {
 
 	let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
 
+	//cfg.plugins.push(new webpack.DefinePlugin({'process.env': {
+	//	NODE_ENV: config.devServer ? 'development' : 'production'
+	//}}));
 	//cfg.plugins.push(new webpack.DefinePlugin({'process.env.ADD_SW': true}));
 	//cfg.plugins.push(new DotenvPlugin({sample: './.env.default', path: './.env'}));
 	//helpers.getPluginsByName(cfg, 'DefinePlugin')
@@ -47,7 +50,7 @@ export default function (config, env, helpers) {
 	//	}));
 
 	//console.log('--------------------------------------------------------------------------------');
-	//console.log(cfg);
+	//console.log(config.devServer);
 	//console.log('--------------------------------------------------------------------------------');
 
 	return cfg;
