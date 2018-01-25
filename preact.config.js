@@ -25,7 +25,14 @@ export default function (config, env, helpers) {
 	const precacheConfig = {
 		runtimeCaching: [{
 			urlPattern: /^https:\/\/shintorg48.ru\/mpreorders\/api\/backend/,
-			handler: 'cacheFirst'
+			handler: 'networkFirst',
+			options: {
+				cache: {
+					maxEntries: 1000,
+					maxAgeSeconds: 86400,
+					name: 'backend-cache'
+				}
+			}
 		}]
 	};
 
