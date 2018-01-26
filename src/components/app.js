@@ -24,7 +24,7 @@ export default class App extends Component {
 					<Home path="/" />
 					<Profile path="/profile/" user="me" />
 					<Profile path="/profile/:user" />
-					<Category path="/categories/:category" />
+					<Category path="/categories/:category/:pageProps" />
 					<Categories path="/categories/" />
 				</Router>
 			</div>

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import Component from '../../components/component';
+import Component from '../component';
 import { route } from 'preact-router';
 import Toolbar from 'preact-material-components/Toolbar';
 import 'preact-material-components/Toolbar/style.css';
@@ -13,7 +13,9 @@ import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
 import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
-// import style from './style';
+import Spinner from './spinner';
+import Title from './title';
+//import style from './style';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
 	closeDrawer() {
@@ -30,10 +32,15 @@ export default class Header extends Component {
 	settingsRef = e => this.settings = e;
 	searchRef = e => this.search = e;
 
-	linkTo = path => e => {
-		route(path);
-		this.closeDrawer();
-	}
+	linkTo = path => ({
+		onClick: e => {
+			e.stopPropagation();
+			e.preventDefault();
+			route(path);
+			this.closeDrawer();
+		},
+		href: path
+	})
 
 	goHome = this.linkTo('/')
 	goProfile = this.linkTo('/profile')
@@ -67,9 +74,10 @@ export default class Header extends Component {
 							<Toolbar.Icon menu onClick={this.openDrawer}>
 								menu
 							</Toolbar.Icon>
-							<Toolbar.Title>Заказы</Toolbar.Title>
+							<Title />
 						</Toolbar.Section>
 						<Toolbar.Section align-end>
+							<Spinner />
 							<Toolbar.Icon onClick={this.openSearch}>search</Toolbar.Icon>
 							<Toolbar.Icon onClick={this.openSettings}>settings</Toolbar.Icon>
 						</Toolbar.Section>
@@ -78,27 +86,27 @@ export default class Header extends Component {
 				<Drawer.TemporaryDrawer ref={this.drawerRef}>
 					<Drawer.TemporaryDrawerContent>
 						<List>
-							<List.LinkItem onClick={this.goHome}>
+							<List.LinkItem {...this.goHome}>
 								<List.ItemIcon>home</List.ItemIcon>
 								Начало
 							</List.LinkItem>
-							<List.LinkItem onClick={this.goCategories}>
+							<List.LinkItem {...this.goCategories}>
 								<List.ItemIcon>view_stream</List.ItemIcon>
 								Категории
 							</List.LinkItem>
-							<List.LinkItem onClick={this.goProducts}>
+							<List.LinkItem {...this.goProducts}>
 								<List.ItemIcon>view_list</List.ItemIcon>
 								Каталог
 							</List.LinkItem>
-							<List.LinkItem onClick={this.goOrders}>
+							<List.LinkItem {...this.goOrders}>
 								<List.ItemIcon>reorder</List.ItemIcon>
 								Заказы
 							</List.LinkItem>
-							<List.LinkItem onClick={this.goCart}>
+							<List.LinkItem {...this.goCart}>
 								<List.ItemIcon>shopping_cart</List.ItemIcon>
 								Корзина
 							</List.LinkItem>
-							<List.LinkItem onClick={this.goProfile}>
+							<List.LinkItem {...this.goProfile}>
 								<List.ItemIcon>account_circle</List.ItemIcon>
 								Профиль
 							</List.LinkItem>

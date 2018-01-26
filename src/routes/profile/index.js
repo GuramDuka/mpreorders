@@ -1,8 +1,11 @@
+//------------------------------------------------------------------------------
 import Component from '../../components/component';
 import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import style from './style';
-
+//------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 export default class Profile extends Component {
 	state = {
 		time: Date.now(),
@@ -47,3 +50,4 @@ export default class Profile extends Component {
 		);
 	}
 }
+//------------------------------------------------------------------------------

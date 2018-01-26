@@ -1,5 +1,8 @@
 //------------------------------------------------------------------------------
-import { serializeURIParams } from '../lib/util';
+import wog from 'window-or-global';
+import fetchPolyfill from 'whatwg-fetch';
+import AbortControllerPolyfill from 'abortcontroller-polyfill';
+import { copy, serializeURIParams } from '../lib/util';
 import disp, { getState } from '../lib/store';
 //------------------------------------------------------------------------------
 // nginx proxy configuration
@@ -56,7 +59,9 @@ import disp, { getState } from '../lib/store';
 const BACKEND_URL = 'https://shintorg48.ru/mpreorders/api/backend';
 export default BACKEND_URL;
 //------------------------------------------------------------------------------
-export function bfetch(opts, success, fail, start) {
+export function bfetch(opts_, success, fail, start) {
+	const opts = copy(opts_);
+
 	if (opts.method === undefined)
 		opts.method = 'GET';
 
@@ -117,8 +122,12 @@ export function bfetch(opts, success, fail, start) {
 		opts.headers = headers;
 
 	const data = {};
+	const retv = {};
+	const controller = new (typeof fetch !== 'function' ? AbortControllerPolyfill : wog.AbortController)();
 
-	const fetchId = fetch(url, opts).then(response => {
+	opts.signal = controller.signal;
+	retv.controller = controller;
+	retv.promise = (typeof fetch !== 'function' ? fetchPolyfill : wog.fetch)(url, opts).then(response => {
 		const contentType = response.headers.get('content-type');
 
 		// check if access denied
@@ -179,7 +188,7 @@ export function bfetch(opts, success, fail, start) {
 
 	start && start.constructor === Function && start(opts);
 
-	return fetchId;
+	return retv;
 }
 //------------------------------------------------------------------------------
 export function imgR(u, w, h, cs, jq) {

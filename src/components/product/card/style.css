@@ -11,28 +11,27 @@
 @value small as bp-small, medium as bp-medium, large as bp-large from "../../../assets/breackpoints.css";
  
 @media bp-small {
-	@value cardHeight: 120px;
-	@value imgHeight: 60px;
+	@value imgHeight: 130px;
 }
 
 @media bp-medium {
-	@value cardHeight: 160px;
-	@value imgHeight: 60px;
+	@value imgHeight: 140px;
 }
 
 @media bp-large {
-	@value cardHeight: 180px;
-	@value imgHeight: 60px;
+	@value imgHeight: 150px;
 }
 
 :local(.card) {
-	width: 100%;
-	height: cardHeight;
-	overflow: hidden;
 }
 
 :local(.media) {
+	background-position: center center;
 	background-size: auto 100%;
 	background-repeat: no-repeat;
 	height: imgHeight;
+}
+
+:local(.m) {
+	margin-bottom: 8px;
 }

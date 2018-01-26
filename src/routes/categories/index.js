@@ -13,36 +13,57 @@ import disp from '../../lib/store';
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Categories extends Component {
-	mergeState = state => {
-		super.mergeState(state);
+	mountState = state => {
+		this.setState(state);
 		state.categories === undefined && this.fetchData();
 	}
 
 	storePaths = new Map([
 		[
-			this.mergeState,
+			this.mountState,
 			{ path: 'categories.list', alias: 'categories' }
 		]
 	])
 
-	fetchData() {
-		const r = { r: { m: 'category', f: 'list', r: { target: 'products' } } };
-
-		bfetch(r, json =>
-			disp(state =>
-				state.setIn('categories.list', transform(json))));
+	storeDisp(store) {
+		return store.setIn('header.title', 'Категории');
 	}
 
-	linkTo = path => e => route(path)
-	goCategory = link => this.linkTo('/categories/' + link)
+	fetchData() {
+		let { fetchControl } = this;
+
+		fetchControl && fetchControl.controller.abort();
+
+		this.fetchControl = fetchControl = bfetch(
+			{ r: { m: 'category', f: 'list', r: { target: 'products' } } },
+			json => fetchControl === this.fetchControl &&
+				disp(state => state.setIn('categories.list', transform(json))
+					.deleteIn('header.spinner.active')),
+			error => fetchControl === this.fetchControl &&
+				disp(state => state.deleteIn('header.spinner.active')),
+			opts => fetchControl === this.fetchControl &&
+				disp(state => state.setIn('header.spinner.active', true))
+		);
+	}
+
+	linkTo = path => ({
+		onClick: e => {
+			e.stopPropagation();
+			e.preventDefault();
+			route(path);
+		},
+		href: path
+	})
+
+	goCategory = link => this.linkTo('/categories/' + link + '/1,40');
 
 	render(props, { categories }) {
 		if (categories === undefined)
 			return undefined;
 
-		const items = categories.rows.map(({ link, name }) =>
-			(<List.Item>
-				<Button ripple key={link} onClick={this.goCategory(link)}>
+		const items = categories.rows.map(({ link, name }) => (
+			<List.Item>
+				<Button unelevated key={link} {...this.goCategory(link)}>
 					{name}
 				</Button>
 			</List.Item>));

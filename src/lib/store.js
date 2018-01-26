@@ -198,21 +198,22 @@ class State {
 	}
 
 	performActions = () => {
-		const { actions } = this;
+		const store = this;
+		const { actions } = store;
 
-		this.startDisp();
+		store.startDisp();
 
 		while (!actions.isEmpty()) {
-			const state = actions.shift().action(this);
+			const state = actions.shift().action(store);
 
-			if (state !== this)
+			if (state !== store)
 				throw new Error('invalid value');
 		}
 
-		this.stopDisp();
+		store.stopDisp();
 
-		if (this.publish())
-			this.store();
+		if (store.publish())
+			store.store();
 	}
 
 	path2msg(path) {

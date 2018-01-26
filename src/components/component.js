@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
-import { shallowEqual, isDevelopment } from '../lib/util';
+//import { shallowEqual } from '../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -20,8 +20,9 @@ export default class Component extends PreactComponent {
 
 	// after the component gets mounted to the DOM
 	componentDidMount() {
-		const { didMount } = this;
+		const { didMount, mount, props, context } = this;
 		didMount && didMount.call(this);
+		mount && mount.call(this, props, context);
 		this._reinitialize();
 	}
 
@@ -34,8 +35,10 @@ export default class Component extends PreactComponent {
 
 	// before new props get accepted
 	componentWillReceiveProps(props, context) {
-		const { willReceiveProps } = this;
+		this._deinitialize();
+		const { willReceiveProps, mount } = this;
 		willReceiveProps && willReceiveProps.call(this, props, context);
+		mount && mount.call(this, props, context);
 		this._reinitialize();
 	}
 
@@ -57,24 +60,23 @@ export default class Component extends PreactComponent {
 		didUpdate && didUpdate.call(this, previousProps, previousState, previousContext);
 	}
 
-	mergeState(state, callback) {
-		if (shallowEqual(this.state, state))
-			return;
+	// mergeState(state, callback) {
+	// 	if (shallowEqual(this.state, state))
+	// 		return;
 
-		this.setState(state, callback);
-	}
+	// 	this.setState(state, callback);
+	// }
 
 	// private
 
 	// called from componentWillReceiveProps, componentDidMount
 	_reinitialize() {
-		this._deinitialize();
-
-		const { storePaths } = this;
+		const obj = this;
+		const { storePaths, storeDisp } = obj;
 
 		storePaths && subscribe(storePaths) && (this._storeSubscription = true)
 			&& disp(state => {
-				for (const data of storePaths.values()) {
+				for (const data of storePaths.values())
 					if (Array.isArray(data))
 						for (const { path } of data)
 							state = state.setIn(path, state.getIn(path));
@@ -83,8 +85,8 @@ export default class Component extends PreactComponent {
 					else
 						state = state.setIn(data, state.getIn(data));
 
-					return state;
-				}
+				if (storeDisp)
+					state = storeDisp.call(obj, state, obj.props, obj.state, obj.context);
 
 				return state;
 			});
@@ -92,9 +94,9 @@ export default class Component extends PreactComponent {
 
 	// called from componentWillUnmount, _reinitialize
 	_deinitialize() {
-		const { storePaths } = this;
-		storePaths && this._storeSubscription
-			&& unsubscribe(storePaths) && delete this._storeSubscription;
+		const { storePaths, _storeSubscription } = this;
+		storePaths && _storeSubscription && unsubscribe(storePaths);
+		delete this._storeSubscription;
 	}
 }
 //------------------------------------------------------------------------------

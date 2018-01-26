@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
-import 'preact-material-components/Card/style.css';
+import Button from 'preact-material-components/Button';
+import 'preact-material-components/Button/style.css';
 import Component from '../../components/component';
 import style from './style';
 import Card from '../../components/product/card';
-import cardStyle from '../../components/product/card/style';
-import VirtualList from 'preact-virtual-list';
+import CardStyle from '../../components/product/card/style';
+import { route } from 'preact-router';
 import { transform } from '../../lib/util';
 import { bfetch } from '../../backend/backend';
 import disp from '../../lib/store';
@@ -13,25 +14,57 @@ import { nullLink } from '../../const';
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Category extends Component {
-	mergeState = state => {
-		super.mergeState(state);
+	mountState = state => {
+		this.setState(state);
 		state.list === undefined && this.fetchData();
 	}
 
-	piece = 40	// items
+	mount(props) {
+		// decode page props
+		let [page, pageSize] = props.pageProps.split(',');
 
-	l2i(l, p) {
-		return Math.trunc(l / p) + (l % p ? 1 : 0);
+		pageSize = ~~pageSize;
+		this.pageSize = pageSize = pageSize > 0 ? pageSize : 40;
+
+		this.page = page = ~~page;
+		this.index = ((page > 0 ? page : 1) - 1) * pageSize;
+
+		this.storeListPath = (this.storePrefix =
+			'categories.' + props.category + '.')
+			+ 'list.' + page;
+		const { storePrefix, storeListPath } = this;
+
+		this.storePaths = new Map([
+			[
+				this.mountState,
+				[
+					{
+						path: storeListPath,
+						alias: 'list'
+					},
+					{
+						path: storePrefix + 'order',
+						alias: 'order'
+					},
+					{
+						path: storePrefix + 'filter',
+						alias: 'filter'
+					}
+				]
+			]
+		]);
 	}
 
 	fetchData() {
-		const { storeListPath, piece, list, props, state } = this;
+		let { fetchControl } = this;
+		fetchControl && fetchControl.controller.abort();
+
+		const { storeListPath, props, state, index, pageSize } = this;
 		const { category } = props;
 		const { parent, order, filter } = state;
-		const index = list ? this.l2i(list.rows.length, piece) * piece : 0;
 
 		// eslint-disable-next-line
-		let r = { type: 'products', piece: piece, index: index };
+		const r = { type: 'products', piece: pageSize, index: index };
 
 		if (order)
 			r.order = order;
@@ -44,86 +77,66 @@ export default class Category extends Component {
 		else if (parent !== nullLink)
 			r.parent = parent;
 
-		// eslint-disable-next-line
-		r = { r: { m: 'dict', f: 'filter', r: r } };
-
-		// eslint-disable-next-line
-		bfetch(r, json => {
-			const next = transform(json);
-			const data = list ? list : next;
-			const src = next.rows, dst = data.rows;
-
-			// refresh list
-			if (dst !== src) {
-				// append or set
-				for (let i = src.length - 1; i >= 0; i--)
-					dst[index + i] = src[i];
-
-				// delete old
-				if (src.length !== 0 && dst.length > index + src.length)
-					data.rows = dst.slice(0, index + length);
-			}
-
-			if (src.length !== 0) {
-				// render first piece immediately, keep fetching in background
-				// copy helps shallowEqual in Component.mergeState detects when data change
-				//if (index === 0)
-				//	disp(state => state.setIn(storeListPath, copy(data)));
-
-				this.list = data;
-				this.fetchData();
-			}
-			else {
-				delete this.list;
-				disp(state => state.setIn(storeListPath, data));
-			}
-		});
+		this.fetchControl = fetchControl = bfetch(
+			// eslint-disable-next-line
+			{ r: { m: 'dict', f: 'filter', r: r } },
+			json => fetchControl === this.fetchControl &&
+				disp(state => state.setIn(storeListPath, transform(json))
+					.setIn('header.title', json.category.name)
+					.deleteIn('header.spinner.active')),
+			error => fetchControl === this.fetchControl &&
+				disp(state => state.deleteIn('header.spinner.active')),
+			opts => fetchControl === this.fetchControl &&
+				disp(state => state.setIn('header.spinner.active', true))
+		);
 	}
 
-	willReceiveProps(props, context) {
-		this.storeListPath = (this.storePrefix =
-			'categories.' + this.props.category + '.') + 'list';
-		const { storePrefix, storeListPath } = this;
+	linkTo = path => ({
+		onClick: e => {
+			e.stopPropagation();
+			e.preventDefault();
+			route(path);
+		},
+		href: path
+	})
 
-		this.storePaths = new Map([
-			[
-				this.mergeState,
-				[
-					{
-						path: storeListPath,
-						alias: 'list'
-					},
-					{
-						path: storePrefix + 'order',
-						alias: 'order'
-					},
-					{
-						path: storePrefix + '.filter',
-						alias: 'filter'
-					}
-				]
-			]
-		]);
-	}
-
-	didMount() {
-		this.willReceiveProps();
-	}
-
-	vlRenderRow = row => <Card data={row} />;
+	goPage = page => this.linkTo('/categories/'
+		+ this.props.category + '/' + page + ',' + this.pageSize);
 
 	render(props, { list }) {
 		if (list === undefined)
 			return undefined;
 
+		const links = [];
+
+		if (this.page > 1)
+			links.push(
+				<Button unelevated
+					className={CardStyle.m}
+					{...this.goPage(this.page - 1) }>
+					<Button.Icon>arrow_back</Button.Icon>
+					{this.page - 1}
+				</Button>);
+
+		if (this.page < list.pages)
+			links.push(
+				<Button unelevated
+					style={{ float: 'right' }}
+					className={CardStyle.m}
+					{...this.goPage(this.page + 1) }>
+					<Button.Icon>arrow_forward</Button.Icon>
+					{this.page + 1}
+				</Button>);
+
 		return (
 			<div class={[style.category, 'mdc-toolbar-fixed-adjust'].join(' ')}>
-				<VirtualList
-					data={list.rows}
-					renderRow={this.vlRenderRow}
-					rowHeight={~~cardStyle.cardHeight.substr(0, cardStyle.cardHeight.length - 2)}
-					overscanCount={10}
-				/>
+				{list.rows.map(row => (
+					<Card
+						classes={CardStyle.m}
+						key={row.link}
+						data={row}
+					/>))}
+				{links}
 			</div>
 		);
 	}

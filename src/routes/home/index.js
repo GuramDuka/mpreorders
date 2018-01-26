@@ -1,9 +1,18 @@
+//------------------------------------------------------------------------------
 import Component from '../../components/component';
 import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import style from './style';
-
+//------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 export default class Home extends Component {
+	storePaths = new Map()
+
+	storeDisp(store) {
+		return store.setIn('header.title', '');
+	}
+
 	render() {
 		return (
 			<div class={[style.home, 'mdc-toolbar-fixed-adjust'].join(' ')}>
@@ -24,3 +33,4 @@ export default class Home extends Component {
 		);
 	}
 }
+//------------------------------------------------------------------------------

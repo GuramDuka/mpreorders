@@ -30,8 +30,8 @@ export default function (config, env, helpers) {
 			options: {
 				cache: {
 					maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
-					maxEntries: 1000,
-					maxAgeSeconds: 86400,
+					maxEntries: 1000000,
+					maxAgeSeconds: 86400 * 7,
 					networkTimeoutSeconds: 30,
 					name: 'backend-cache'
 				}

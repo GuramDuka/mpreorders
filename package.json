@@ -31,7 +31,9 @@
     "webpack-dotenv-plugin": "^2.0.2"
   },
   "dependencies": {
+    "abortcontroller-polyfill": "^1.0.9",
     "double-ended-queue": "^2.1.0-0",
+    "fetch-polyfill": "^0.8.2",
     "preact": "^8.2.1",
     "preact-compat": "^3.18.0",
     "preact-custom-scrollbars": "^4.0.4",
@@ -43,6 +45,7 @@
     "universal-localstorage": "",
     "uuid": "^3.2.1",
     "webpack-dev-server": "^2.11.1",
+    "whatwg-fetch": "^2.0.3",
     "window-or-global": "^1.0.1"
   }
 }
