@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
-import wog from 'window-or-global';
-import fetchPolyfill from 'whatwg-fetch';
-import AbortControllerPolyfill from 'abortcontroller-polyfill';
+//import wog from 'window-or-global';
+import 'whatwg-fetch';
+//import 'abortcontroller-polyfill';
 import { copy, serializeURIParams } from '../lib/util';
 import disp, { getState } from '../lib/store';
 //------------------------------------------------------------------------------
@@ -123,11 +123,15 @@ export function bfetch(opts_, success, fail, start) {
 
 	const data = {};
 	const retv = {};
-	const controller = new (typeof fetch !== 'function' ? AbortControllerPolyfill : wog.AbortController)();
-
-	opts.signal = controller.signal;
-	retv.controller = controller;
-	retv.promise = (typeof fetch !== 'function' ? fetchPolyfill : wog.fetch)(url, opts).then(response => {
+	try {
+		// eslint-disable-next-line
+		eval('retv.controller = new AbortController()');
+	}
+	catch (e) {
+		retv.controller = { abort: () => true };
+	}
+	opts.signal = retv.controller.signal;
+	retv.promise = fetch(url, opts).then(response => {
 		const contentType = response.headers.get('content-type');
 
 		// check if access denied
@@ -175,7 +179,7 @@ export function bfetch(opts_, success, fail, start) {
 			throw new TypeError('Oops, we haven\'t got data! ' + result);
 
 		result.date = new Date(data.headers.get('date'));
-		
+
 		let xMaxAge = data.headers.get('cache-control');
 		xMaxAge = xMaxAge && xMaxAge.split(',').find(v => v.match(/max-age/gi));
 		xMaxAge = xMaxAge && xMaxAge.replace(/max-age|[= ]/gi, '');
