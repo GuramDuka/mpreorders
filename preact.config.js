@@ -28,13 +28,13 @@ export default function (config, env, helpers) {
 		maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
 		runtimeCaching: [{
 			urlPattern: /^https:\/\/shintorg48.ru\/mpreorders\/api\/backend/,
-			handler: 'fastest',
+			handler: 'networkFirst',
 			options: {
 				debug: true,
+				networkTimeoutSeconds: 30,
 				cache: {
 					maxEntries: 1000000,
 					maxAgeSeconds: 86400 * 7,
-					networkTimeoutSeconds: 30,
 					name: 'backend-cache'
 				}
 			}
