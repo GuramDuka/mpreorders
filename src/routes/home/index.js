@@ -3,6 +3,7 @@ import Component from '../../components/component';
 import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import style from './style';
+import { headerTitleStorePath } from '../../const';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -10,12 +11,14 @@ export default class Home extends Component {
 	storePaths = new Map()
 
 	storeDisp(store) {
-		return store.setIn('header.title', '');
+		return store.setIn(headerTitleStorePath, '');
 	}
+
+	style = [style.home, 'mdc-toolbar-fixed-adjust'].join(' ')
 
 	render() {
 		return (
-			<div class={[style.home, 'mdc-toolbar-fixed-adjust'].join(' ')}>
+			<div class={this.style}>
 				<h1>Home route</h1>
 				<Card>
 					<Card.Primary>

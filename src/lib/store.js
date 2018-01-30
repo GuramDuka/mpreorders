@@ -11,6 +11,7 @@ import { defaultState } from '../config';
 class State {
 	topic = 'STORE'
 	actions = new Deque([])
+	trailers = []
 	topicsSubscribers = new Map()
 	subscribers = new Map()
 	pushedSubscribers = new Map()
@@ -199,12 +200,13 @@ class State {
 
 	performActions = () => {
 		const store = this;
-		const { actions } = store;
+		const { actions, trailers } = store;
 
 		store.startDisp();
 
 		while (!actions.isEmpty()) {
-			const state = actions.shift().action(store);
+			const functor = actions.shift();
+			const state = functor(store);
 
 			if (state !== store)
 				throw new Error('invalid value');
@@ -214,6 +216,12 @@ class State {
 
 		if (store.publish())
 			store.store();
+
+		for (const trailer of trailers)
+			trailer(store);
+
+		// truncate array
+		trailers.length = 0;
 	}
 
 	path2msg(path) {
@@ -247,8 +255,8 @@ class State {
 	}
 
 	startDisp() {
-		if (this.mutatedPaths !== undefined)
-			throw new Error('already dispatched');
+		if (this.isDispatched())
+			throw new Error('already dispatching');
 
 		this.mutatedPaths = {};
 		this.messages = [];
@@ -256,8 +264,16 @@ class State {
 		return this;
 	}
 
+	isDispatched() {
+		return this.mutatedPaths !== undefined;
+	}
+
+	isNotDispatched() {
+		return this.mutatedPaths === undefined;
+	}
+
 	stopDisp() {
-		if (this.mutatedPaths === undefined)
+		if (this.isNotDispatched())
 			throw new Error('not dispatched');
 
 		delete this.mutatedPaths;
@@ -321,12 +337,19 @@ class State {
 		return r;
 	}
 
+
+	checkDispatched() {
+		if (this.isNotDispatched())
+			throw new Error('Must be dispatched for change state');
+		return this;
+	}
+
 	static mSetIn(node, key, value) {
 		node[key] = value;
 	}
 
 	setIn(path, value, mutateLevels = 1) {
-		this.getNode(path, true, mutateLevels, State.mSetIn, value);
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mSetIn, value);
 		return this;
 	}
 
@@ -342,7 +365,7 @@ class State {
 	}
 
 	mergeIn(path, iterable, mutateLevels = 1) {
-		this.getNode(path, true, mutateLevels, State.mMergeIn, iterable);
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mMergeIn, iterable);
 		return this;
 	}
 
@@ -351,7 +374,7 @@ class State {
 	}
 
 	updateIn(path, functor, mutateLevels = 1) {
-		this.getNode(path, true, mutateLevels, State.mUpdateIn, functor);
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mUpdateIn, functor);
 		return this;
 	}
 
@@ -365,7 +388,7 @@ class State {
 	}
 
 	editIn(path, functor, mutateLevels = 1) {
-		this.getNode(path, true, mutateLevels, State.mEditIn, functor);
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mEditIn, functor);
 		return this;
 	}
 
@@ -374,7 +397,7 @@ class State {
 	}
 
 	deleteIn(path, mutateLevels = 1) {
-		this.getNode(path, true, mutateLevels, State.mDeleteIn);
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mDeleteIn);
 		return this;
 	}
 
@@ -386,7 +409,7 @@ class State {
 	}
 
 	toggleIn(path, mutateLevels = 1) {
-		this.getNode(path, true, mutateLevels, State.mToggleIn);
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mToggleIn);
 		return this;
 	}
 
@@ -406,7 +429,7 @@ class State {
 //------------------------------------------------------------------------------
 const store = new State();
 //------------------------------------------------------------------------------
-export function getState() {
+export function getStore() {
 	return store;
 }
 //------------------------------------------------------------------------------
@@ -420,42 +443,45 @@ export function unsubscribe(functor, path) {
 //------------------------------------------------------------------------------
 // disp save order of requests, FIFO - first in, first out dispatch
 //------------------------------------------------------------------------------
-export default function disp(functor, exclusive, sync) {
-	// disable features
-	exclusive = sync = false;
+export default function disp(functor, trailer
+	//, exclusive, sync
+) {
+	const { actions, trailers, performActions } = store;
+	const empty = actions.isEmpty();
 
-	const empty = store.actions.isEmpty();
+	// if (sync) {
+	// 	if (!empty)
+	// 		throw new Error('already dispatched async');
 
-	if (sync) {
-		if (!empty)
-			throw new Error('already dispatched async');
+	// 	const state = functor(store.startDisp()).stopDispatch();
 
-		const state = functor(store.startDisp()).stopDispatch();
+	// 	if (state !== store)
+	// 		throw new Error('invalid value');
 
-		if (state !== store)
-			throw new Error('invalid value');
+	// 	if (store.publish())
+	// 		store.store();
 
-		if (store.publish())
-			store.store();
+	// 	return true;
+	// }
 
-		return true;
-	}
+	// // if already executing exclusive action, silently ignore new actions
+	// // for example if on user button click long time loading and on data ready
+	// // change current route view
+	// if (!empty && store.actions.peekFront().exclusive)
+	// 	return undefined;
 
-	// if already executing exclusive action, silently ignore new actions
-	// for example if on user button click long time loading and on data ready
-	// change current route view
-	if (!empty && store.actions.peekFront().exclusive)
-		return undefined;
+	// store.actions.push({
+	// 	id: uuidv1(),
+	// 	action: functor,
+	// 	exclusive: !!exclusive
+	// });
 
-	store.actions.push({
-		//id: uuidv1(),
-		action: functor,
-		exclusive: !!exclusive
-	});
+	functor && actions.push(functor);
+	trailer && trailers.push(trailer);
 
-	if (empty)
-		setZeroTimeout(store.performActions);
+	if (empty && !actions.isEmpty())
+		setZeroTimeout(performActions);
 
-	return false;
+	return store;
 }
 //------------------------------------------------------------------------------

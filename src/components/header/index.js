@@ -15,57 +15,57 @@ import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
 import Spinner from './spinner';
 import Title from './title';
+import categoriesLoader from '../categories/loader';
 //import style from './style';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
-	closeDrawer() {
-		this.drawer.MDComponent.open = false;
-		this.state = {
-			darkThemeEnabled: false
-		};
-	}
-
-	openDrawer = () => (this.drawer.MDComponent.open = true);
-	openSettings = () => this.settings.MDComponent.show();
-	openSearch = () => this.search.MDComponent.show();
+	closeDrawer = e => this.drawer.MDComponent.open = false;
+	openDrawer = e => this.drawer.MDComponent.open = true;
+	openSettings = e => this.settings.MDComponent.show();
+	openSearch = e => this.search.MDComponent.show();
 	drawerRef = e => this.drawer = e;
 	settingsRef = e => this.settings = e;
 	searchRef = e => this.search = e;
 
-	linkTo = path => ({
+	linkTo = (path, loader) => ({
 		onClick: e => {
 			e.stopPropagation();
 			e.preventDefault();
-			route(path);
-			this.closeDrawer();
+
+			const ctrl = (disabled, path) => {
+				path && route(path) && this.closeDrawer();
+				disabled !== undefined
+					&& this.setState({ linksDisabled: disabled });
+			};
+
+			if (loader)
+				loader(result => ctrl(false, path),	error => ctrl(false), opts => ctrl(true));
+			else
+				ctrl(undefined, path);
 		},
 		href: path
 	})
 
 	goHome = this.linkTo('/')
 	goProfile = this.linkTo('/profile')
-	goCategories = this.linkTo('/categories')
+	goCategories = this.linkTo('/categories', categoriesLoader)
 	goProducts = this.linkTo('/products')
 	goOrders = this.linkTo('/orders')
 	goCart = this.linkTo('/cart')
 
-	toggleDarkTheme = () => {
-		this.setState(
-			{
-				darkThemeEnabled: !this.state.darkThemeEnabled
-			},
-			() => {
-				if (this.state.darkThemeEnabled) {
-					document.body.classList.add('mdc-theme--dark');
-				}
-				else {
-					document.body.classList.remove('mdc-theme--dark');
-				}
-			}
-		);
+	toggleDarkTheme = e => {
+		e.stopPropagation();
+		e.preventDefault();
+
+		this.setState({ darkThemeEnabled: !this.state.darkThemeEnabled });
+
+		if (this.state.darkThemeEnabled)
+			document.body.classList.add('mdc-theme--dark');
+		else
+			document.body.classList.remove('mdc-theme--dark');
 	}
 
-	render() {
+	render(props, { linksDisabled }) {
 		return (
 			<div>
 				<Toolbar className="toolbar" fixed>
@@ -86,27 +86,27 @@ export default class Header extends Component {
 				<Drawer.TemporaryDrawer ref={this.drawerRef}>
 					<Drawer.TemporaryDrawerContent>
 						<List>
-							<List.LinkItem {...this.goHome}>
+							<List.LinkItem disabled={linksDisabled} {...this.goHome}>
 								<List.ItemIcon>home</List.ItemIcon>
 								Начало
 							</List.LinkItem>
-							<List.LinkItem {...this.goCategories}>
+							<List.LinkItem disabled={linksDisabled} {...this.goCategories}>
 								<List.ItemIcon>view_stream</List.ItemIcon>
 								Категории
 							</List.LinkItem>
-							<List.LinkItem {...this.goProducts}>
+							<List.LinkItem disabled={linksDisabled} {...this.goProducts}>
 								<List.ItemIcon>view_list</List.ItemIcon>
 								Каталог
 							</List.LinkItem>
-							<List.LinkItem {...this.goOrders}>
+							<List.LinkItem disabled={linksDisabled} {...this.goOrders}>
 								<List.ItemIcon>reorder</List.ItemIcon>
 								Заказы
 							</List.LinkItem>
-							<List.LinkItem {...this.goCart}>
+							<List.LinkItem disabled={linksDisabled} {...this.goCart}>
 								<List.ItemIcon>shopping_cart</List.ItemIcon>
 								Корзина
 							</List.LinkItem>
-							<List.LinkItem {...this.goProfile}>
+							<List.LinkItem disabled={linksDisabled} {...this.goProfile}>
 								<List.ItemIcon>account_circle</List.ItemIcon>
 								Профиль
 							</List.LinkItem>

@@ -24,12 +24,14 @@ export default function (config, env, helpers) {
 	//}
 
 	const precacheConfig = {
+		verbose: true,
+		maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
 		runtimeCaching: [{
 			urlPattern: /^https:\/\/shintorg48.ru\/mpreorders\/api\/backend/,
 			handler: 'fastest',
 			options: {
+				debug: true,
 				cache: {
-					maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
 					maxEntries: 1000000,
 					maxAgeSeconds: 86400 * 7,
 					networkTimeoutSeconds: 30,
@@ -41,10 +43,10 @@ export default function (config, env, helpers) {
 
 	let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
 
-	// let plugin = cfg.plugins.find(v => v.constructor === SWPrecacheWebpackPlugin);
+	let plugin = cfg.plugins.find(v => v.constructor === SWPrecacheWebpackPlugin);
 
-	// if (plugin)
-	// 	plugin.options.minify = false;
+	if (plugin)
+		plugin.options.minify = false;
 
 	// plugin = cfg.plugins.find(v => v.constructor === HtmlWebpackPlugin);
 	// if (plugin)
@@ -54,11 +56,11 @@ export default function (config, env, helpers) {
 	// if (plugin)
 	// 	console.log(plugin.definitions['process.env.NODE_ENV']);
 
-	// console.log('--------------------------------------------------------------------------------');
+	//console.log('--------------------------------------------------------------------------------');
 	// cfg.plugins.forEach(v => console.log(v.constructor));
 	// console.log(cfg.plugins.find(v => v.constructor === HtmlWebpackPlugin));
-	// //cfg.plugins.forEach(v => console.log(v));
-	// console.log('--------------------------------------------------------------------------------');
+	//cfg.plugins.forEach(v => console.log(v));
+	//console.log('--------------------------------------------------------------------------------');
 
 	return cfg;
 }

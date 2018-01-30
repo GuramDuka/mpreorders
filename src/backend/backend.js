@@ -3,7 +3,7 @@
 import 'whatwg-fetch';
 //import 'abortcontroller-polyfill';
 import { copy, serializeURIParams } from '../lib/util';
-import disp, { getState } from '../lib/store';
+import disp, { getStore } from '../lib/store';
 //------------------------------------------------------------------------------
 // nginx proxy configuration
 // proxy_cache_path /var/cache/nginx/ram use_temp_path=off keys_zone=ram:4M inactive=1d max_size=1024M;
@@ -55,7 +55,7 @@ import disp, { getState } from '../lib/store';
 // 	add_header 'Service-Worker-Allowed' '/';
 // }
 //------------------------------------------------------------------------------
-//const BACKEND_URL = 'https://31.210.212.158:65480/opt/hs/react';
+//const BACKEND_URL = 'http://31.210.212.158:65480/opt/hs/react';
 const BACKEND_URL = 'https://shintorg48.ru/mpreorders/api/backend';
 export default BACKEND_URL;
 //------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ export function bfetch(opts_, success, fail, start) {
 	if (!opts.noauth) {
 		// send auth data
 		// antipattern, but only as an exception and it is the fastest method
-		const auth = getState().getIn('auth');
+		const auth = getStore().getIn('auth');
 
 		if (auth && auth.authorized) {
 			headers = headers ? headers : new Headers();
@@ -103,7 +103,7 @@ export function bfetch(opts_, success, fail, start) {
 		}
 	}
 
-	if (r !== undefined && opts.rmod && opts.rmod.constructor === Function)
+	if (r !== undefined && opts.rmod)
 		opts.rmod(r);
 
 	let url = BACKEND_URL;
@@ -148,13 +148,13 @@ export function bfetch(opts_, success, fail, start) {
 		if (xaLink === null)
 			xaLink = undefined;
 
-		disp(state => {
-			const auth = state.getIn('auth');
+		disp(store => {
+			const auth = store.getIn('auth');
 
 			if (auth && (auth.link !== xaLink || auth.employee !== xaEmployee))
-				state = state.deleteIn('auth.authorized');
+				store = store.deleteIn('auth.authorized');
 
-			return state;
+			return store;
 		});
 
 		data.headers = response.headers;
@@ -185,12 +185,12 @@ export function bfetch(opts_, success, fail, start) {
 		xMaxAge = xMaxAge && xMaxAge.replace(/max-age|[= ]/gi, '');
 		result.maxAge = ~~xMaxAge; // fast convert string to integer
 
-		success && success.constructor === Function && success(result, opts);
+		success && success(result, opts);
 	}).catch(error => {
-		fail && fail.constructor === Function && fail(error, opts);
+		fail && fail(error, opts);
 	});
 
-	start && start.constructor === Function && start(opts);
+	start && start(opts);
 
 	return retv;
 }

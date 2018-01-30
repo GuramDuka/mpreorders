@@ -41,7 +41,7 @@ export default class Card extends Component {
 		[
 			article,
 			manufacturer,
-			data.remainder + (data.reserve ? ' (' + data.reserve + ')' : '') + '⧉',
+			data.remainder + (data.reserve ? ' (' + data.reserve + ')' : ''),
 			data.price + '₽'
 		].forEach(v => v.length !== 0 && subTitle.push(v));
 

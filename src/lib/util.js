@@ -42,6 +42,12 @@ export function sscat(delimiter, ...args) {
 	return s.substr(delimiter.length).trim();
 }
 //------------------------------------------------------------------------------
+export function isArrow(functor) {
+	return functor
+		&& (functor.constructor === Function || functor instanceof Function)
+		&& !functor.hasOwnProperty('prototype');
+}
+//------------------------------------------------------------------------------
 function equ(a, b) {
 	return a === b;
 }

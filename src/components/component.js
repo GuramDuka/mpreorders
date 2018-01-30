@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
 import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
-//import { shallowEqual } from '../lib/util';
+import { isArrow } from '../lib/util';
+import { isArray } from 'util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -71,11 +72,12 @@ export default class Component extends PreactComponent {
 
 	// called from componentWillReceiveProps, componentDidMount
 	_reinitialize() {
-		const obj = this;
-		const { storePaths, storeDisp } = obj;
+		const { storePaths, storeDisp, storeTrailer } = this;
 
-		storePaths && subscribe(storePaths) && (this._storeSubscription = true)
-			&& disp(state => {
+		if (storePaths && subscribe(storePaths)) {
+			this._storeSubscription = true;
+
+			const functor = state => {
 				for (const data of storePaths.values())
 					if (Array.isArray(data))
 						for (const { path } of data)
@@ -86,13 +88,18 @@ export default class Component extends PreactComponent {
 						state = state.setIn(data, state.getIn(data));
 
 				if (storeDisp)
-					state = storeDisp.call(obj, state, obj.props, obj.state, obj.context);
+					state = storeDisp.call(this, state, this.props, this.state, this.context);
 
 				return state;
-			});
+			};
+			const trailer = storeTrailer
+				&& (store => storeTrailer.call(this, store, this.props, this.state, this.context));
+
+			disp(functor, trailer);
+		}
 	}
 
-	// called from componentWillUnmount, _reinitialize
+	// called from componentWillReceiveProps, componentWillUnmount
 	_deinitialize() {
 		const { storePaths, _storeSubscription } = this;
 		storePaths && _storeSubscription && unsubscribe(storePaths);
