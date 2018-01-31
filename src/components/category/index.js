@@ -42,7 +42,7 @@ export default class Category extends Component {
 				state => {
 					this.setState(state);
 					const { list } = state;
-					disp(state => state.setIn(headerTitleStorePath, list.category.name));
+					list && disp(state => state.setIn(headerTitleStorePath, list.category.name));
 				},
 				[
 					{
