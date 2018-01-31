@@ -1,23 +1,31 @@
 //------------------------------------------------------------------------------
-import wog from 'window-or-global';
-import uuidv1 from 'uuid/v1';
+//import wog from 'window-or-global';
+//import uuidv1 from 'uuid/v1';
 import { route } from 'preact-router';
 import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import Component from '../../components/component';
+import disp from '../../lib/store';
+import { headerTitleStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
-//import style from './style';
-import Card from '../product/card';
-import CardStyle from '../product/card/style';
+import style from './style';
+import Card from '../products/card';
+import CardStyle from '../products/card/style';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Category extends Component {
+	linkTo = path => e => {
+		e.stopPropagation();
+		e.preventDefault();
+		route(path);
+	}
+
 	goPage = page => this.linkTo('/category/'
 		+ this.props.category + '/' + page + ',' + this.pageSize, page)
 	//goPrev = e => wog.history.back()
 
-	mount(props) {
+	mount(props, { list }) {
 		// decode page props
 		let [page, pageSize] = props.pageProps.split(',');
 
@@ -31,7 +39,11 @@ export default class Category extends Component {
 
 		this.storePaths = new Map([
 			[
-				state => this.setState(state),
+				state => {
+					this.setState(state);
+					const { list } = state;
+					disp(state => state.setIn(headerTitleStorePath, list.category.name));
+				},
 				[
 					{
 						path: storePath + '.list.' + page,
@@ -53,39 +65,13 @@ export default class Category extends Component {
 		this.goNext = this.goPage(page + 1);
 	}
 
-	storeTrailer(store, { category }, { list }) {
-		list === undefined
-			&& loader(undefined, undefined, undefined,
-				category, this.page, this.pageSize);
+	storeTrailer(props, { list }) {
+		list === undefined && loader.call(this);
 	}
 
-	linkTo = (path, page) => ({
-		onClick: e => {
-			e.stopPropagation();
-			e.preventDefault();
+	style = [style.category, 'mdc-toolbar-fixed-adjust'].join(' ');
 
-			const ctrl = (disabled, path) => {
-				path && route(path);
-				this.setState({ linksDisabled: disabled });
-			};
-
-			loader(
-				result => ctrl(false, path),
-				error => ctrl(false),
-				opts => ctrl(true),
-				this.props.category, page, this.pageSize);
-		},
-		href: path
-	})
-
-	id = uuidv1()
-
-	didUpdate(){
-		const e = document.getElementById(this.id);
-		e && e.children[0] && e.children[0].scrollIntoView(false);
-	}
-
-	render({ containerClass }, { list, linksDisabled }) {
+	render(props, { list }) {
 		if (list === undefined)
 			return undefined;
 
@@ -98,9 +84,8 @@ export default class Category extends Component {
 
 		this.page > 1 && view.push(
 			<Button unelevated
-				disabled={linksDisabled}
 				className={CardStyle.m}
-				{...this.goPrev}
+				onClick={this.goPrev}
 			>
 				<Button.Icon>arrow_back</Button.Icon>
 				НАЗАД
@@ -108,17 +93,16 @@ export default class Category extends Component {
 
 		this.page < list.pages && view.push(
 			<Button unelevated
-				disabled={linksDisabled}
 				style={{ float: 'right' }}
 				className={CardStyle.m}
-				{...this.goNext}
+				onClick={this.goNext}
 			>
 				<Button.Icon>arrow_forward</Button.Icon>
 				{this.page + 1}
 			</Button>);
 
 		return (
-			<div id={this.id} class={containerClass}>
+			<div class={this.style}>
 				{view}
 			</div>);
 	}

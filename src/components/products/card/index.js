@@ -17,16 +17,6 @@ export default class Card extends Component {
 			? icoUrl(primaryImageLink, undefined, this.imgHeight, 16)
 			: nopic;
 		const s = { backgroundImage: 'url(' + url + ')' };
-		//const w = ~~styles.icoWidth.substring(0, styles.icoWidth.length - 2);
-		//const h = ~~styles.icoHeight.substring(0, styles.icoHeight.length - 2);
-		// const r = icoR(row.ОсновноеИзображение, w, h, 16);
-		// return <Image url={icoUrl(row.ОсновноеИзображение, w, h, 16)} r={r} />;
-		// 	return <img alt="BROKEN"
-		// 	  src={icoUrl(row.primaryImageLink, undefined, h, 16)}
-		// 	  className={styles.regular} />;
-		//   }
-
-		//   return <img alt="" src={nopic} className={styles.regular} />;
 		return <MuiCard.Media className={style.media} style={s} />;
 	}
 

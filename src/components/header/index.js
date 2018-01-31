@@ -15,10 +15,16 @@ import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
 import Spinner from './spinner';
 import Title from './title';
-import categoriesLoader from '../categories/loader';
 //import style from './style';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
+	storePaths = new Map([
+		[
+			state => this.setState(state),
+			'auth'
+		]
+	])
+
 	closeDrawer = e => this.drawer.MDComponent.open = false;
 	openDrawer = e => this.drawer.MDComponent.open = true;
 	openSettings = e => this.settings.MDComponent.show();
@@ -27,28 +33,16 @@ export default class Header extends Component {
 	settingsRef = e => this.settings = e;
 	searchRef = e => this.search = e;
 
-	linkTo = (path, loader) => ({
-		onClick: e => {
-			e.stopPropagation();
-			e.preventDefault();
-
-			const ctrl = (disabled, path) => {
-				path && route(path) && this.closeDrawer();
-				disabled !== undefined
-					&& this.setState({ linksDisabled: disabled });
-			};
-
-			if (loader)
-				loader(result => ctrl(false, path),	error => ctrl(false), opts => ctrl(true));
-			else
-				ctrl(undefined, path);
-		},
-		href: path
-	})
+	linkTo = path => e => {
+		e.stopPropagation();
+		e.preventDefault();
+		route(path);
+		this.closeDrawer();
+	}
 
 	goHome = this.linkTo('/')
 	goProfile = this.linkTo('/profile')
-	goCategories = this.linkTo('/categories', categoriesLoader)
+	goCategories = this.linkTo('/categories')
 	goProducts = this.linkTo('/products')
 	goOrders = this.linkTo('/orders')
 	goCart = this.linkTo('/cart')
@@ -65,7 +59,7 @@ export default class Header extends Component {
 			document.body.classList.remove('mdc-theme--dark');
 	}
 
-	render(props, { linksDisabled }) {
+	render(props, { auth }) {
 		return (
 			<div>
 				<Toolbar className="toolbar" fixed>
@@ -86,29 +80,30 @@ export default class Header extends Component {
 				<Drawer.TemporaryDrawer ref={this.drawerRef}>
 					<Drawer.TemporaryDrawerContent>
 						<List>
-							<List.LinkItem disabled={linksDisabled} {...this.goHome}>
+							<List.LinkItem onClick={this.goHome}>
 								<List.ItemIcon>home</List.ItemIcon>
 								Начало
 							</List.LinkItem>
-							<List.LinkItem disabled={linksDisabled} {...this.goCategories}>
+							<List.LinkItem onClick={this.goCategories}>
 								<List.ItemIcon>view_stream</List.ItemIcon>
 								Категории
 							</List.LinkItem>
-							<List.LinkItem disabled={linksDisabled} {...this.goProducts}>
+							<List.LinkItem onClick={this.goProducts}>
 								<List.ItemIcon>view_list</List.ItemIcon>
 								Каталог
 							</List.LinkItem>
-							<List.LinkItem disabled={linksDisabled} {...this.goOrders}>
+							<List.LinkItem onClick={this.goOrders}>
 								<List.ItemIcon>reorder</List.ItemIcon>
 								Заказы
 							</List.LinkItem>
-							<List.LinkItem disabled={linksDisabled} {...this.goCart}>
+							<List.LinkItem onClick={this.goCart}>
 								<List.ItemIcon>shopping_cart</List.ItemIcon>
 								Корзина
 							</List.LinkItem>
-							<List.LinkItem disabled={linksDisabled} {...this.goProfile}>
+							<List.LinkItem onClick={this.goProfile}>
 								<List.ItemIcon>account_circle</List.ItemIcon>
 								Профиль
+								{auth && auth.authorized ? <List.ItemIcon>verified_user</List.ItemIcon> : undefined}
 							</List.LinkItem>
 						</List>
 					</Drawer.TemporaryDrawerContent>

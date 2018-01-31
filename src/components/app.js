@@ -4,10 +4,10 @@
 import Component from './component';
 import { Router } from 'preact-router';
 import Header from './header';
-import Home from 'async!../routes/home';
-import Profile from 'async!../routes/profile';
-import Categories from 'async!../routes/categories';
-import Category from 'async!../routes/category';
+import Home from '../routes/home';//import Home from 'async!../routes/home';
+import Profile from '../routes/profile';//import Profile from 'async!../routes/profile';
+import Categories from '../routes/categories';//import Categories from 'async!../routes/categories';
+import Category from '../routes/category';//import Category from 'async!../routes/category';
 //------------------------------------------------------------------------------
 export default class App extends Component {
 	/** Gets fired when the route changes.

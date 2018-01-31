@@ -1,8 +1,6 @@
 //------------------------------------------------------------------------------
 import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
-import { isArrow } from '../lib/util';
-import { isArray } from 'util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -21,9 +19,9 @@ export default class Component extends PreactComponent {
 
 	// after the component gets mounted to the DOM
 	componentDidMount() {
-		const { didMount, mount, props, context } = this;
+		const { didMount, mount, props, state, context } = this;
 		didMount && didMount.call(this);
-		mount && mount.call(this, props, context);
+		mount && mount.call(this, props, state, context);
 		this._reinitialize();
 	}
 
@@ -37,9 +35,9 @@ export default class Component extends PreactComponent {
 	// before new props get accepted
 	componentWillReceiveProps(props, context) {
 		this._deinitialize();
-		const { willReceiveProps, mount } = this;
+		const { willReceiveProps, mount, state } = this;
 		willReceiveProps && willReceiveProps.call(this, props, context);
-		mount && mount.call(this, props, context);
+		mount && mount.call(this, props, state, context);
 		this._reinitialize();
 	}
 
@@ -93,7 +91,7 @@ export default class Component extends PreactComponent {
 				return state;
 			};
 			const trailer = storeTrailer
-				&& (store => storeTrailer.call(this, store, this.props, this.state, this.context));
+				&& (store => storeTrailer.call(this, this.props, this.state, this.context, store));
 
 			disp(functor, trailer);
 		}

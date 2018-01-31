@@ -5,9 +5,9 @@ import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import { route } from 'preact-router';
 import Component from '../../components/component';
+import { headerTitleStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
-//import style from './style';
-import categoryLoader from '../category/loader';
+import style from './style';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -22,50 +22,45 @@ export default class Categories extends Component {
 		]
 	])
 
-	storeTrailer(store, props, { list }) {
-		list === undefined && loader();
+	storeDisp(store) {
+		return store.setIn(headerTitleStorePath, 'Категории');
 	}
 
-	linkTo = (path, category, page, pageSize) => ({
-		onClick: e => {
-			e.stopPropagation();
-			e.preventDefault();
+	storeTrailer(props, { list }) {
+		list === undefined && loader.call(this);
+	}
 
-			const ctrl = (disabled, path) => {
-				path && route(path);
-				this.setState({ linksDisabled: disabled });
-			};
-
-			categoryLoader(
-				result => ctrl(false, path),
-				error => ctrl(false),
-				opts => ctrl(true),
-				category, page, pageSize);
-		},
-		href: path
-	})
+	linkTo = path => e => {
+		e.stopPropagation();
+		e.preventDefault();
+		route(path);
+	}
 
 	goCategory = (link, page = 1, pageSize = 40) =>
-		this.linkTo('/category/' + link + '/' + page + ',' + pageSize, link, page, pageSize);
+		this.linkTo('/category/' + link + '/' + page + ',' + pageSize);
 
-	render(props, { list, linksDisabled }) {
+	style = [style.categories, 'mdc-toolbar-fixed-adjust'].join(' ');
+
+	render(props, { list }) {
 		if (list === undefined)
 			return undefined;
 
 		const items = list.rows.map(({ link, name }) => (
 			<List.Item>
 				<Button unelevated
-					disabled={linksDisabled}
-					key={link} {...this.goCategory(link)}
+					key={link}
+					onClick={this.goCategory(link)}
 				>
 					{name}
 				</Button>
 			</List.Item>));
 
 		return (
-			<List>
-				{items}
-			</List>
+			<div class={this.style}>
+				<List>
+					{items}
+				</List>
+			</div>
 		);
 	}
 }
