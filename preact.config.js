@@ -41,7 +41,7 @@ export default function (config, env, helpers) {
 		}]
 	};
 
-	//let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
+	let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
 
 	//let plugin = cfg.plugins.find(v => v.constructor === SWPrecacheWebpackPlugin);
 
