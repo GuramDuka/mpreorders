@@ -28,7 +28,7 @@ export default function (config, env, helpers) {
 		maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
 		runtimeCaching: [{
 			urlPattern: /^https:\/\/shintorg48.ru\/mpreorders\/api\/backend/,
-			handler: 'fastest',
+			handler: 'cacheFirst',
 			options: {
 				debug: true,
 				networkTimeoutSeconds: 30,
@@ -41,7 +41,7 @@ export default function (config, env, helpers) {
 		}]
 	};
 
-	let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
+	//let cfg = preactCliSwPrecachePlugin(config, precacheConfig);
 
 	//let plugin = cfg.plugins.find(v => v.constructor === SWPrecacheWebpackPlugin);
 
