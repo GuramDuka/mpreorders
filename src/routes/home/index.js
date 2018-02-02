@@ -4,6 +4,9 @@ import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import style from './style';
 import { headerTitleStorePath } from '../../const';
+import disp from '../../lib/store';
+import { LogIn, LogOut, UserPlus } from 'preact-feather';
+import FaBeer from 'react-icons/fa/beer';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -14,6 +17,10 @@ export default class Home extends Component {
 		return store.setIn(headerTitleStorePath, '');
 	}
 
+	mount() {
+		return disp(store => store.setIn(headerTitleStorePath, ''));
+	}
+	
 	style = [style.home, 'mdc-toolbar-fixed-adjust'].join(' ')
 
 	render() {
@@ -32,6 +39,10 @@ export default class Home extends Component {
 						<Card.Action>OKAY</Card.Action>
 					</Card.Actions>
 				</Card>
+				<FaBeer size={24} />
+				<LogIn style={{ verticalAlign: 'middle' }} color="black" />
+				<LogOut style={{ verticalAlign: 'middle' }} color="black" />
+				<UserPlus style={{ verticalAlign: 'middle' }} color="black" />
 			</div>
 		);
 	}

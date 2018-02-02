@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { bfetch } from '../../backend/backend';
 import disp from '../../lib/store';
-import { nullLink, headerTitleStorePath } from '../../const';
+import { nullLink } from '../../const';
 import { successor, failer, starter } from '../load';
 //------------------------------------------------------------------------------
 export const storePrefix = 'category';

@@ -30,7 +30,7 @@ export default function (config, env, helpers) {
 			urlPattern: /^https:\/\/shintorg48.ru\/mpreorders\/api\/backend/,
 			handler: 'cacheFirst',
 			options: {
-				debug: true,
+				debug: false,
 				networkTimeoutSeconds: 30,
 				cache: {
 					maxEntries: 1000000,

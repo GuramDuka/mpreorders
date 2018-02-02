@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
 //import wog from 'window-or-global';
-//import uuidv1 from 'uuid/v1';
 import { route } from 'preact-router';
 import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';

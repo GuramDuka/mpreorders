@@ -25,13 +25,13 @@ export default class Header extends Component {
 		]
 	])
 
-	closeDrawer = e => this.drawer.MDComponent.open = false;
-	openDrawer = e => this.drawer.MDComponent.open = true;
-	openSettings = e => this.settings.MDComponent.show();
-	openSearch = e => this.search.MDComponent.show();
-	drawerRef = e => this.drawer = e;
-	settingsRef = e => this.settings = e;
-	searchRef = e => this.search = e;
+	closeDrawer = e => this.drawer.MDComponent.open = false
+	openDrawer = e => this.drawer.MDComponent.open = true
+	openSettings = e => this.settings.MDComponent.show()
+	openSearch = e => this.search.MDComponent.show()
+	drawerRef = e => this.drawer = e
+	settingsRef = e => this.settings = e
+	searchRef = e => this.search = e
 
 	linkTo = path => e => {
 		e.stopPropagation();
