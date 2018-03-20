@@ -75,28 +75,6 @@ export function shallowEqual(a, b, equal = equ) {
 	if (isA !== isB)
 		return false;
 
-	isA = a.constructor === Object || a instanceof Object;
-	isB = b.constructor === Object || b instanceof Object;
-
-	if (isA && isB) {
-		const keys = Object.keys(a);
-
-		if (keys.length !== Object.keys(b).length)
-			return false;
-
-		for (i = keys.length - 1; i >= 0; i--) {
-			const key = keys[i];
-
-			if (!equal(a[key], b[key], equal))
-				return false;
-		}
-
-		return true;
-	}
-
-	if (isA !== isB)
-		return false;
-
 	isA = a.constructor === Set || a instanceof Set;
 	isB = b.constructor === Set || b instanceof Set;
 
@@ -149,6 +127,28 @@ export function shallowEqual(a, b, equal = equ) {
 	if (isA !== isB)
 		return false;
 
+	isA = a.constructor === Object || a instanceof Object;
+	isB = b.constructor === Object || b instanceof Object;
+
+	if (isA && isB) {
+		const keys = Object.keys(a);
+
+		if (keys.length !== Object.keys(b).length)
+			return false;
+
+		for (i = keys.length - 1; i >= 0; i--) {
+			const key = keys[i];
+
+			if (!equal(a[key], b[key], equal))
+				return false;
+		}
+
+		return true;
+	}
+
+	if (isA !== isB)
+		return false;
+
 	return false;
 }
 //------------------------------------------------------------------------------
@@ -167,13 +167,6 @@ export function copy(src) {
 		for (const v of src)
 			dst.push(copy(v));
 	}
-	else if (src.constructor === Object || src instanceof Object) {
-		dst = {};
-
-		// eslint-disable-next-line
-		for (const n in src)
-			dst[n] = copy(src[n]);
-	}
 	else if (src.constructor === Map || src instanceof Map) {
 		dst = new Map();
 		src.forEach((v, k) => dst.set(k, v));
@@ -190,6 +183,13 @@ export function copy(src) {
 		dst = src.valueOf();
 	else if (src.constructor === Date || src instanceof Date)
 		dst = new Date(src.valueOf());
+	else if (src.constructor === Object || src instanceof Object) {
+		dst = {};
+
+		// eslint-disable-next-line
+		for (const n in src)
+			dst[n] = copy(src[n]);
+	}
 	else
 		dst = new src.constructor(src.valueOf());
 

@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
+//import { shallowEqual } from '../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -10,6 +11,22 @@ export default class Component extends PreactComponent {
 	// constructor(props, context) {
 	// 	super(props, context);
 	// }
+
+	//if (force || !shallowEqual(this.state, state))
+
+	setState(state, callback) {
+		const { willSetState, didSetState } = this;
+		let cb = callback;
+		
+		if (didSetState)
+			cb = () => {
+				didSetState.call(this, this.state, state);
+				callback && callback();
+			};
+
+		willSetState && willSetState.call(this, state);
+		return super.setState.call(this, state, cb);
+	}
 
 	// 	before the component gets mounted to the DOM
 	componentWillMount() {

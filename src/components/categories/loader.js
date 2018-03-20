@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import { bfetch } from '../../backend/backend';
+import { bfetch } from '../../backend';
 import disp from '../../lib/store';
 import { successor, failer, starter } from '../load';
 //------------------------------------------------------------------------------

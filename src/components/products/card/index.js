@@ -4,7 +4,7 @@ import 'preact-material-components/Card/style.css';
 import Component from '../../component';
 import style from './style';
 import { nullLink } from '../../../const';
-import { icoUrl } from '../../../backend/backend';
+import { icoUrl } from '../../../backend';
 import nopic from '../../../assets/nopic.svg';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////

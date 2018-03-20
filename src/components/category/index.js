@@ -38,11 +38,7 @@ export default class Category extends Component {
 
 		this.storePaths = new Map([
 			[
-				state => {
-					this.setState(state);
-					const { list } = state;
-					list && disp(state => state.setIn(headerTitleStorePath, list.category.name));
-				},
+				state => this.setState(state),
 				[
 					{
 						path: storePath + '.list.' + page,
@@ -64,6 +60,11 @@ export default class Category extends Component {
 		this.goNext = this.goPage(page + 1);
 	}
 
+	storeDisp(store, props, state) {
+		const { list } = state;
+		list && disp(state => state.cmpSetIn(headerTitleStorePath, list.category.name));
+	}
+	
 	storeTrailer(props, { list }) {
 		list === undefined && loader.call(this);
 	}

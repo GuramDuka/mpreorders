@@ -23,7 +23,7 @@ export default class Categories extends Component {
 	])
 
 	storeDisp(store) {
-		return store.setIn(headerTitleStorePath, 'Категории');
+		return store.cmpSetIn(headerTitleStorePath, 'Категории');
 	}
 
 	storeTrailer(props, { list }) {

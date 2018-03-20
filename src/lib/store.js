@@ -5,6 +5,8 @@ import Deque from 'double-ended-queue';
 //import * as PubSub from 'pubsub-js';
 import setZeroTimeout from '../lib/zerotimeout';
 import { defaultState } from '../config';
+import { stringify, destringify } from '../lib/json';
+import { shallowEqual } from '../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -15,32 +17,6 @@ class State {
 	topicsSubscribers = new Map()
 	subscribers = new Map()
 	pushedSubscribers = new Map()
-
-	static stringify(obj) {
-		const placeholder = '____PLACEHOLDER____';
-		const fns = [];
-		const json = JSON.stringify(obj, (k, v) => {
-			if (v !== undefined && v !== null) {
-				if ((!!v.nostore) === true)
-					return undefined;
-
-				if (v.constructor === Function || v instanceof Function) {
-					fns.push(v);
-					return placeholder;
-				}
-
-				if (v.constructor === Set || v instanceof Set)
-					throw new Error('invalid stringify value');
-				//return [...v];
-
-				if (v.constructor === Map || v instanceof Map)
-					throw new Error('invalid stringify value');
-				//return [...v];
-			}
-			return v;
-		});
-		return '(' + json.replace(new RegExp(`"${placeholder}"`, 'g'), e => fns.shift()) + ')';
-	}
 
 	constructor() {
 		this.restore();
@@ -236,8 +212,8 @@ class State {
 		let state = wog.localStorage && wog.localStorage.getItem('state');
 
 		if (state !== undefined && state !== null) {
-			// eslint-disable-next-line
-			state = eval(state);
+			state = destringify(state);
+
 			if (defaultState.metadataVersion !== state.metadataVersion)
 				state = defaultState;
 		}
@@ -250,7 +226,7 @@ class State {
 
 	store() {
 		const { root } = this;
-		wog.localStorage.setItem('state', State.stringify(root));
+		wog.localStorage.setItem('state', stringify(root));
 		root.version++;
 	}
 
@@ -320,9 +296,13 @@ class State {
 		return vPath;
 	}
 
-	getNode(path, createNode, mutateLevels, manipulator, arg0) {
+	getNode(path, createNode, mutateLevels, manipulator, arg0, equ) {
 		const vPath = this.getPath(path, createNode);
 		const { key, node } = vPath[vPath.length - 1];
+
+		if (equ && equ(node[key], arg0))
+			return arg0;
+
 		const r = manipulator.call(this, node, key, arg0);
 
 		if (mutateLevels > vPath.length)
@@ -337,10 +317,14 @@ class State {
 		return r;
 	}
 
-
 	checkDispatched() {
 		if (this.isNotDispatched())
 			throw new Error('Must be dispatched for change state');
+		return this;
+	}
+
+	cmpSetIn(path, value, mutateLevels = 1) {
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mSetIn, value, shallowEqual);
 		return this;
 	}
 

@@ -1,22 +1,24 @@
 //------------------------------------------------------------------------------
-import wog from 'window-or-global';
-import { route } from 'preact-router';
-import Component from '../../components/component';
-import { bfetch } from '../../backend';
+//import wog from 'window-or-global';
+import Component from '../../../components/component';
+import { bfetch } from '../../../backend';
 import { SHA256 } from 'jshashes';
+import FormField from 'preact-material-components/FormField';
+import 'preact-material-components/FormField/style.css';
 import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
 import Radio from 'preact-material-components/Radio';
 import 'preact-material-components/Radio/style.css';
+import Checkbox from 'preact-material-components/Checkbox';
+import 'preact-material-components/Checkbox/style.css';
 import Snackbar from 'preact-material-components/Snackbar';
 import 'preact-material-components/Snackbar/style.css';
 import style from './style';
-import { headerTitleStorePath } from '../../const';
-import { successor, failer, starter } from '../load';
-import disp from '../../lib/store';
-import { strftime } from '../../lib/strftime';
+import { headerTitleStorePath, termsOfUseAndPrivacyPolicy } from '../../../const';
+import { successor, failer, starter } from '../../load';
+import disp from '../../../lib/store';
 //------------------------------------------------------------------------------
 const reValidEmail = new RegExp((() => {
 	const sQtext = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
@@ -41,7 +43,7 @@ function validateEmail(email) {
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-export default class Profile extends Component {
+export default class Registration extends Component {
 	storePaths = new Map([
 		[
 			state => this.setState(state),
@@ -60,8 +62,15 @@ export default class Profile extends Component {
 
 	isLoading = (state, callback) => this.setState({ isLoading: state }, callback)
 
+	// willSetState(state) {
+	// 	const { auth, isReg } = { ...this.state, ...state };
+
+	// 	if (!isReg && (!auth || (!auth.authorized && auth.user && auth.pass)))
+	// 		state.valid = true;
+	// }
+
 	didSetState() {
-		disp(store => store.cmpSetIn(headerTitleStorePath, 'Профиль'));
+		disp(store => store.cmpSetIn(headerTitleStorePath, 'Регистрация'));
 	}
 
 	fieldInputValidator = field => {
@@ -89,7 +98,14 @@ export default class Profile extends Component {
 	phoneFieldInput = this.fieldInputValidator('phone')
 
 	validateAllFields(state, callback) {
+		for (const field of this.requiredFields)
+			if (this.field !== field) {
+				const n = field.substr(0, 1).toUpperCase() + field.substr(1);
+				state = { ...state, ...this[`validate${n}Field`](true) };
+			}
+
 		const {
+			termsOfUseAndPrivacyPolicyAccepted,
 			userError, emailError, passError, pass2Error,
 			birthdayError, genderError,
 			familyError, fnameError, snameError,
@@ -100,6 +116,7 @@ export default class Profile extends Component {
 			&& !emailError
 			&& !passError
 			&& !pass2Error
+			&& !!termsOfUseAndPrivacyPolicyAccepted
 			&& !birthdayError
 			&& !genderError
 			&& !familyError
@@ -116,7 +133,7 @@ export default class Profile extends Component {
 	userPattern = /[\u0021-\u007e,\u00a0-\u00ff,\u0400-\u04FF,\u0500-\u052F]/g
 
 	validateUserField(ret) {
-		//const { state } = this;
+		const { state } = this;
 		const r = { userError: undefined };
 
 		if (!this.user)
@@ -127,18 +144,18 @@ export default class Profile extends Component {
 		if (ret)
 			return r;
 
-		// (state.isReg || (state.auth && state.auth.authorized)) && bfetch(
-		// 	{ noauth: true, r: { m: 'auth', f: 'check', r: { user: this.user } } },
-		// 	result => {
-		// 		const userUC = this.user.toUpperCase();
-		// 		const rserUC = result.user.toUpperCase();
+		state.auth && state.auth.authorized && bfetch(
+			{ noauth: true, r: { m: 'auth', f: 'check', r: { user: this.user } } },
+			result => {
+				const userUC = this.user.toUpperCase();
+				const rserUC = result.user.toUpperCase();
 
-		// 		if (userUC === rserUC && result.exists)
-		// 			this.validateAllFields({
-		// 				userError: 'Пользователь с таким именем уже существует'
-		// 			});
-		// 	}
-		// );
+				if (userUC === rserUC && result.exists)
+					this.validateAllFields({
+						userError: 'Пользователь с таким именем уже существует'
+					});
+			}
+		);
 
 		this.validateAllFields(r);
 	}
@@ -272,13 +289,16 @@ export default class Profile extends Component {
 		this.validateAllFields(r);
 	}
 
-	push = e => {
+	termsOfUseAndPrivacyPolicyAccept = e => this.validateAllFields({
+		termsOfUseAndPrivacyPolicyAccepted: e.target.checked
+	})
+
+	register = e => {
 		const { state } = this;
 		const { auth } = state;
-		const { authorized } = auth;
-		const user = authorized && this.user === undefined ? auth.user : this.user === undefined ? auth.user : this.user;
-		const email = authorized && this.email === undefined ? auth.email : this.email === undefined ? auth.email : this.email;
-		const pass = authorized && this.pass === undefined ? auth.pass : this.pass === undefined ? auth.pass : this.pass;
+		const user = this.user === undefined ? auth.user : this.user === undefined ? auth.user : this.user;
+		const email = this.email === undefined ? auth.email : this.email === undefined ? auth.email : this.email;
+		const pass = this.pass === undefined ? auth.pass : this.pass === undefined ? auth.pass : this.pass;
 		const r = {
 			// eslint-disable-next-line
 			user: user,
@@ -308,45 +328,35 @@ export default class Profile extends Component {
 		bfetch(
 			{
 				method: 'PUT',
+				noauth: true,
 				// eslint-disable-next-line
-				r: { m: 'auth', f: 'profile', r: r }
+				r: { m: 'auth', f: 'registration', r: r }
 			},
 			successor(result => {
-				delete result.nostore;
+				const state = { isLoading: false };
 
-				if (result.profile && result.profile.birthday)
-					result.profile.birthday = new Date(result.profile.birthday);
+				if (result.exists)
+					this.showError('Пользователь с таким именем уже существует');
+				else if (result.registered) {
+					delete result.nostore;
 
-				this.clearTypedFields();
-				// eslint-disable-next-line
-				disp(store => store.mergeIn('auth', { ...r, ...result, pass: pass }));
-				this.setState({ isLoading: false, valid: false });
+					if (result.profile && result.profile.birthday)
+						result.profile.birthday = new Date(result.profile.birthday);
+
+					this.clearTypedFields();
+					state.valid = false;
+					// eslint-disable-next-line
+					disp(store => store.mergeIn('auth', { ...r, ...result, pass: pass }));
+				}
+				else
+					this.showError('Ошибка регистрации');
+
+				this.setState(state);
 			}),
-			failer(error => this.isLoading(false, e => this.showError('Ошибка авторизации'))),
+			failer(error => this.isLoading(false, e => this.showError('Ошибка регистрации'))),
 			starter(opts => this.isLoading(true))
 		);
 	}
-
-	logout = e => bfetch(
-		{
-			method: 'PUT',
-			//noauth: true,
-			r: { m: 'auth', f: 'logout', r: {} }
-		},
-		successor(result => {
-			this.clearTypedFields();
-			disp(store => store.deleteIn('auth.authorized', 2));
-			this.isLoading(false);
-		}),
-		failer(error => this.isLoading(
-			false,
-			e => this.showError('Ошибка при отмене авторизации')
-		)),
-		starter(opts => this.isLoading(true))
-	)
-
-	registration = e => this.setState({ isReg: true })
-	cancelRegistration = e => this.setState({ isReg: false }, e => wog.scrollTo(0, 0))
 
 	style = [style.profile, 'mdc-toolbar-fixed-adjust'].join(' ');
 
@@ -356,41 +366,20 @@ export default class Profile extends Component {
 		e && this.snackbar.MDComponent.show({ message: e });
 	}
 
-	linkTo = path => e => {
-		e.stopPropagation();
-		e.preventDefault();
-		route(path);
-	}
-
-	goДщпшт = this.linkTo('/profile/login')
-
 	render(props, state) {
 		const { auth } = state;
 
 		if (auth === undefined)
-			return (
-				<Button unelevated
-					disabled={isLoading}
-					className={style.button}
-					onClick={this.goLogin}
-				>
-					<Button.Icon>arrow_forward</Button.Icon>Переход к авторизации
-				</Button>);
+			return undefined;
 
 		const { authorized } = auth;
-		const profile = auth.profile ? auth.profile : {};
-		const user = this.user !== undefined ? this.user : auth.user;
-		const pass = this.pass !== undefined ? this.pass : auth.pass;
-		const email = this.email !== undefined ? this.email : auth.email;
-		const birthday = this.birthday !== undefined ? this.birthday : profile.birthday;
-		const gender = this.gender !== undefined ? this.gender : profile.gender;
-		const family = this.family !== undefined ? this.family : profile.family;
-		const fname = this.fname !== undefined ? this.fname : profile.fname;
-		const sname = this.sname !== undefined ? this.sname : profile.sname;
-		const phone = this.phone !== undefined ? this.phone : profile.phone;
 
+		if (authorized === undefined)
+			return undefined;
+		
 		const {
 			isLoading,
+			termsOfUseAndPrivacyPolicyAccepted,
 			valid,
 			userError,
 			emailError,
@@ -404,13 +393,12 @@ export default class Profile extends Component {
 
 		const userField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={userError ? userError : authorized ? 'Имя пользователя или E-mail, например: VikDik или vik.dik@gmail.com' : ' '}
+				helperText={userError ? userError : 'Имя пользователя или E-mail, например: VikDik или vik.dik@gmail.com'}
 				disabled={isLoading}
 				fullwidth required invalid={!!userError}
 				placeHolder="Имя пользователя или E-mail"
 				trailingIcon="perm_identity"
 				type="text"
-				value={user}
 				onInput={this.userFieldInput}
 			/>);
 
@@ -421,20 +409,18 @@ export default class Profile extends Component {
 				fullwidth required invalid={!!emailError}
 				placeHolder="Электронная почта (E-mail)"
 				type="email"
-				value={email}
 				trailingIcon="email"
 				onInput={this.emailFieldInput}
 			/>);
 
 		const passField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={passError ? passError : authorized ? 'Пароль, например: Uc_gliec6' : ' '}
+				helperText={passError ? passError : 'Пароль, например: Uc_gliec6'}
 				disabled={isLoading}
 				fullwidth required invalid={!!passError} minlength={8}
 				placeHolder="Пароль"
 				trailingIcon="security"
 				type="password"
-				value={pass}
 				onInput={this.passFieldInput}
 			/>);
 
@@ -456,12 +442,11 @@ export default class Profile extends Component {
 				fullwidth
 				placeHolder="День рождения"
 				type="date"
-				value={this.birthday ? strftime('%Y-%m-%d', birthday) : undefined}
 				trailingIcon="cake"
 				onInput={this.birthdayFieldInput}
 			/>);
 
-		const genderField = (
+		const genderField =(
 			<div>
 				<div class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--box mdc-text-field--with-trailing-icon mdc-text-field--upgraded mdc-ripple-upgraded">
 					<label>
@@ -470,7 +455,6 @@ export default class Profile extends Component {
 							disabled={isLoading}
 							fullwidth
 							value="male"
-							checked={gender === 'male'}
 							name="gender"
 							onChange={this.genderFieldInput}
 						/>
@@ -482,7 +466,6 @@ export default class Profile extends Component {
 							disabled={isLoading}
 							fullwidth
 							value="female"
-							checked={gender === 'female'}
 							name="gender"
 							onChange={this.genderFieldInput}
 						/>
@@ -494,7 +477,6 @@ export default class Profile extends Component {
 							disabled={isLoading}
 							fullwidth
 							value="other"
-							checked={gender === 'other'}
 							name="gender"
 							onChange={this.genderFieldInput}
 						/>
@@ -513,7 +495,6 @@ export default class Profile extends Component {
 				fullwidth
 				placeHolder="Контактный телефон"
 				type="tel"
-				value={phone}
 				trailingIcon="phone"
 				onInput={this.phoneFieldInput} onKeyUp={this.maskPhoneField}
 			/>);
@@ -525,7 +506,6 @@ export default class Profile extends Component {
 				fullwidth invalid={!!familyError}
 				trailingIcon="account_circle"
 				type="text"
-				value={family}
 				onInput={this.familyFieldInput}
 			/>);
 
@@ -536,7 +516,6 @@ export default class Profile extends Component {
 				fullwidth invalid={!!fnameError}
 				trailingIcon="account_circle"
 				type="text"
-				value={fname}
 				onInput={this.fnameFieldInput}
 			/>);
 
@@ -547,26 +526,33 @@ export default class Profile extends Component {
 				fullwidth invalid={!!snameError}
 				trailingIcon="account_circle"
 				type="text"
-				value={sname}
 				onInput={this.snameFieldInput}
 			/>);
 
-		const logoutButton = (
-			<Button unelevated
-				disabled={isLoading}
-				className={style.button}
-				onClick={this.logout}
-			>
-				<Button.Icon>arrow_back</Button.Icon>Выйти
-			</Button>);
+		const termsOfUseAndPrivacyPolicyField = (
+			<div>
+				{termsOfUseAndPrivacyPolicyAccepted ? undefined :
+					<h4>Условия использования и политика конфиденциальности</h4>}
+				{termsOfUseAndPrivacyPolicyAccepted ? undefined :
+					<p style={{ textAlign: 'justify' }}>
+						{termsOfUseAndPrivacyPolicy}
+					</p>}
+				<FormField>
+					<Checkbox
+						disabled={isLoading}
+						onChange={this.termsOfUseAndPrivacyPolicyAccept}
+					/>
+					Я согласен с условиями использования и политикой конфиденциальности
+				</FormField>
+			</div>);
 
-		const pushButton = (
+		const regButton = authorized ? undefined : (
 			<Button unelevated
 				disabled={!valid || isLoading}
 				className={style.button}
-				onClick={this.push}
+				onClick={this.register}
 			>
-				<Button.Icon>backup</Button.Icon>Сохранить
+				<Button.Icon>person_add</Button.Icon>Регистрация
 			</Button>);
 
 		return (
@@ -584,10 +570,10 @@ export default class Profile extends Component {
 					{familyField}
 					{fnameField}
 					{snameField}
+					{termsOfUseAndPrivacyPolicyField}
 				</form>
 
-				{logoutButton}
-				{pushButton}
+				{regButton}
 
 			</div>);
 	}

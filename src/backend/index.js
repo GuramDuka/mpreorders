@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //import wog from 'window-or-global';
-import 'whatwg-fetch';
-//import 'abortcontroller-polyfill';
+//import fetch from 'whatwg-fetch';
+//import AbortController from 'abortcontroller-polyfill';
 import { copy, serializeURIParams } from '../lib/util';
 import disp, { getStore } from '../lib/store';
 //------------------------------------------------------------------------------
@@ -135,27 +135,29 @@ export function bfetch(opts_, success, fail, start) {
 		const contentType = response.headers.get('content-type');
 
 		// check if access denied
-		let xaLink = response.headers.get('x-access-data'), xaEmployee;
+		if (!opts.noauth) {
+			let xaLink = response.headers.get('x-access-data'), xaEmployee;
 
-		if (xaLink) {
-			[xaLink, xaEmployee] = xaLink.split(',');
-			xaLink = xaLink.length !== 0 ? xaLink.trim() : undefined;
+			if (xaLink) {
+				[xaLink, xaEmployee] = xaLink.split(',');
+				xaLink = xaLink.length !== 0 ? xaLink.trim() : undefined;
 
-			if (xaEmployee !== undefined)
-				xaEmployee = xaEmployee.trim();
+				if (xaEmployee !== undefined)
+					xaEmployee = xaEmployee.trim();
+			}
+
+			if (xaLink === null)
+				xaLink = undefined;
+
+			disp(store => {
+				const auth = store.getIn('auth');
+
+				if (auth.link !== xaLink || auth.employee !== xaEmployee)
+					store = store.deleteIn('auth.authorized', 2);
+
+				return store;
+			});
 		}
-
-		if (xaLink === null)
-			xaLink = undefined;
-
-		disp(store => {
-			const auth = store.getIn('auth');
-
-			if (auth.link !== xaLink || auth.employee !== xaEmployee)
-				store = store.deleteIn('auth.authorized', 2);
-
-			return store;
-		});
 
 		data.headers = response.headers;
 
