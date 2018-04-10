@@ -16,12 +16,13 @@ import 'preact-material-components/TextField/style.css';
 import Spinner from './spinner';
 import Title from './title';
 //import style from './style';
+import 'preact-material-components/Theme/style.css';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
 	storePaths = new Map([
 		[
 			state => this.setState(state),
-			'auth'
+			{ path: 'auth', alias: 'auth' }
 		]
 	])
 
@@ -42,6 +43,7 @@ export default class Header extends Component {
 
 	goHome = this.linkTo('/')
 	goProfile = this.linkTo('/profile')
+	goLogin = this.linkTo('/login')
 	goCategories = this.linkTo('/categories')
 	goProducts = this.linkTo('/products')
 	goOrders = this.linkTo('/orders')
@@ -51,15 +53,21 @@ export default class Header extends Component {
 		e.stopPropagation();
 		e.preventDefault();
 
-		this.setState({ darkThemeEnabled: !this.state.darkThemeEnabled });
+		this.setState(
+			{ darkThemeEnabled: !this.state.darkThemeEnabled },
+			() => {
+				const { classList } = document.body;
 
-		if (this.state.darkThemeEnabled)
-			document.body.classList.add('mdc-theme--dark');
-		else
-			document.body.classList.remove('mdc-theme--dark');
+				if (this.state.darkThemeEnabled)
+					classList.add('mdc-theme--dark');
+				else
+					classList.remove('mdc-theme--dark');
+			}
+		);
 	}
 
-	render(props, { auth }) {
+	render(props, { darkThemeEnabled, auth }) {
+		const authorized = auth && auth.authorized;
 		return (
 			<div>
 				<Toolbar className="toolbar" fixed>
@@ -72,40 +80,45 @@ export default class Header extends Component {
 						</Toolbar.Section>
 						<Toolbar.Section align-end>
 							<Spinner />
-							<Toolbar.Icon onClick={this.openSearch}>search</Toolbar.Icon>
-							<Toolbar.Icon onClick={this.openSettings}>settings</Toolbar.Icon>
+							<Toolbar.Icon onClick={this.openSearch}>
+								search
+							</Toolbar.Icon>
+							<Toolbar.Icon onClick={this.openSettings}>
+								settings
+							</Toolbar.Icon>
+							{/* Zero Width Space https://unicode-table.com/ru/200B/
+							  * Need for right positioning when title.length === 0
+							  */}
+							<Toolbar.Title>&#x200B;</Toolbar.Title>
 						</Toolbar.Section>
 					</Toolbar.Row>
 				</Toolbar>
 				<Drawer.TemporaryDrawer ref={this.drawerRef}>
 					<Drawer.TemporaryDrawerContent>
-						<List>
-							<List.LinkItem onClick={this.goHome}>
-								<List.ItemIcon>home</List.ItemIcon>
-								Начало
-							</List.LinkItem>
-							<List.LinkItem onClick={this.goCategories}>
-								<List.ItemIcon>view_stream</List.ItemIcon>
-								Категории
-							</List.LinkItem>
-							<List.LinkItem onClick={this.goProducts}>
-								<List.ItemIcon>view_list</List.ItemIcon>
-								Каталог
-							</List.LinkItem>
-							<List.LinkItem onClick={this.goOrders}>
-								<List.ItemIcon>reorder</List.ItemIcon>
-								Заказы
-							</List.LinkItem>
-							<List.LinkItem onClick={this.goCart}>
-								<List.ItemIcon>shopping_cart</List.ItemIcon>
-								Корзина
-							</List.LinkItem>
-							<List.LinkItem onClick={this.goProfile}>
-								<List.ItemIcon>account_circle</List.ItemIcon>
-								Профиль
-								{auth && auth.authorized ? <List.ItemIcon>verified_user</List.ItemIcon> : undefined}
-							</List.LinkItem>
-						</List>
+						<Drawer.DrawerItem onClick={this.goHome}>
+							<List.ItemGraphic>home</List.ItemGraphic>
+							Начало
+						</Drawer.DrawerItem>
+						<Drawer.DrawerItem onClick={this.goCategories}>
+							<List.ItemGraphic>view_stream</List.ItemGraphic>
+							Категории
+						</Drawer.DrawerItem>
+						<Drawer.DrawerItem onClick={this.goProducts}>
+							<List.ItemGraphic>view_list</List.ItemGraphic>
+							Каталог
+						</Drawer.DrawerItem>
+						<Drawer.DrawerItem onClick={this.goOrders}>
+							<List.ItemGraphic>reorder</List.ItemGraphic>
+							Заказы
+						</Drawer.DrawerItem>
+						<Drawer.DrawerItem onClick={this.goCart}>
+							<List.ItemGraphic>shopping_cart</List.ItemGraphic>
+							Корзина
+						</Drawer.DrawerItem>
+						<Drawer.DrawerItem onClick={authorized ? this.goProfile : this.goLogin}>
+							<List.ItemGraphic>{authorized ? 'verified_user' : 'account_circle'}</List.ItemGraphic>
+							{authorized ? 'Профиль' : 'Вход/Регистрация'}
+						</Drawer.DrawerItem>
 					</Drawer.TemporaryDrawerContent>
 				</Drawer.TemporaryDrawer>
 				<Dialog ref={this.settingsRef}>
@@ -114,7 +127,7 @@ export default class Header extends Component {
 						<div>
 							<span>Включить темную тему</span>
 							&nbsp;&nbsp;&nbsp;&nbsp;
-							<Switch onClick={this.toggleDarkTheme} />
+							<Switch onClick={this.toggleDarkTheme} checked={darkThemeEnabled} />
 						</div>
 					</Dialog.Body>
 					<Dialog.Footer>

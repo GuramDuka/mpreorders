@@ -1,24 +1,34 @@
 {
-  "ver ion": "0.2.0",
-  "configurations": [
-    {
-      "type": "chrome",
-      "request": "launch",
-      "name": "Chrome",
-      "url": "http://127.0.0.1:8080",
-      "webRoot": "${workspaceRoot}/src",
-      "userDataDir": "${workspaceRoot}/.vscode/chrome",
-      "sourceMapPathOverrides": {
-        "webpack:///src/*": "${webRoot}/*"
-      }
-    },
-    {
-    "type": "firefox",
-    "request": "launch",
-    "name": "Firefox",
-    //"reAttach": true,
-    "firefoxExecutable": "C:\\Program Files\\Firefox Developer Edition\\firefox.exe",
-    "url": "http://127.0.0.1:8080",
-    "webRoot": "${workspaceRoot}/src"
-  }]
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Chrome",
+			"url": "http://127.0.0.1:8080",
+			"sourceMaps": true,
+			"webRoot": "${workspaceRoot}/src",
+			"trace": "verbose",
+			"userDataDir": "${workspaceRoot}/.vscode/chrome",
+			"sourceMapPathOverrides": {
+				"webpack:///src/*": "${webRoot}/*"
+			}
+		},
+		{
+			"type": "chrome",
+			"request": "attach",
+			"name": "Attach to Chrome",
+			"port": 9222,
+			"webRoot": "${workspaceRoot}"
+		},
+		{
+			"type": "firefox",
+			"request": "launch",
+			"name": "Firefox",
+			//"reAttach": true,
+			"firefoxExecutable": "C:\\Program Files\\Firefox Developer Edition\\firefox.exe",
+			"url": "http://127.0.0.1:8080",
+			"webRoot": "${workspaceRoot}/src"
+		}
+	]
 }

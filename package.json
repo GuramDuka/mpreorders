@@ -23,7 +23,7 @@
     "build/*"
   ],
   "devDependencies": {
-    "eslint": "^4.19.0",
+    "eslint": "^4.19.1",
     "eslint-config-synacor": "^1.1.0",
     "if-env": "^1.0.4",
     "preact-cli": "^2.2.1",
@@ -40,7 +40,7 @@
     "preact-compat": "^3.18.0",
     "preact-custom-scrollbars": "^4.0.4",
     "preact-feather": "^1.0.3",
-    "preact-material-components": "^1.3.7",
+    "preact-material-components": "^1.4.1",
     "preact-router": "^2.5.5",
     "preact-virtual-list": "^0.3.1",
     "pubsub-js": "^1.6.0",
@@ -49,7 +49,7 @@
     "universal-localstorage": "",
     "uuid": "^3.2.1",
     "webpack-dev-server": "^2.11.2",
-    "whatwg-fetch": "^2.0.3",
+    "whatwg-fetch": "^2.0.4",
     "window-or-global": "^1.0.1"
   }
 }

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import wog from 'window-or-global';
+//import wog from 'window-or-global';
 import { route } from 'preact-router';
 import Component from '../../components/component';
 import { bfetch } from '../../backend';
@@ -60,8 +60,11 @@ export default class Profile extends Component {
 
 	isLoading = (state, callback) => this.setState({ isLoading: state }, callback)
 
-	didSetState() {
-		disp(store => store.cmpSetIn(headerTitleStorePath, 'Профиль'));
+	didSetState({ auth }) {
+		if (!auth || !auth.authorized)
+			route('/login', true);
+		else
+			disp(store => store.cmpSetIn(headerTitleStorePath, 'Профиль'));
 	}
 
 	fieldInputValidator = field => {
@@ -158,25 +161,17 @@ export default class Profile extends Component {
 	//mediumPassPattern = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/g
 
 	validatePassField(ret) {
-		const { state, pass } = this;
-		const { isReg, auth } = state;
-		let r = {};
-
-		if (isReg || auth.authorized) {
-			const valid = this.strongPassPattern.test(pass);
-			const r = {
-				...this.validatePass2Field(true),
-				passError: valid ? undefined : 'Не заполнен пароль'
-			};
-
-			if (ret)
-				return r;
-
-			this.validateAllFields(r);
-		}
+		const { pass } = this;
+		const valid = this.strongPassPattern.test(pass);
+		const r = {
+			passError: valid ? undefined : 'Не заполнен пароль'
+		};
 
 		if (ret)
 			return r;
+
+		this.validatePass2Field();
+		this.validateAllFields(r);
 	}
 
 	validatePass2Field(ret) {
@@ -275,10 +270,9 @@ export default class Profile extends Component {
 	push = e => {
 		const { state } = this;
 		const { auth } = state;
-		const { authorized } = auth;
-		const user = authorized && this.user === undefined ? auth.user : this.user === undefined ? auth.user : this.user;
-		const email = authorized && this.email === undefined ? auth.email : this.email === undefined ? auth.email : this.email;
-		const pass = authorized && this.pass === undefined ? auth.pass : this.pass === undefined ? auth.pass : this.pass;
+		const user = this.user === undefined ? auth.user : this.user;
+		const email = this.email === undefined ? auth.email : this.email;
+		const pass = this.pass === undefined ? auth.pass : this.pass;
 		const r = {
 			// eslint-disable-next-line
 			user: user,
@@ -345,9 +339,6 @@ export default class Profile extends Component {
 		starter(opts => this.isLoading(true))
 	)
 
-	registration = e => this.setState({ isReg: true })
-	cancelRegistration = e => this.setState({ isReg: false }, e => wog.scrollTo(0, 0))
-
 	style = [style.profile, 'mdc-toolbar-fixed-adjust'].join(' ');
 
 	snackbarRef = e => this.snackbar = e;
@@ -362,20 +353,11 @@ export default class Profile extends Component {
 		route(path);
 	}
 
-	goДщпшт = this.linkTo('/profile/login')
-
 	render(props, state) {
 		const { auth } = state;
 
 		if (auth === undefined)
-			return (
-				<Button unelevated
-					disabled={isLoading}
-					className={style.button}
-					onClick={this.goLogin}
-				>
-					<Button.Icon>arrow_forward</Button.Icon>Переход к авторизации
-				</Button>);
+			return undefined;
 
 		const { authorized } = auth;
 		const profile = auth.profile ? auth.profile : {};

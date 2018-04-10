@@ -14,6 +14,7 @@ import style from './style';
 import { headerTitleStorePath } from '../../../const';
 import { successor, failer, starter } from '../../load';
 import disp from '../../../lib/store';
+//import setZeroTimeout from '../../../lib/zerotimeout';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -27,9 +28,17 @@ export default class Login extends Component {
 
 	isLoading = (state, callback) => this.setState({ isLoading: state }, callback)
 
-	didSetState() {
-		disp(store => store.cmpSetIn(headerTitleStorePath, 'Авторизация'));
+	didSetState({ auth }) {
+		if (auth && auth.authorized)
+			route('/', true);
+		else
+			disp(store => store.cmpSetIn(headerTitleStorePath, 'Авторизация'));
 	}
+
+	fieldInput = field => e => this[field] = e.target.value
+
+	userFieldInput = this.fieldInput('user')
+	passFieldInput = this.fieldInput('pass')
 
 	login = e => {
 		const { state } = this;
@@ -51,20 +60,21 @@ export default class Login extends Component {
 					}
 				}
 			},
-			successor(result => {
+			successor(result => this.isLoading(false, () => {
 				if (result.authorized) {
 					delete result.nostore;
+
 					if (result.profile && result.profile.birthday)
 						result.profile.birthday = new Date(result.profile.birthday);
 
 					// eslint-disable-next-line
-					disp(store => store.mergeIn('auth', { ...r, ...result, pass: pass }));
+					disp(store => store.mergeIn('auth', { ...result, user: user, pass: pass }),
+						() => route('/', true)
+					);
 				}
 				else
 					this.showError('Ошибка авторизации');
-
-				this.isLoading(false);
-			}),
+			})),
 			failer(
 				error => this.isLoading(
 					false,
@@ -81,7 +91,7 @@ export default class Login extends Component {
 		route(path);
 	}
 
-	goRegistration = this.linkTo('/profile/registration')
+	goRegistration = this.linkTo('/registration')
 
 	snackbarRef = e => this.snackbar = e;
 
@@ -90,7 +100,7 @@ export default class Login extends Component {
 	}
 
 	style = [style.login, 'mdc-toolbar-fixed-adjust'].join(' ');
-	
+
 	render(props, state) {
 		const { auth } = state;
 

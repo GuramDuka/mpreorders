@@ -20,7 +20,7 @@ export default class Component extends PreactComponent {
 		
 		if (didSetState)
 			cb = () => {
-				didSetState.call(this, this.state, state);
+				didSetState.call(this, this.state);
 				callback && callback();
 			};
 
@@ -93,7 +93,9 @@ export default class Component extends PreactComponent {
 			this._storeSubscription = true;
 
 			const functor = state => {
-				for (const data of storePaths.values())
+				const paths = storePaths.values();
+
+				for (const data of paths)
 					if (Array.isArray(data))
 						for (const { path } of data)
 							state = state.setIn(path, state.getIn(path));

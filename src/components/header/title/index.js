@@ -13,7 +13,13 @@ export default class Title extends Component {
 	])
 
 	render(props, { title }) {
-		return <Toolbar.Title>{title}</Toolbar.Title>;
+		// Zero Width Space https://unicode-table.com/ru/200B/
+		// Need for right positioning when title.length === 0
+		return (
+			<Toolbar.Title>
+				&#x200B;
+				{title}
+			</Toolbar.Title>);
 	}
 }
 //------------------------------------------------------------------------------

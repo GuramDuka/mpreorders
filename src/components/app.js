@@ -11,6 +11,15 @@ import Registration from '../routes/profile/registration';
 import Categories from '../routes/categories';//import Categories from 'async!../routes/categories';
 import Category from '../routes/category';//import Category from 'async!../routes/category';
 //------------------------------------------------------------------------------
+/** fall-back route (handles unroutable URLs) */
+const Error = ({ type, url }) => (
+	<section class="error">
+		<h2>Error {type}</h2>
+		<p>It looks like we hit a snag.</p>
+		<pre>{url}</pre>
+	</section>
+);
+//------------------------------------------------------------------------------
 export default class App extends Component {
 	/** Gets fired when the route changes.
 	 *	@param {Object} event		"change" event from [preact-router](http://git.io/preact-router)
@@ -24,11 +33,12 @@ export default class App extends Component {
 				<Header />
 				<Router onChange={this.handleRoute}>
 					<Home path="/" />
-					<Profile path="/profile/:user" />
-					<Login path="/profile/login/" />
-					<Registration path="/profile/registration/" />
+					<Profile path="/profile/" />
+					<Login path="/login/" />
+					<Registration path="/registration/" />
 					<Category path="/category/:category/:pageProps" />
 					<Categories path="/categories/" />
+					<Error type="404" default />
 				</Router>
 			</div>
 		);
