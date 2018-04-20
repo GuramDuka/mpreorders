@@ -98,11 +98,11 @@ export default class Component extends PreactComponent {
 				for (const data of paths)
 					if (Array.isArray(data))
 						for (const { path } of data)
-							state = state.setIn(path, state.getIn(path));
+							state = state.pubIn(path);
 					else if (data.constructor === Object || data instanceof Object)
-						state = state.setIn(data.path, state.getIn(data.path));
+						state = state.pubIn(data.path);
 					else
-						state = state.setIn(data, state.getIn(data));
+						state = state.pubIn(data);
 
 				if (storeDisp)
 					state = storeDisp.call(this, state, this.props, this.state, this.context);

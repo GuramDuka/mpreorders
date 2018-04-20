@@ -40,7 +40,7 @@
     "preact-compat": "^3.18.0",
     "preact-custom-scrollbars": "^4.0.4",
     "preact-feather": "^1.0.3",
-    "preact-material-components": "^1.4.1",
+    "preact-material-components": "^1.4.2",
     "preact-router": "^2.5.5",
     "preact-virtual-list": "^0.3.1",
     "pubsub-js": "^1.6.0",

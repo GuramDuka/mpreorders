@@ -337,6 +337,14 @@ class State {
 		return this;
 	}
 
+	static mPubIn(node, key, value) {
+	}
+
+	pubIn(path, mutateLevels = 1) {
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mPubIn);
+		return this;
+	}
+	
 	static mMergeIn(node, key, value) {
 		let v = node[key];
 

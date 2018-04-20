@@ -18,27 +18,6 @@ import { successor, failer, starter } from '../load';
 import disp from '../../lib/store';
 import { strftime } from '../../lib/strftime';
 //------------------------------------------------------------------------------
-const reValidEmail = new RegExp((() => {
-	const sQtext = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
-	const sDtext = '[^\\x0d\\x5b-\\x5d\\x80-\\xff]';
-	const sAtom = '[^\\x00-\\x20\\x22\\x28\\x29\\x2c\\x2e\\x3a-\\x3c\\x3e\\x40\\x5b-\\x5d\\x7f-\\xff]+';
-	const sQuotedPair = '\\x5c[\\x00-\\x7f]';
-	const sDomainLiteral = `\\x5b(${sDtext}|${sQuotedPair})*\\x5d`;
-	const sQuotedString = `\\x22(${sQtext}|${sQuotedPair})*\\x22`;
-	const sDomainRef = sAtom;
-	const sSubDomain = `(${sDomainRef}|${sDomainLiteral})`;
-	const sWord = `(${sAtom}|${sQuotedString})`;
-	const sDomain = `${sSubDomain}(\\x2e${sSubDomain})*`;
-	const sLocalPart = `${sWord}(\\x2e${sWord})*`;
-	const sAddrSpec = `${sLocalPart}\\x40${sDomain}`; // complete RFC822 email address spec
-	const sValidEmail = `^${sAddrSpec}$`; // as whole string
-	return sValidEmail;
-})());
-//------------------------------------------------------------------------------
-function validateEmail(email) {
-	return email && email.length <= 127 && reValidEmail.test(email);
-}
-//------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Profile extends Component {
@@ -49,26 +28,30 @@ export default class Profile extends Component {
 		]
 	])
 
-	allFields = []
-	requiredFields = ['user', 'pass', 'pass2', 'email']
+	allFields = {}
+	requiredFields = []
 	profileFields = ['birthday', 'gender', 'family', 'fname', 'sname', 'phone']
 
 	clearTypedFields = () => {
-		for (const field of this.allFields)
+		for (const field of Object.keys(this.allFields))
 			delete this[field];
 	}
 
-	isLoading = (state, callback) => this.setState({ isLoading: state }, callback)
+	isLoading = (state, callback) => this.setState({ isLoading: state, isPulled: true }, callback)
 
-	didSetState({ auth }) {
+	didSetState({ auth, isPulled }) {
 		if (!auth || !auth.authorized)
 			route('/login', true);
-		else
+		else {
 			disp(store => store.cmpSetIn(headerTitleStorePath, 'Профиль'));
+
+			if (!isPulled)
+				this.pull();
+		}
 	}
 
-	fieldInputValidator = field => {
-		this.allFields.push(field);
+	fieldInputValidator = (field, display) => {
+		this.allFields[field] = display;
 
 		return e => {
 			this.field = field;
@@ -80,38 +63,37 @@ export default class Profile extends Component {
 	// change event occurs when the value of an element has been changed
 	//userFieldChange = e => this.user = e.target.value;
 	// input event occurs immediately after the value of an element has changed
-	userFieldInput = this.fieldInputValidator('user')
-	emailFieldInput = this.fieldInputValidator('email')
-	passFieldInput = this.fieldInputValidator('pass')
-	pass2FieldInput = this.fieldInputValidator('pass2')
-	birthdayFieldInput = this.fieldInputValidator('birthday')
-	genderFieldInput = this.fieldInputValidator('gender')
-	familyFieldInput = this.fieldInputValidator('family')
-	fnameFieldInput = this.fieldInputValidator('fname')
-	snameFieldInput = this.fieldInputValidator('sname')
-	phoneFieldInput = this.fieldInputValidator('phone')
+	userFieldInput = this.fieldInputValidator('user', 'Имя пользователя')
+	emailFieldInput = this.fieldInputValidator('email', 'Электронная почта')
+	passFieldInput = this.fieldInputValidator('pass', 'Пароль')
+	pass2FieldInput = this.fieldInputValidator('pass2', 'Подтверждение пароля')
+	birthdayFieldInput = this.fieldInputValidator('birthday', 'День рождения')
+	genderFieldInput = this.fieldInputValidator('gender', 'Пол')
+	phoneFieldInput = this.fieldInputValidator('phone', 'Контактный телефон')
+	familyFieldInput = this.fieldInputValidator('family', 'Фамилия')
+	fnameFieldInput = this.fieldInputValidator('fname', 'Имя')
+	snameFieldInput = this.fieldInputValidator('sname', 'Отчество')
 
 	validateAllFields(state, callback) {
-		const {
-			userError, emailError, passError, pass2Error,
-			birthdayError, genderError,
-			familyError, fnameError, snameError,
-			phoneError
-		} = { ...this.state, ...state };
+		const combo = { ...this.state, ...state };
+		const notFilled = {};
+		let v = true;
 
-		const v = !userError
-			&& !emailError
-			&& !passError
-			&& !pass2Error
-			&& !birthdayError
-			&& !genderError
-			&& !familyError
-			&& !fnameError
-			&& !snameError
-			&& !phoneError
-			;
+		for (const field of Object.keys(this.allFields)) {
+			const fe = field + 'Error';
+			const fieldError = combo[fe];
 
-		this.setState({ valid: v, state }, callback);
+			if (fieldError)
+				v = false;
+			else if (this.requiredFields.includes(field)) {
+				if (this[field] === undefined || this[field].trim().length === 0) {
+					notFilled[fe] = 'Поле \'' + this.allFields[field] + '\' не заполнено';
+					v = false;
+				}
+			}
+		}
+
+		this.setState({ valid: v, ...state, ...notFilled }, callback);
 	}
 
 	// check non printable symbols, allow only Basic Latin and Cyrillic, exclude space
@@ -146,9 +128,30 @@ export default class Profile extends Component {
 		this.validateAllFields(r);
 	}
 
+	reValidEmail = new RegExp((() => {
+		const sQtext = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
+		const sDtext = '[^\\x0d\\x5b-\\x5d\\x80-\\xff]';
+		const sAtom = '[^\\x00-\\x20\\x22\\x28\\x29\\x2c\\x2e\\x3a-\\x3c\\x3e\\x40\\x5b-\\x5d\\x7f-\\xff]+';
+		const sQuotedPair = '\\x5c[\\x00-\\x7f]';
+		const sDomainLiteral = `\\x5b(${sDtext}|${sQuotedPair})*\\x5d`;
+		const sQuotedString = `\\x22(${sQtext}|${sQuotedPair})*\\x22`;
+		const sDomainRef = sAtom;
+		const sSubDomain = `(${sDomainRef}|${sDomainLiteral})`;
+		const sWord = `(${sAtom}|${sQuotedString})`;
+		const sDomain = `${sSubDomain}(\\x2e${sSubDomain})*`;
+		const sLocalPart = `${sWord}(\\x2e${sWord})*`;
+		const sAddrSpec = `${sLocalPart}\\x40${sDomain}`; // complete RFC822 email address spec
+		const sValidEmail = `^${sAddrSpec}$`; // as whole string
+		return sValidEmail;
+	})())
+
+	validateEmail(email) {
+		return email && email.length <= 127 && this.reValidEmail.test(email);
+	}
+
 	validateEmailField(ret) {
 		const r = {
-			emailError: validateEmail(this.email) ? undefined : 'Не заполнен E-mail'
+			emailError: this.validateEmail(this.email) ? undefined : 'Не заполнен E-mail'
 		};
 
 		if (ret)
@@ -157,21 +160,31 @@ export default class Profile extends Component {
 		this.validateAllFields(r);
 	}
 
-	strongPassPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})/g
+	//strongPassPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})/g
+	//strongPassPattern = /^(?=.*\d)(?=.*[!@#$%^&*()-_+=.,:;?|~\\/`\'\"\[\]{}])(?=.*[a-z])(?=.*[A-Z]).{8,}/g
 	//mediumPassPattern = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})/g
 
 	validatePassField(ret) {
 		const { pass } = this;
-		const valid = this.strongPassPattern.test(pass);
-		const r = {
-			passError: valid ? undefined : 'Не заполнен пароль'
-		};
+		const r = { passError: undefined };
+		//const valid = this.strongPassPattern.test(pass);
+
+		if (pass.length < 8)
+			r.passError = 'Пароль должен содержать минимум 8 символов';//'Your password must be at least 8 characters';
+		else if (pass.search(/[a-z]/g) < 0)
+			r.passError = 'Пароль должен содержать минимум одну строчную [a-z] букву';//'Your password must contain at least one lower case letter';
+		else if (pass.search(/[A-Z]/g) < 0)
+			r.passError = 'Пароль должен содержать минимум одну заглавную [A-Z] букву';//'Your password must contain at least one upper case letter';
+		else if (pass.search(/[0-9]/g) < 0)
+			r.passError = 'Пароль должен содержать минимум одну цифру [0-9]';//'Your password must contain at least one digit';
+		// eslint-disable-next-line
+		else if (pass.search(/[!@#$%^&*()-_+=.,:;?|~\\/`\'"\[\]{}]/g) < 0)
+			r.passError = 'Пароль должен содержать минимум один специальный символ';//'Your password must contain at least one special symbol';
 
 		if (ret)
 			return r;
 
-		this.validatePass2Field();
-		this.validateAllFields(r);
+		this.validateAllFields({ ...r, ...this.validatePass2Field(true) });
 	}
 
 	validatePass2Field(ret) {
@@ -209,31 +222,47 @@ export default class Profile extends Component {
 	}
 
 	validateGenderField(ret) {
-		if (ret)
-			return {};
+		const r = {
+			genderError: undefined
+		};
 
-		this.validateAllFields({});
+		if (ret)
+			return r;
+
+		this.validateAllFields(r);
 	}
 
 	validateFamilyField(ret) {
-		if (ret)
-			return {};
+		const r = {
+			familyError: undefined
+		};
 
-		this.validateAllFields({});
+		if (ret)
+			return r;
+
+		this.validateAllFields(r);
 	}
 
 	validateFnameField(ret) {
-		if (ret)
-			return {};
+		const r = {
+			fnameError: undefined
+		};
 
-		this.validateAllFields({});
+		if (ret)
+			return r;
+
+		this.validateAllFields(r);
 	}
 
 	validateSnameField(ret) {
-		if (ret)
-			return {};
+		const r = {
+			snameError: undefined
+		};
 
-		this.validateAllFields({});
+		if (ret)
+			return r;
+
+		this.validateAllFields(r);
 	}
 
 	//phonePattern = /(\+?\d[- .()]*){7,13}/g
@@ -303,7 +332,7 @@ export default class Profile extends Component {
 			{
 				method: 'PUT',
 				// eslint-disable-next-line
-				r: { m: 'auth', f: 'profile', r: r }
+				r: { m: 'auth', f: 'profile_push', r: r }
 			},
 			successor(result => {
 				delete result.nostore;
@@ -316,7 +345,47 @@ export default class Profile extends Component {
 				disp(store => store.mergeIn('auth', { ...r, ...result, pass: pass }));
 				this.setState({ isLoading: false, valid: false });
 			}),
-			failer(error => this.isLoading(false, e => this.showError('Ошибка авторизации'))),
+			failer(error => this.isLoading(false, e => this.showError('Ошибка записи'))),
+			starter(opts => this.isLoading(true))
+		);
+	}
+
+	pull = e => {
+		const { state } = this;
+		const { auth } = state;
+		const user = this.user === undefined ? auth.user : this.user;
+		const pass = this.pass === undefined ? auth.pass : this.pass;
+		const r = {
+			// eslint-disable-next-line
+			user: user,
+			hash: (new SHA256()).hex(pass).toUpperCase()
+		};
+
+		bfetch(
+			{
+				method: 'PUT',
+				// eslint-disable-next-line
+				r: { m: 'auth', f: 'profile_pull', r: r }
+			},
+			successor(result => this.isLoading(false, () => {
+				if (result.authorized) {
+					delete result.nostore;
+
+					if (result.profile && result.profile.birthday)
+						result.profile.birthday = new Date(result.profile.birthday);
+
+					// eslint-disable-next-line
+					disp(store => store.mergeIn('auth', { ...result, user: user, pass: pass }));
+				}
+				else
+					this.showError('Ошибка чтения');
+			})),
+			failer(
+				error => this.isLoading(
+					false,
+					e => this.showError('Ошибка чтения')
+				)
+			),
 			starter(opts => this.isLoading(true))
 		);
 	}
@@ -359,12 +428,11 @@ export default class Profile extends Component {
 		if (auth === undefined)
 			return undefined;
 
-		const { authorized } = auth;
 		const profile = auth.profile ? auth.profile : {};
 		const user = this.user !== undefined ? this.user : auth.user;
 		const pass = this.pass !== undefined ? this.pass : auth.pass;
 		const email = this.email !== undefined ? this.email : auth.email;
-		const birthday = this.birthday !== undefined ? this.birthday : profile.birthday;
+		const birthday = this.birthday !== undefined ? this.birthday : profile.birthday !== undefined ? strftime('%Y-%m-%d', profile.birthday) : undefined;
 		const gender = this.gender !== undefined ? this.gender : profile.gender;
 		const family = this.family !== undefined ? this.family : profile.family;
 		const fname = this.fname !== undefined ? this.fname : profile.fname;
@@ -372,7 +440,7 @@ export default class Profile extends Component {
 		const phone = this.phone !== undefined ? this.phone : profile.phone;
 
 		const {
-			isLoading,
+			isPulled,
 			valid,
 			userError,
 			emailError,
@@ -384,12 +452,14 @@ export default class Profile extends Component {
 			phoneError
 		} = state;
 
+		const isLoading = state.isLoading || !isPulled;
+
 		const userField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={userError ? userError : authorized ? 'Имя пользователя или E-mail, например: VikDik или vik.dik@gmail.com' : ' '}
-				disabled={isLoading}
-				fullwidth required invalid={!!userError}
-				placeHolder="Имя пользователя или E-mail"
+				helperText={userError ? userError : this.allFields.user + ' или E-mail, например: VikDik или vik.dik@gmail.com'}
+				fullwidth disabled={isLoading} invalid={!!userError}
+				required={this.requiredFields.includes('user')}
+				placeHolder={this.allFields.user + ' или E-mail'}
 				trailingIcon="perm_identity"
 				type="text"
 				value={user}
@@ -398,10 +468,10 @@ export default class Profile extends Component {
 
 		const emailField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={emailError ? emailError : 'Электронная почта (E-mail), например: vik.dik@gmail.com'}
-				disabled={isLoading}
-				fullwidth required invalid={!!emailError}
-				placeHolder="Электронная почта (E-mail)"
+				helperText={emailError ? emailError : this.allFields.email + ' (E-mail), например: vik.dik@gmail.com'}
+				fullwidth disabled={isLoading} invalid={!!emailError}
+				required={this.requiredFields.includes('email')}
+				placeHolder={this.allFields.email + ' (E-mail)'}
 				type="email"
 				value={email}
 				trailingIcon="email"
@@ -410,10 +480,10 @@ export default class Profile extends Component {
 
 		const passField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={passError ? passError : authorized ? 'Пароль, например: Uc_gliec6' : ' '}
-				disabled={isLoading}
-				fullwidth required invalid={!!passError} minlength={8}
-				placeHolder="Пароль"
+				helperText={passError ? passError : this.allFields.pass + ', например: Uc_gliec6'}
+				fullwidth disabled={isLoading} invalid={!!passError}
+				required={this.requiredFields.includes('pass')}
+				placeHolder={this.allFields.pass} minlength={8}
 				trailingIcon="security"
 				type="password"
 				value={pass}
@@ -422,10 +492,10 @@ export default class Profile extends Component {
 
 		const pass2Field = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={pass2Error ? pass2Error : 'Подтверждение пароля'}
-				disabled={isLoading}
-				fullwidth required invalid={!!pass2Error} minlength={8}
-				placeHolder=""
+				helperText={pass2Error ? pass2Error : this.allFields.pass2}
+				fullwidth disabled={isLoading} invalid={!!pass2Error}
+				required={this.requiredFields.includes('pass2')}
+				placeHolder="" minlength={8}
 				trailingIcon="security"
 				type="password"
 				onInput={this.pass2FieldInput}
@@ -433,12 +503,12 @@ export default class Profile extends Component {
 
 		const birthdayField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={birthdayError ? birthdayError : 'День рождения, например: 20.08.2000'}
-				disabled={isLoading}
-				fullwidth
-				placeHolder="День рождения"
+				helperText={birthdayError ? birthdayError : this.allFields.birthday + ', например: 20.08.2000'}
+				fullwidth disabled={isLoading} invalid={!!birthdayError}
+				required={this.requiredFields.includes('birthday')}
+				placeHolder={this.allFields.birthday}
 				type="date"
-				value={this.birthday ? strftime('%Y-%m-%d', birthday) : undefined}
+				value={birthday}
 				trailingIcon="cake"
 				onInput={this.birthdayFieldInput}
 			/>);
@@ -450,6 +520,7 @@ export default class Profile extends Component {
 						<Radio className={style.radio}
 							autocomplete="off"
 							disabled={isLoading}
+							required={this.requiredFields.includes('gender')}
 							fullwidth
 							value="male"
 							checked={gender === 'male'}
@@ -462,6 +533,7 @@ export default class Profile extends Component {
 						<Radio className={style.radio}
 							autocomplete="off"
 							disabled={isLoading}
+							required={this.requiredFields.includes('gender')}
 							fullwidth
 							value="female"
 							checked={gender === 'female'}
@@ -474,6 +546,7 @@ export default class Profile extends Component {
 						<Radio className={style.radio}
 							autocomplete="off"
 							disabled={isLoading}
+							required={this.requiredFields.includes('gender')}
 							fullwidth
 							value="other"
 							checked={gender === 'other'}
@@ -484,16 +557,16 @@ export default class Profile extends Component {
 					</label>
 				</div>
 				<p aria-hidden class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent mdc-text-field-helper-text mdc-text-field-helper-text--persistent">
-					{genderError ? 'Пол (' + genderError + ')' : 'Пол'}
+					{genderError ? 'Пол (' + genderError + ')' : this.allFields.gender}
 				</p>
 			</div>);
 
 		const phoneField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={phoneError ? phoneError : 'Контактный телефон, например: +7 (912) 88-85-554'}
-				disabled={isLoading}
-				fullwidth
-				placeHolder="Контактный телефон"
+				helperText={phoneError ? phoneError : this.allFields.phone + ', например: +7 (912) 88-85-554'}
+				fullwidth disabled={isLoading} invalid={!!phoneError}
+				required={this.requiredFields.includes('phone')}
+				placeHolder={this.allFields.phone}
 				type="tel"
 				value={phone}
 				trailingIcon="phone"
@@ -502,9 +575,10 @@ export default class Profile extends Component {
 
 		const familyField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={familyError ? familyError : 'Фамилия'}
-				disabled={isLoading}
-				fullwidth invalid={!!familyError}
+				helperText={familyError ? familyError : this.allFields.family}
+				fullwidth disabled={isLoading} invalid={!!familyError}
+				required={this.requiredFields.includes('family')}
+				placeHolder=""
 				trailingIcon="account_circle"
 				type="text"
 				value={family}
@@ -513,9 +587,10 @@ export default class Profile extends Component {
 
 		const fnameField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={fnameError ? fnameError : 'Имя'}
-				disabled={isLoading}
-				fullwidth invalid={!!fnameError}
+				helperText={fnameError ? fnameError : this.allFields.fname}
+				fullwidth disabled={isLoading} invalid={!!fnameError}
+				required={this.requiredFields.includes('fname')}
+				placeHolder=""
 				trailingIcon="account_circle"
 				type="text"
 				value={fname}
@@ -524,16 +599,17 @@ export default class Profile extends Component {
 
 		const snameField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={snameError ? snameError : 'Отчество'}
-				disabled={isLoading}
-				fullwidth invalid={!!snameError}
+				helperText={snameError ? snameError : this.allFields.sname}
+				fullwidth disabled={isLoading} invalid={!!snameError}
+				required={this.requiredFields.includes('sname')}
+				placeHolder=""
 				trailingIcon="account_circle"
 				type="text"
 				value={sname}
 				onInput={this.snameFieldInput}
 			/>);
 
-		const logoutButton = (
+		const logoutButton = state.notUseLogoutButton ? undefined : (
 			<Button unelevated
 				disabled={isLoading}
 				className={style.button}
@@ -548,7 +624,7 @@ export default class Profile extends Component {
 				className={style.button}
 				onClick={this.push}
 			>
-				<Button.Icon>backup</Button.Icon>Сохранить
+				<Button.Icon>backup</Button.Icon>{state.pushButtonName ? state.pushButtonName : 'Сохранить'}
 			</Button>);
 
 		return (
