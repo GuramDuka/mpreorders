@@ -160,7 +160,7 @@ export default class Login extends Component {
 
 		return (
 			<div class={this.style}>
-				<Snackbar ref={this.snackbarRef} />
+				<Snackbar ref={this.snackbarRef} style={style.snackbar} />
 
 				<form onSubmit={false}>
 					{userField}

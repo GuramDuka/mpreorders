@@ -27,7 +27,7 @@
 // eslint-disable-next-line
 //state = '(' + eval(state) + ')';
 //------------------------------------------------------------------------------
-function stringifyHelper(types, path, value) {
+function stringifyHelper(types, path, value, debug) {
 	if (value === undefined || value === null)
 		return JSON.stringify(value);
 
@@ -77,9 +77,12 @@ function stringifyHelper(types, path, value) {
 	}
 
 	if (value.constructor === Object || value instanceof Object) {
-		let r = '';
+		if ((!!value.nostore) === true)
+			return '{}';
+	
 		const keys = Object.keys(value);
 		const l = keys.length;
+		let r = '';
 
 		for (let i = 0; i < l; i++) {
 			const key = keys[i];

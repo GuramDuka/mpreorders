@@ -5,6 +5,7 @@ import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import { route } from 'preact-router';
 import Component from '../../components/component';
+import disp from '../../lib/store';
 import { headerTitleStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
 import style from './style';
@@ -22,12 +23,11 @@ export default class Categories extends Component {
 		]
 	])
 
-	storeDisp(store) {
-		return store.cmpSetIn(headerTitleStorePath, 'Категории');
-	}
-
-	storeTrailer(props, { list }) {
-		list === undefined && loader.call(this);
+	didSetState({ list }) {
+		if (list)
+			disp(store => store.cmpSetIn(headerTitleStorePath, 'Категории'));
+		else
+			loader.call(this);
 	}
 
 	linkTo = path => e => {

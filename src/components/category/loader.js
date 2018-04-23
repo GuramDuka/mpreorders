@@ -32,8 +32,11 @@ export default function loader() {
 	return bfetch(
 		// eslint-disable-next-line
 		{ r: { m: 'dict', f: 'filter', r: r } },
-		successor(
-			result => disp(store => store.setIn(storeListPath, result))
+		successor(result =>
+			disp(store =>
+				store.setIn(storeListPath, result).
+					cmpSetIn(storePrefix + '.nostore', true)
+			)
 		),
 		failer(),
 		starter()

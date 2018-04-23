@@ -31,7 +31,7 @@
     "webpack-dotenv-plugin": "^2.0.2"
   },
   "dependencies": {
-    "abortcontroller-polyfill": "^1.1.8",
+    "abortcontroller-polyfill": "^1.1.9",
     "double-ended-queue": "^2.1.0-0",
     "fetch-polyfill": "^0.8.2",
     "jshashes": "^1.0.7",

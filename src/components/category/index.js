@@ -60,14 +60,19 @@ export default class Category extends Component {
 		this.goNext = this.goPage(page + 1);
 	}
 
-	storeDisp(store, props, state) {
-		const { list } = state;
-		list && disp(state => state.cmpSetIn(headerTitleStorePath, list.category.name));
+	didSetState({ list }) {
+		if (list)
+			disp(state => state.cmpSetIn(headerTitleStorePath, list.category.name));
+		else
+			loader.call(this);
 	}
-	
-	storeTrailer(props, { list }) {
-		list === undefined && loader.call(this);
-	}
+
+	// storeDisp(store, props, state) {
+	// }
+
+	// storeTrailer(props, { list }) {
+	// 	list === undefined && loader.call(this);
+	// }
 
 	style = [style.category, 'mdc-toolbar-fixed-adjust'].join(' ');
 

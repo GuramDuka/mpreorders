@@ -8,8 +8,11 @@ export const storePrefix = 'category';
 export default function loader() {
 	return bfetch(
 		{ r: { m: 'category', f: 'list', r: { target: 'products' } } },
-		successor(
-			result => disp(store => store.setIn(storePrefix + '.list', result))
+		successor(result =>
+			disp(store =>
+				store.setIn(storePrefix + '.list', result).
+					cmpSetIn(storePrefix + '.nostore', true)
+			)
 		),
 		failer(),
 		starter()

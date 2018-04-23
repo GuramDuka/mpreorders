@@ -21,6 +21,12 @@ import { strftime } from '../../lib/strftime';
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Profile extends Component {
+	state = {
+		pushButtonName: 'Сохранить',
+		pushFunction: 'profile_push',
+		pushError: 'Ошибка записи'
+	}
+
 	storePaths = new Map([
 		[
 			state => this.setState(state),
@@ -87,7 +93,7 @@ export default class Profile extends Component {
 				v = false;
 			else if (this.requiredFields.includes(field)) {
 				if (this[field] === undefined || this[field].trim().length === 0) {
-					notFilled[fe] = 'Поле \'' + this.allFields[field] + '\' не заполнено';
+					notFilled[fe] = this.allFields[field] + ' - необходимо заполнить';
 					v = false;
 				}
 			}
@@ -297,8 +303,8 @@ export default class Profile extends Component {
 	}
 
 	push = e => {
-		const { state } = this;
-		const { auth } = state;
+		const { state, pushSuccessorHook } = this;
+		const { auth, pushFunction, pushError } = state;
 		const user = this.user === undefined ? auth.user : this.user;
 		const email = this.email === undefined ? auth.email : this.email;
 		const pass = this.pass === undefined ? auth.pass : this.pass;
@@ -331,8 +337,12 @@ export default class Profile extends Component {
 		bfetch(
 			{
 				method: 'PUT',
-				// eslint-disable-next-line
-				r: { m: 'auth', f: 'profile_push', r: r }
+				r: {
+					m: 'auth',
+					f: pushFunction,
+					// eslint-disable-next-line
+					r: r
+				}
 			},
 			successor(result => {
 				delete result.nostore;
@@ -340,12 +350,13 @@ export default class Profile extends Component {
 				if (result.profile && result.profile.birthday)
 					result.profile.birthday = new Date(result.profile.birthday);
 
+				pushSuccessorHook && pushSuccessorHook(result);
 				this.clearTypedFields();
 				// eslint-disable-next-line
 				disp(store => store.mergeIn('auth', { ...r, ...result, pass: pass }));
 				this.setState({ isLoading: false, valid: false });
 			}),
-			failer(error => this.isLoading(false, e => this.showError('Ошибка записи'))),
+			failer(error => this.isLoading(false, e => this.showError(error.message + '\r\n' + pushError))),
 			starter(opts => this.isLoading(true))
 		);
 	}
@@ -624,12 +635,12 @@ export default class Profile extends Component {
 				className={style.button}
 				onClick={this.push}
 			>
-				<Button.Icon>backup</Button.Icon>{state.pushButtonName ? state.pushButtonName : 'Сохранить'}
+				<Button.Icon>backup</Button.Icon>{state.pushButtonName}
 			</Button>);
 
 		return (
 			<div class={this.style}>
-				<Snackbar ref={this.snackbarRef} />
+				<Snackbar ref={this.snackbarRef} class={style.snackbar} />
 
 				<form onSubmit={false}>
 					{userField}

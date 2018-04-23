@@ -2,18 +2,7 @@
 //import wog from 'window-or-global';
 import Profile from '../index';
 import { route } from 'preact-router';
-import Component from '../../component';
-import { bfetch } from '../../../backend';
-import { SHA256 } from 'jshashes';
-import Button from 'preact-material-components/Button';
-import 'preact-material-components/Button/style.css';
-import TextField from 'preact-material-components/TextField';
-import 'preact-material-components/TextField/style.css';
-import Snackbar from 'preact-material-components/Snackbar';
-import 'preact-material-components/Snackbar/style.css';
-import style from './style';
 import { headerTitleStorePath } from '../../../const';
-import { successor, failer, starter } from '../../load';
 import disp from '../../../lib/store';
 //------------------------------------------------------------------------------
 const registration = 'Регистрация';
@@ -25,7 +14,9 @@ export default class Registration extends Profile {
 		auth: {},
 		isPulled: true,
 		notUseLogoutButton: true,
-		pushButtonName: registration
+		pushButtonName: registration,
+		pushFunction: 'registration',
+		pushError: 'Ошибка регистрации'
 	}
 
 	requiredFields = [
@@ -37,12 +28,22 @@ export default class Registration extends Profile {
 		'family',
 		'fname'
 	]
-	
+
+	willMount() {
+		this.validateAllFields();
+	}
+
 	didSetState({ auth }) {
 		if (auth && auth.authorized)
 			route('/profile', true);
 		else
 			disp(store => store.cmpSetIn(headerTitleStorePath, registration));
+	}
+
+	pushSuccessorHook(result) {
+		if (!result.registered && result.exists)
+			throw new Error('Пользователь уже зарегистрирован');
+		delete result.registered;
 	}
 }
 //------------------------------------------------------------------------------

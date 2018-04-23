@@ -12,3 +12,8 @@
 :local(.radio) {
 	vertical-align: middle;
 }
+
+:local(.snackbar) {
+	z-index: 9999;
+}
+	
