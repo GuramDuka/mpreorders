@@ -26,7 +26,7 @@ export default class Header extends Component {
 	storePaths = new Map([
 		[
 			(state, store) => this.setState(
-				{ ...state, searchProps: store.getIn(state.searchStorePath) }
+				{ ...state, searchProps: store.getIn(state.searchStorePath, {}) }
 			),
 			[
 				{ path: 'auth', alias: 'auth' },
