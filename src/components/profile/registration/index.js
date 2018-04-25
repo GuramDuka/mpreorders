@@ -2,7 +2,7 @@
 //import wog from 'window-or-global';
 import Profile from '../index';
 import { route } from 'preact-router';
-import { headerTitleStorePath } from '../../../const';
+import { headerTitleStorePath, headerSearchStorePath } from '../../../const';
 import disp from '../../../lib/store';
 //------------------------------------------------------------------------------
 const registration = 'Регистрация';
@@ -37,7 +37,8 @@ export default class Registration extends Profile {
 		if (auth && auth.authorized)
 			route('/profile', true);
 		else
-			disp(store => store.cmpSetIn(headerTitleStorePath, registration));
+			disp(store => store.cmpSetIn(headerTitleStorePath, registration).
+				deleteIn(headerSearchStorePath));
 	}
 
 	pushSuccessorHook(result) {

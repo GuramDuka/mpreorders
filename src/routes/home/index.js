@@ -3,22 +3,18 @@ import Component from '../../components/component';
 import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import style from './style';
-import { headerTitleStorePath } from '../../const';
+import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import disp from '../../lib/store';
-import { LogIn, LogOut, UserPlus } from 'preact-feather';
-import FaBeer from 'react-icons/fa/beer';
+//import { LogIn, LogOut, UserPlus } from 'preact-feather';
+//import FaBeer from 'react-icons/fa/beer';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Home extends Component {
 	storePaths = new Map()
 
-	storeDisp(store) {
-		return store.setIn(headerTitleStorePath, '');
-	}
-
 	mount() {
-		return disp(store => store.setIn(headerTitleStorePath, ''));
+		return disp(store => store.setIn(headerTitleStorePath, '').deleteIn(headerSearchStorePath));
 	}
 
 	style = [style.home, 'mdc-toolbar-fixed-adjust'].join(' ')
@@ -38,11 +34,11 @@ export default class Home extends Component {
 					<Card.Actions>
 						<Card.ActionButton>OKAY</Card.ActionButton>
 					</Card.Actions>
-				</Card>
+				</Card>{/*
 				<FaBeer size={24} />
 				<LogIn style={{ verticalAlign: 'middle' }} color="black" />
 				<LogOut style={{ verticalAlign: 'middle' }} color="black" />
-				<UserPlus style={{ verticalAlign: 'middle' }} color="black" />
+				<UserPlus style={{ verticalAlign: 'middle' }} color="black" />*/}
 			</div>
 		);
 	}

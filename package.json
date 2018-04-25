@@ -34,6 +34,7 @@
     "abortcontroller-polyfill": "^1.1.9",
     "double-ended-queue": "^2.1.0-0",
     "fetch-polyfill": "^0.8.2",
+    "font-awesome": "^4.7.0",
     "jshashes": "^1.0.7",
     "preact": "^8.2.1",
     "preact-async-route": "^2.1.1",

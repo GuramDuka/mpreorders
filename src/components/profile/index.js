@@ -13,7 +13,7 @@ import 'preact-material-components/Radio/style.css';
 import Snackbar from 'preact-material-components/Snackbar';
 import 'preact-material-components/Snackbar/style.css';
 import style from './style';
-import { headerTitleStorePath } from '../../const';
+import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import { successor, failer, starter } from '../load';
 import disp from '../../lib/store';
 import { strftime } from '../../lib/strftime';
@@ -49,7 +49,8 @@ export default class Profile extends Component {
 		if (!auth || !auth.authorized)
 			route('/login', true);
 		else {
-			disp(store => store.cmpSetIn(headerTitleStorePath, 'Профиль'));
+			disp(store => store.cmpSetIn(headerTitleStorePath, 'Профиль').
+				deleteIn(headerSearchStorePath));
 
 			if (!isPulled)
 				this.pull();
@@ -93,7 +94,7 @@ export default class Profile extends Component {
 				v = false;
 			else if (this.requiredFields.includes(field)) {
 				if (this[field] === undefined || this[field].trim().length === 0) {
-					notFilled[fe] = this.allFields[field] + ' - необходимо заполнить';
+					notFilled[fe] = 'необходимо заполнить';//this.allFields[field] + ' - необходимо заполнить';
 					v = false;
 				}
 			}
@@ -467,10 +468,10 @@ export default class Profile extends Component {
 
 		const userField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={userError ? userError : this.allFields.user + ' или E-mail, например: VikDik или vik.dik@gmail.com'}
+				helperText={(userError ? userError + ', ' : '') + 'например: VikDik или vik.dik@gmail.com'}
 				fullwidth disabled={isLoading} invalid={!!userError}
 				required={this.requiredFields.includes('user')}
-				placeHolder={this.allFields.user + ' или E-mail'}
+				label={this.allFields.user + ' или E-mail'}
 				trailingIcon="perm_identity"
 				type="text"
 				value={user}
@@ -479,10 +480,10 @@ export default class Profile extends Component {
 
 		const emailField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={emailError ? emailError : this.allFields.email + ' (E-mail), например: vik.dik@gmail.com'}
+				helperText={(emailError ? emailError + ', ' : '') + 'например: vik.dik@gmail.com'}
 				fullwidth disabled={isLoading} invalid={!!emailError}
 				required={this.requiredFields.includes('email')}
-				placeHolder={this.allFields.email + ' (E-mail)'}
+				label={this.allFields.email + ' (E-mail)'}
 				type="email"
 				value={email}
 				trailingIcon="email"
@@ -491,10 +492,10 @@ export default class Profile extends Component {
 
 		const passField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={passError ? passError : this.allFields.pass + ', например: Uc_gliec6'}
+				helperText={(passError ? passError + ', ' : '') + 'например: Uc_gliec6'}
 				fullwidth disabled={isLoading} invalid={!!passError}
 				required={this.requiredFields.includes('pass')}
-				placeHolder={this.allFields.pass} minlength={8}
+				label={this.allFields.pass} minlength={8}
 				trailingIcon="security"
 				type="password"
 				value={pass}
@@ -503,10 +504,10 @@ export default class Profile extends Component {
 
 		const pass2Field = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={pass2Error ? pass2Error : this.allFields.pass2}
+				helperText={pass2Error ? pass2Error : ' '}
 				fullwidth disabled={isLoading} invalid={!!pass2Error}
 				required={this.requiredFields.includes('pass2')}
-				placeHolder="" minlength={8}
+				label="Проверка пароля" minlength={8}
 				trailingIcon="security"
 				type="password"
 				onInput={this.pass2FieldInput}
@@ -514,10 +515,10 @@ export default class Profile extends Component {
 
 		const birthdayField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={birthdayError ? birthdayError : this.allFields.birthday + ', например: 20.08.2000'}
+				helperText={this.allFields.birthday + ', ' + (birthdayError ? birthdayError + ', ' : '') + 'например: 20.08.2000'}
 				fullwidth disabled={isLoading} invalid={!!birthdayError}
 				required={this.requiredFields.includes('birthday')}
-				placeHolder={this.allFields.birthday}
+				label=""
 				type="date"
 				value={birthday}
 				trailingIcon="cake"
@@ -577,7 +578,7 @@ export default class Profile extends Component {
 				helperText={phoneError ? phoneError : this.allFields.phone + ', например: +7 (912) 88-85-554'}
 				fullwidth disabled={isLoading} invalid={!!phoneError}
 				required={this.requiredFields.includes('phone')}
-				placeHolder={this.allFields.phone}
+				label={this.allFields.phone}
 				type="tel"
 				value={phone}
 				trailingIcon="phone"
@@ -586,10 +587,10 @@ export default class Profile extends Component {
 
 		const familyField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={familyError ? familyError : this.allFields.family}
+				helperText={familyError ? familyError : ' '}
 				fullwidth disabled={isLoading} invalid={!!familyError}
 				required={this.requiredFields.includes('family')}
-				placeHolder=""
+				label={this.allFields.family}
 				trailingIcon="account_circle"
 				type="text"
 				value={family}
@@ -598,10 +599,10 @@ export default class Profile extends Component {
 
 		const fnameField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={fnameError ? fnameError : this.allFields.fname}
+				helperText={fnameError ? fnameError : ' '}
 				fullwidth disabled={isLoading} invalid={!!fnameError}
 				required={this.requiredFields.includes('fname')}
-				placeHolder=""
+				label={this.allFields.fname}
 				trailingIcon="account_circle"
 				type="text"
 				value={fname}
@@ -610,10 +611,10 @@ export default class Profile extends Component {
 
 		const snameField = (
 			<TextField autocomplete="off" helperTextPersistent
-				helperText={snameError ? snameError : this.allFields.sname}
+				helperText={snameError ? snameError : ' '}
 				fullwidth disabled={isLoading} invalid={!!snameError}
 				required={this.requiredFields.includes('sname')}
-				placeHolder=""
+				label={this.allFields.sname}
 				trailingIcon="account_circle"
 				type="text"
 				value={sname}

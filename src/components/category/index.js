@@ -5,7 +5,7 @@ import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import Component from '../../components/component';
 import disp from '../../lib/store';
-import { headerTitleStorePath } from '../../const';
+import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
 import style from './style';
 import Card from '../products/card';
@@ -24,7 +24,7 @@ export default class Category extends Component {
 		+ this.props.category + '/' + page + ',' + this.pageSize, page)
 	//goPrev = e => wog.history.back()
 
-	mount(props, { list }) {
+	mount(props) {
 		// decode page props
 		let [page, pageSize] = props.pageProps.split(',');
 
@@ -33,25 +33,16 @@ export default class Category extends Component {
 
 		this.page = page = ~~page;
 		this.index = ((page > 0 ? page : 1) - 1) * pageSize;
-
-		const storePath = storePrefix + '.' + props.category;
+		const storePath = this.storePath = storePrefix + '.' + props.category;
 
 		this.storePaths = new Map([
 			[
 				state => this.setState(state),
 				[
-					{
-						path: storePath + '.list.' + page,
-						alias: 'list'
-					},
-					{
-						path: storePath + '.order',
-						alias: 'order'
-					},
-					{
-						path: storePath + '.filter',
-						alias: 'filter'
-					}
+					{ path: storePath + '.list.' + page, alias: 'list' },
+					{ path: storePath + '.order', alias: 'order' },
+					{ path: storePath + '.filter', alias: 'filter' },
+					{ path: storePath + '.stock', alias: 'stock' }
 				]
 			]
 		]);
@@ -60,11 +51,13 @@ export default class Category extends Component {
 		this.goNext = this.goPage(page + 1);
 	}
 
-	didSetState({ list }) {
-		if (list)
-			disp(state => state.cmpSetIn(headerTitleStorePath, list.category.name));
-		else
-			loader.call(this);
+	didSetState(state, { list }) {
+		list || loader.call(this);
+		disp(state => {
+			if (list)
+				state = state.cmpSetIn(headerTitleStorePath, list.category.name);
+			return state.cmpSetIn(headerSearchStorePath, this.storePath);
+		});
 	}
 
 	// storeDisp(store, props, state) {

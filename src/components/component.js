@@ -20,7 +20,7 @@ export default class Component extends PreactComponent {
 		
 		if (didSetState)
 			cb = () => {
-				didSetState.call(this, this.state);
+				didSetState.call(this, this.state, state);
 				callback && callback();
 			};
 

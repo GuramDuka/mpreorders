@@ -9,9 +9,10 @@ export const storePrefix = 'category';
 export default function loader() {
 	const { page, pageSize, props, state } = this;
 	const { category } = props;
-	const { order, filter } = state;
+	const { order, filter, stock } = state;
 	const storePath = storePrefix + '.' + category;
-	const storeListPath = storePath + '.list.' + page;
+	const storeListPath = storePath + '.list';
+	const storeListPagePath = storeListPath + '.' + page;
 	const r = {
 		type: 'products',
 		piece: pageSize,
@@ -24,6 +25,9 @@ export default function loader() {
 	if (filter)
 		r.filter = filter;
 
+	if (stock !== undefined)
+		r.stock = stock;
+		
 	if (category !== undefined)
 		r.category = category;
 	else if (parent !== nullLink)
@@ -34,8 +38,8 @@ export default function loader() {
 		{ r: { m: 'dict', f: 'filter', r: r } },
 		successor(result =>
 			disp(store =>
-				store.setIn(storeListPath, result).
-					cmpSetIn(storePrefix + '.nostore', true)
+				store.setIn(storeListPagePath, result).
+					cmpSetIn(storeListPath + '.nostore', true)
 			)
 		),
 		failer(),

@@ -11,7 +11,7 @@ import 'preact-material-components/TextField/style.css';
 import Snackbar from 'preact-material-components/Snackbar';
 import 'preact-material-components/Snackbar/style.css';
 import style from './style';
-import { headerTitleStorePath } from '../../../const';
+import { headerTitleStorePath, headerSearchStorePath } from '../../../const';
 import { successor, failer, starter } from '../../load';
 import disp from '../../../lib/store';
 //import setZeroTimeout from '../../../lib/zerotimeout';
@@ -32,7 +32,8 @@ export default class Login extends Component {
 		if (auth && auth.authorized)
 			route('/', true);
 		else
-			disp(store => store.cmpSetIn(headerTitleStorePath, 'Авторизация'));
+			disp(store => store.cmpSetIn(headerTitleStorePath, 'Авторизация').
+				deleteIn(headerSearchStorePath));
 	}
 
 	fieldInput = field => e => this[field] = e.target.value
@@ -110,18 +111,14 @@ export default class Login extends Component {
 		const user = this.user !== undefined ? this.user : auth.user;
 		const pass = this.pass !== undefined ? this.pass : auth.pass;
 
-		const {
-			isLoading,
-			userError,
-			passError
-		} = state;
+		const { isLoading } = state;
 
 		const userField = (
-			<TextField autocomplete="off" helperTextPersistent
-				helperText={userError ? userError : ' '}
+			<TextField autocomplete="off"
+				helperText="Введите имя"
 				disabled={isLoading}
-				fullwidth required invalid={!!userError}
-				placeHolder="Имя пользователя или E-mail"
+				fullwidth required
+				label="Имя пользователя или E-mail"
 				trailingIcon="perm_identity"
 				type="text"
 				value={user}
@@ -129,11 +126,11 @@ export default class Login extends Component {
 			/>);
 
 		const passField = (
-			<TextField autocomplete="off" helperTextPersistent
-				helperText={passError ? passError : ' '}
+			<TextField autocomplete="off"
+				helperText="Введите пароль"
 				disabled={isLoading}
-				fullwidth required invalid={!!passError} minlength={8}
-				placeHolder="Пароль"
+				fullwidth required
+				label="Пароль"
 				trailingIcon="security"
 				type="password"
 				value={pass}

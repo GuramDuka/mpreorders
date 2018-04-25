@@ -13,16 +13,25 @@ import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
 import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
+import Icon from 'preact-material-components/Icon';
+import 'preact-material-components/Icon/style.css';
 import Spinner from './spinner';
 import Title from './title';
 //import style from './style';
 import 'preact-material-components/Theme/style.css';
+import { headerSearchStorePath } from '../../const';
+import disp from '../../lib/store';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
 	storePaths = new Map([
 		[
-			state => this.setState(state),
-			{ path: 'auth', alias: 'auth' }
+			(state, store) => this.setState(
+				{ ...state, searchProps: store.getIn(state.searchStorePath) }
+			),
+			[
+				{ path: 'auth', alias: 'auth' },
+				{ path: headerSearchStorePath, alias: 'searchStorePath' }
+			]
 		]
 	])
 
@@ -66,8 +75,81 @@ export default class Header extends Component {
 		);
 	}
 
-	render(props, { darkThemeEnabled, auth }) {
+	searchFilterInput = e => {
+		e.stopPropagation();
+		e.preventDefault();
+		this.setState({ searchFilter: e.target.value });
+	}
+
+	searchStockChange = e => {
+		e.stopPropagation();
+		e.preventDefault();
+		this.setState({ searchStock: e.target.checked });
+	}
+
+	searchDialogApplyClick = e => {
+		const { state } = this;
+		const { searchStorePath, searchFilter, searchStock } = state;
+
+		disp(state => {
+			if (searchFilter !== undefined)
+				state = state.setIn(searchStorePath + '.filter', searchFilter);
+			if (searchStock !== undefined)
+				state = state.setIn(searchStorePath + '.stock', searchStock);
+			return state;
+		});
+	}
+
+	render(props, { darkThemeEnabled, auth, searchProps, searchFilter, searchStock }) {
 		const authorized = auth && auth.authorized;
+
+		const searchIcon = searchProps ? (
+			<Toolbar.Icon onClick={this.openSearch}>
+				search
+			</Toolbar.Icon>) : undefined;
+
+		const searchNotChanged =
+			(searchFilter === undefined || searchFilter === searchProps.filter) &&
+			(searchStock === undefined || searchStock === searchProps.stock);
+
+		const searchDialog = searchProps ? (
+			<Dialog ref={this.searchRef}>
+				<Dialog.Header>Поиск</Dialog.Header>
+				<Dialog.Body>
+					<TextField
+						helperText="Вводите текст ..."
+						helperTextPersistent
+						fullwidth
+						trailingIcon="search"
+						value={searchFilter !== undefined ? searchFilter : searchProps.filter}
+						onInput={this.searchFilterInput}
+					>
+						<Icon>menu</Icon>
+					</TextField>
+					<span>Имеющиеся в наличии&nbsp;&nbsp;</span>
+					<Switch
+						onChange={this.searchStockChange}
+						checked={searchStock !== undefined ? searchStock : searchProps.stock}
+					/>
+				</Dialog.Body>
+				<Dialog.Footer>
+					<Dialog.FooterButton
+						onClick={this.searchDialogApplyClick}
+						disabled={searchNotChanged}
+						accept
+					>
+						OK
+					</Dialog.FooterButton>
+					<Dialog.FooterButton
+						onClick={this.searchDialogApplyClick}
+						disabled={searchNotChanged}
+					>
+						Применить
+					</Dialog.FooterButton>
+					<Dialog.FooterButton cancel>Закрыть</Dialog.FooterButton>
+				</Dialog.Footer>
+			</Dialog>) : undefined;
+
 		return (
 			<div>
 				<Toolbar className="toolbar" fixed>
@@ -80,16 +162,14 @@ export default class Header extends Component {
 						</Toolbar.Section>
 						<Toolbar.Section align-end>
 							<Spinner />
-							<Toolbar.Icon onClick={this.openSearch}>
-								search
-							</Toolbar.Icon>
+							{searchIcon}
 							<Toolbar.Icon onClick={this.openSettings}>
 								settings
 							</Toolbar.Icon>
 							{/* Zero Width Space https://unicode-table.com/ru/200B/
 							  * Need for right positioning when title.length === 0
 							  */}
-							<Toolbar.Title>&#x200B;</Toolbar.Title>
+							<Toolbar.Title style={{ margin: 0 }}>&#x200B;</Toolbar.Title>
 						</Toolbar.Section>
 					</Toolbar.Row>
 				</Toolbar>
@@ -124,31 +204,15 @@ export default class Header extends Component {
 				<Dialog ref={this.settingsRef}>
 					<Dialog.Header>Настройки</Dialog.Header>
 					<Dialog.Body>
-						<div>
-							<span>Включить темную тему</span>
-							&nbsp;&nbsp;&nbsp;&nbsp;
-							<Switch onClick={this.toggleDarkTheme} checked={darkThemeEnabled} />
-						</div>
+						<span>Тёмная тема&nbsp;&nbsp;</span>
+						<Switch onClick={this.toggleDarkTheme} checked={darkThemeEnabled} />
 					</Dialog.Body>
 					<Dialog.Footer>
 						<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>
 					</Dialog.Footer>
 				</Dialog>
-				<Dialog ref={this.searchRef}>
-					<Dialog.Header>Поиск</Dialog.Header>
-					<Dialog.Body>
-						<TextField
-							helperText="Вводите текст ..."
-							helperTextPersistent
-							fullwidth
-							trailingIcon="search"
-						/>
-					</Dialog.Body>
-					<Dialog.Footer>
-						<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>
-					</Dialog.Footer>
-				</Dialog>
-			</div>
+				{searchDialog}
+			</div >
 		);
 	}
 }

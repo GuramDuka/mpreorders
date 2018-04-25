@@ -1,7 +1,9 @@
 //------------------------------------------------------------------------------
 export const nullLink = '00000000-0000-0000-0000-000000000000';
+export const zLink = nullLink.replace(/0/g, 'z');
 //------------------------------------------------------------------------------
 export const headerTitleStorePath = 'header.title';
+export const headerSearchStorePath = 'header.search';
 export const loaderSpinnerStorePath = 'header.spinner.active';
 //------------------------------------------------------------------------------
 export const termsOfUseAndPrivacyPolicy = `

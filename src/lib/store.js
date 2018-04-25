@@ -28,7 +28,7 @@ class State {
 
 		if (messages && pushedSubscribers && messages.length !== 0 && pushedSubscribers.size !== 0)
 			for (const [functor, msgs] of pushedSubscribers.entries())
-				functor(msgs);
+				functor(msgs, this);
 		else
 			r = false;
 
@@ -260,6 +260,9 @@ class State {
 	getPath(path, createNode) {
 		let rPath;
 
+		if (path === undefined || path === null)
+			return [{ key: 0, node: {} }];
+
 		if (Array.isArray(path)) {
 			rPath = path;
 		}
@@ -344,7 +347,7 @@ class State {
 		this.checkDispatched().getNode(path, true, mutateLevels, State.mPubIn);
 		return this;
 	}
-	
+
 	static mMergeIn(node, key, value) {
 		let v = node[key];
 

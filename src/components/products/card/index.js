@@ -23,17 +23,17 @@ export default class Card extends Component {
 	render({ classes, data }) {
 		// regex replace comma without space after
 		const r = /(,(?=\S)|:)/g;
-		const name = data.name.replace(r, ', ');
-		const article = data.article.replace(r, ', ');
-		const manufacturer = data.manufacturer.replace(r, ', ');
-		const title = `[${data.code}] ${name}`;
-		const subTitle = [];
-		[
-			article,
-			manufacturer,
-			data.remainder + (data.reserve ? ' (' + data.reserve + ')' : ''),
+		const title = `[${data.code}] ${data.name.replace(r, ', ')}`;
+		let subTitle = '';
+
+		for (const v of [
+			data.article.replace(r, ', '),
+			data.manufacturer.replace(r, ', '),
+			data.remainder !== 0 || data.reserve !== 0 ? data.remainder + (data.reserve ? ' (' + data.reserve + ')' : '') : '',
 			data.price + '₽'
-		].forEach(v => v.length !== 0 && subTitle.push(v));
+		])
+			if (v.length !== 0)
+				subTitle += `, ${v}`;
 
 		return (
 			<MuiCard className={[style.card, ...classes].join(' ')}>
@@ -43,7 +43,7 @@ export default class Card extends Component {
 						{title}
 					</MuiCard.Title>
 					<MuiCard.Subtitle>
-						{subTitle.join(', ')}
+						{subTitle}
 					</MuiCard.Subtitle>
 				</MuiCard.Primary>
 				<MuiCard.Actions />
