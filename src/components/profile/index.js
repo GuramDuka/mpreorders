@@ -17,6 +17,7 @@ import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import { successor, failer, starter } from '../load';
 import disp from '../../lib/store';
 import { strftime } from '../../lib/strftime';
+import { plinkRoute } from '../../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -24,7 +25,9 @@ export default class Profile extends Component {
 	state = {
 		pushButtonName: 'Сохранить',
 		pushFunction: 'profile_push',
-		pushError: 'Ошибка записи'
+		pushError: 'Ошибка записи',
+		notAuthorizedRouteUrl: '/login',
+		header: 'Профиль'
 	}
 
 	storePaths = new Map([
@@ -33,6 +36,21 @@ export default class Profile extends Component {
 			{ path: 'auth', alias: 'auth' }
 		]
 	])
+
+	didMount() {
+		disp(store => store.cmpSetIn(headerTitleStorePath, this.state.header).
+			deleteIn(headerSearchStorePath));
+	}
+
+	didSetState({ isPulled, auth, authorizedRouteUrl, notAuthorizedRouteUrl }) {
+		const url = auth && auth.authorized
+			? authorizedRouteUrl : notAuthorizedRouteUrl;
+
+		if (url)
+			route(url, true);
+		else if (!isPulled)
+			this.pull();
+	}
 
 	allFields = {}
 	requiredFields = []
@@ -44,18 +62,6 @@ export default class Profile extends Component {
 	}
 
 	isLoading = (state, callback) => this.setState({ isLoading: state, isPulled: true }, callback)
-
-	didSetState({ auth, isPulled }) {
-		if (!auth || !auth.authorized)
-			route('/login', true);
-		else {
-			disp(store => store.cmpSetIn(headerTitleStorePath, 'Профиль').
-				deleteIn(headerSearchStorePath));
-
-			if (!isPulled)
-				this.pull();
-		}
-	}
 
 	fieldInputValidator = (field, display) => {
 		this.allFields[field] = display;
@@ -305,7 +311,8 @@ export default class Profile extends Component {
 
 	push = e => {
 		const { state, pushSuccessorHook } = this;
-		const { auth, pushFunction, pushError } = state;
+		const { pushFunction, pushError } = state;
+		const auth = state.auth2 ? state.auth2 : state.auth;
 		const user = this.user === undefined ? auth.user : this.user;
 		const email = this.email === undefined ? auth.email : this.email;
 		const pass = this.pass === undefined ? auth.pass : this.pass;
@@ -364,7 +371,7 @@ export default class Profile extends Component {
 
 	pull = e => {
 		const { state } = this;
-		const { auth } = state;
+		const auth = state.auth2 ? state.auth2 : state.auth;
 		const user = this.user === undefined ? auth.user : this.user;
 		const pass = this.pass === undefined ? auth.pass : this.pass;
 		const r = {
@@ -428,14 +435,10 @@ export default class Profile extends Component {
 		e && this.snackbar.MDComponent.show({ message: e });
 	}
 
-	linkTo = path => e => {
-		e.stopPropagation();
-		e.preventDefault();
-		route(path);
-	}
+	linkTo = path => plinkRoute(path)
 
 	render(props, state) {
-		const { auth } = state;
+		const auth = state.auth2 ? state.auth2 : state.auth;
 
 		if (auth === undefined)
 			return undefined;
@@ -452,7 +455,6 @@ export default class Profile extends Component {
 		const phone = this.phone !== undefined ? this.phone : profile.phone;
 
 		const {
-			isPulled,
 			valid,
 			userError,
 			emailError,
@@ -464,7 +466,7 @@ export default class Profile extends Component {
 			phoneError
 		} = state;
 
-		const isLoading = state.isLoading || !isPulled;
+		const isLoading = state.isLoading;
 
 		const userField = (
 			<TextField autocomplete="off" helperTextPersistent

@@ -340,8 +340,7 @@ class State {
 		return this;
 	}
 
-	static mPubIn(node, key, value) {
-	}
+	static mPubIn() {}
 
 	pubIn(path, mutateLevels = 1) {
 		this.checkDispatched().getNode(path, true, mutateLevels, State.mPubIn);

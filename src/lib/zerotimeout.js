@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import wog from 'window-or-global';
 import Deque from 'double-ended-queue';
+import { prevent } from './util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -10,11 +11,10 @@ class ZeroTimeout {
 
 	static messageHandler(e) {
 		if (e.source === wog && e.data === ZeroTimeout.messageName) {
-			e.stopPropagation();
-			e.preventDefault();
-			
 			while (!ZeroTimeout.timeouts.isEmpty())
 				ZeroTimeout.timeouts.shift()(e);
+
+			return prevent(e);
 		}
 	}
 

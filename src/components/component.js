@@ -3,6 +3,23 @@ import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
 //import { shallowEqual } from '../lib/util';
 //------------------------------------------------------------------------------
+function pubStorePaths(storePaths) {
+	return disp(state => {
+		const paths = storePaths.values();
+
+		for (const data of paths)
+			if (Array.isArray(data))
+				for (const { path } of data)
+					state = state.pubIn(path);
+			else if (data.constructor === Object || data instanceof Object)
+				state = state.pubIn(data.path);
+			else
+				state = state.pubIn(data);
+
+		return state;
+	});
+}
+//------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Component extends PreactComponent {
@@ -16,13 +33,12 @@ export default class Component extends PreactComponent {
 
 	setState(state, callback) {
 		const { willSetState, didSetState } = this;
-		let cb = callback;
-		
-		if (didSetState)
-			cb = () => {
+		const cb = didSetState ?
+			() => {
 				didSetState.call(this, this.state, state);
 				callback && callback();
-			};
+			}
+			: callback;
 
 		willSetState && willSetState.call(this, state);
 		return super.setState.call(this, state, cb);
@@ -36,26 +52,60 @@ export default class Component extends PreactComponent {
 
 	// after the component gets mounted to the DOM
 	componentDidMount() {
-		const { didMount, mount, props, state, context } = this;
-		didMount && didMount.call(this);
-		mount && mount.call(this, props, state, context);
-		this._reinitialize();
+		const { didMount } = this;
+
+		if (didMount)
+			didMount.call(this, this.props);
+
+		const { mount } = this;
+
+		if (mount) {
+			mount.call(this, this.props);
+			this.__mount = true;
+		}
+			
+		const { storePaths } = this;
+
+		if (storePaths && subscribe(storePaths))
+			pubStorePaths(storePaths);
 	}
 
 	// prior to removal from the DOM
 	componentWillUnmount() {
 		const { willUnmount } = this;
 		willUnmount && willUnmount.call(this);
-		this._deinitialize();
+		const { storePaths } = this;
+		storePaths && unsubscribe(storePaths);
 	}
 
 	// before new props get accepted
 	componentWillReceiveProps(props, context) {
-		this._deinitialize();
-		const { willReceiveProps, mount, state } = this;
-		willReceiveProps && willReceiveProps.call(this, props, context);
-		mount && mount.call(this, props, state, context);
-		this._reinitialize();
+		const { willReceiveProps } = this;
+		const curStorePaths = this.storePaths;
+		
+		if (willReceiveProps)
+			willReceiveProps.call(this, props);
+
+		const { mount } = this;
+
+		if (mount) {
+			if (!this.__mount)
+				mount.call(this, props);
+
+			delete this.__mount;
+		}
+	
+		const { storePaths } = this;
+
+		if (curStorePaths !== storePaths) {
+			unsubscribe(curStorePaths);
+
+			if (storePaths)
+				subscribe(storePaths);
+		}
+
+		if (storePaths)
+			pubStorePaths(storePaths);
 	}
 
 	// before render(). Return false to skip render
@@ -82,45 +132,5 @@ export default class Component extends PreactComponent {
 
 	// 	this.setState(state, callback);
 	// }
-
-	// private
-
-	// called from componentWillReceiveProps, componentDidMount
-	_reinitialize() {
-		const { storePaths, storeDisp, storeTrailer } = this;
-
-		if (storePaths && subscribe(storePaths)) {
-			this._storeSubscription = true;
-
-			const functor = state => {
-				const paths = storePaths.values();
-
-				for (const data of paths)
-					if (Array.isArray(data))
-						for (const { path } of data)
-							state = state.pubIn(path);
-					else if (data.constructor === Object || data instanceof Object)
-						state = state.pubIn(data.path);
-					else
-						state = state.pubIn(data);
-
-				if (storeDisp)
-					state = storeDisp.call(this, state, this.props, this.state, this.context);
-
-				return state;
-			};
-			const trailer = storeTrailer
-				&& (store => storeTrailer.call(this, this.props, this.state, this.context, store));
-
-			disp(functor, trailer);
-		}
-	}
-
-	// called from componentWillReceiveProps, componentWillUnmount
-	_deinitialize() {
-		const { storePaths, _storeSubscription } = this;
-		storePaths && _storeSubscription && unsubscribe(storePaths);
-		delete this._storeSubscription;
-	}
 }
 //------------------------------------------------------------------------------

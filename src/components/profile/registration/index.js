@@ -11,12 +11,14 @@ const registration = 'Регистрация';
 //------------------------------------------------------------------------------
 export default class Registration extends Profile {
 	state = {
-		auth: {},
+		auth2: {},
 		isPulled: true,
 		notUseLogoutButton: true,
 		pushButtonName: registration,
 		pushFunction: 'registration',
-		pushError: 'Ошибка регистрации'
+		pushError: 'Ошибка регистрации',
+		authorizedRouteUrl: '/profile',
+		header: registration
 	}
 
 	requiredFields = [
@@ -31,14 +33,6 @@ export default class Registration extends Profile {
 
 	willMount() {
 		this.validateAllFields();
-	}
-
-	didSetState({ auth }) {
-		if (auth && auth.authorized)
-			route('/profile', true);
-		else
-			disp(store => store.cmpSetIn(headerTitleStorePath, registration).
-				deleteIn(headerSearchStorePath));
 	}
 
 	pushSuccessorHook(result) {

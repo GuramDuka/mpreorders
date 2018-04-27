@@ -7,12 +7,12 @@ import 'preact-material-components/Button/style.css';
 //import 'preact-material-components/IconToggle/style.css';
 import Checkbox from 'preact-material-components/Checkbox';
 import 'preact-material-components/Checkbox/style.css';
-import { route } from 'preact-router';
 import Component from '../../components/component';
 import disp from '../../lib/store';
 import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
 import style from './style';
+import { prevent, plinkRoute } from '../../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -20,96 +20,66 @@ export default class Categories extends Component {
 	storePaths = new Map([
 		[
 			state => this.setState(state),
-			{
-				path: storePrefix + '.list',
-				alias: 'list'
-			}
+			{ path: storePrefix + '.list', alias: 'list' }
 		]
 	])
 
-	didSetState({ list }) {
-		if (list && list.rows)
-			disp(store => store.cmpSetIn(headerTitleStorePath, 'Категории')
-				.deleteIn(headerSearchStorePath));
-		else
-			loader.call(this);
+	didMount() {
+		disp(store => store.cmpSetIn(headerTitleStorePath, 'Категории')
+			.deleteIn(headerSearchStorePath));
 	}
 
-	linkTo = path => e => {
-		e.stopPropagation();
-		e.preventDefault();
-		route(path);
+	mount() {
+		loader.call(this);
 	}
+
+	linkTo = path => plinkRoute(path)
 
 	goCategory = (link, page = 1, pageSize = 40) =>
 		this.linkTo('/category/' + link + '/' + page + ',' + pageSize);
 
 	handleCategoriesCheckList = link => e => {
-		e.stopPropagation();
-		e.preventDefault();
+		let { checked } = this.state;
+		checked || (checked = {});
+		checked[link] = e.target.checked;
 
-		const { rows } = this.state.list;
-		const row = rows.find(v => v.link === link);
-		row.checked = e.target.checked;
-		row.disabled = row.checked;
-
-		let a = 0;
-
-		for (const v of rows)
-			a += ~~v.checked;
-
-		this.setState({ checkedCategories: a > 1 });
+		// eslint-disable-next-line
+		this.setState({ checked: checked });
+		return prevent(e);
 	}
 
 	style = [style.categories, 'mdc-toolbar-fixed-adjust'].join(' ');
 
-	render(props, { list, checkedCategories }) {
+	render(props, { list, checked }) {
 		if (list === undefined || list.rows === undefined)
 			return undefined;
 
-		// const toggleOnIcon = {
-		// 	content: 'check_circle',
-		// 	label: 'Remove From checklist'
-		// };
-		// const toggleOffIcon = {
-		// 	content: 'check',
-		// 	label: 'Add to checklist'
-		// };
+		checked || (checked = {});
+		const checkedKeys = Object.keys(checked);
 
-		const items = list.rows.map(({ link, name, checked, disabled }) => (
+		const items = list.rows.map(({ link, name }) => (
 			<List.Item key={link}>
-				{/*<IconToggle
-					role="button"
-					tabindex="0"
-					aria-pressed="false"
-					aria-label="Add to checklist"
-					data-toggle-on={toggleOnIcon}
-					data-toggle-off={toggleOffIcon}
-					onChange={this.handleCategoriesCheckList(link)}
-				/>*/}
 				<Checkbox
-					checked={checked}
+					checked={checked[link]}
 					onChange={this.handleCategoriesCheckList(link)}
 				/>
 				<Button unelevated
-					disabled={disabled}
+					disabled={checked[link] && checkedKeys.length > 1}
 					onClick={this.goCategory(link)}
 				>
 					{name}
 				</Button>
 			</List.Item>));
 
-		if (checkedCategories) {
-			const click = this.goCategory(
-				list.rows.reduce((a, v) => a + (v.checked ? ',' + v.link : ''), '').substr(1)
-			);
-			const item = (
+		if (checkedKeys.length > 1)
+			items.push((
 				<List.Item>
-					<Button unelevated onClick={click}>Открыть выбранные</Button>
-				</List.Item>);
-
-			items.push(item);
-		}
+					<Button unelevated
+						onClick={this.goCategory(checkedKeys.join(','))}
+					>
+						Открыть выбранные
+					</Button>
+				</List.Item>));
 
 		return (
 			<div class={this.style}>

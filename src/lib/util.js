@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 import wog from 'window-or-global';
+import { route } from 'preact-router';
 //------------------------------------------------------------------------------
 export function isDevelopment() {
 	return (wog.process
@@ -300,5 +301,30 @@ export function serializeURIParams(params) {
 	}
 
 	return parts;
+}
+//------------------------------------------------------------------------------
+export function prevent(e) {
+	if (e) {
+		if (e.stopImmediatePropagation)
+			e.stopImmediatePropagation();
+
+		if (e.stopPropagation)
+			e.stopPropagation();
+
+		e.preventDefault();
+	}
+	return false;
+}
+//------------------------------------------------------------------------------
+export function preventRoute(e, path) {
+	route(path);
+	return prevent(e);
+}
+//------------------------------------------------------------------------------
+export function plinkRoute(path) {
+	return e => {
+		route(path);
+		return prevent(e);
+	};
 }
 //------------------------------------------------------------------------------

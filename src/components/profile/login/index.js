@@ -14,6 +14,7 @@ import style from './style';
 import { headerTitleStorePath, headerSearchStorePath } from '../../../const';
 import { successor, failer, starter } from '../../load';
 import disp from '../../../lib/store';
+import { plinkRoute } from '../../../lib/util';
 //import setZeroTimeout from '../../../lib/zerotimeout';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
@@ -26,15 +27,17 @@ export default class Login extends Component {
 		]
 	])
 
-	isLoading = (state, callback) => this.setState({ isLoading: state }, callback)
+	didMount() {
+		disp(store => store.cmpSetIn(headerTitleStorePath, 'Авторизация').
+			deleteIn(headerSearchStorePath));
+	}
 
 	didSetState({ auth }) {
 		if (auth && auth.authorized)
 			route('/', true);
-		else
-			disp(store => store.cmpSetIn(headerTitleStorePath, 'Авторизация').
-				deleteIn(headerSearchStorePath));
 	}
+
+	isLoading = (state, callback) => this.setState({ isLoading: state }, callback)
 
 	fieldInput = field => e => this[field] = e.target.value
 
@@ -86,11 +89,7 @@ export default class Login extends Component {
 		);
 	}
 
-	linkTo = path => e => {
-		e.stopPropagation();
-		e.preventDefault();
-		route(path);
-	}
+	linkTo = path => plinkRoute(path)
 
 	goRegistration = this.linkTo('/registration')
 

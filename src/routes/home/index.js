@@ -13,8 +13,9 @@ import disp from '../../lib/store';
 export default class Home extends Component {
 	storePaths = new Map()
 
-	mount() {
-		return disp(store => store.setIn(headerTitleStorePath, '').deleteIn(headerSearchStorePath));
+	didMount() {
+		disp(store => store.setIn(headerTitleStorePath, 'Главная').
+			deleteIn(headerSearchStorePath));
 	}
 
 	style = [style.home, 'mdc-toolbar-fixed-adjust'].join(' ')

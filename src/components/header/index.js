@@ -21,17 +21,22 @@ import Title from './title';
 import 'preact-material-components/Theme/style.css';
 import { headerSearchStorePath } from '../../const';
 import disp from '../../lib/store';
+import { prevent } from '../../lib/util';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
 	storePaths = new Map([
 		[
-			(state, store) => this.setState(
-				{ ...state, searchProps: store.getIn(state.searchStorePath, {}) }
-			),
-			[
-				{ path: 'auth', alias: 'auth' },
-				{ path: headerSearchStorePath, alias: 'searchStorePath' }
-			]
+			state => this.setState(state),
+			{ path: 'auth', alias: 'auth' }
+		],
+		[
+			(state, store) => this.setState({
+				...state,
+				searchProps: store.getIn(state.searchStorePath),
+				searchFilter: store.getIn(state.searchStorePath + '.filter'),
+				searchStock: store.getIn(state.searchStorePath + '.stock')
+			}),
+			{ path: headerSearchStorePath, alias: 'searchStorePath' }
 		]
 	])
 
@@ -44,10 +49,9 @@ export default class Header extends Component {
 	searchRef = e => this.search = e
 
 	linkTo = path => e => {
-		e.stopPropagation();
-		e.preventDefault();
 		route(path);
 		this.closeDrawer();
+		return prevent(e);
 	}
 
 	goHome = this.linkTo('/')
@@ -59,9 +63,6 @@ export default class Header extends Component {
 	goCart = this.linkTo('/cart')
 
 	toggleDarkTheme = e => {
-		e.stopPropagation();
-		e.preventDefault();
-
 		this.setState(
 			{ darkThemeEnabled: !this.state.darkThemeEnabled },
 			() => {
@@ -73,18 +74,17 @@ export default class Header extends Component {
 					classList.remove('mdc-theme--dark');
 			}
 		);
+		return prevent(e);
 	}
 
 	searchFilterInput = e => {
-		e.stopPropagation();
-		e.preventDefault();
 		this.setState({ searchFilter: e.target.value });
+		return prevent(e);
 	}
 
 	searchStockChange = e => {
-		e.stopPropagation();
-		e.preventDefault();
 		this.setState({ searchStock: e.target.checked });
+		return prevent(e);
 	}
 
 	searchDialogApplyClick = e => {
@@ -92,10 +92,16 @@ export default class Header extends Component {
 		const { searchStorePath, searchFilter, searchStock } = state;
 
 		disp(state => {
-			if (searchFilter !== undefined)
+			if (searchFilter !== undefined && searchFilter.trim().length !== 0)
 				state = state.setIn(searchStorePath + '.filter', searchFilter);
-			if (searchStock !== undefined)
+			else
+				state = state.deleteIn(searchStorePath + '.filter');
+
+			if (searchStock)
 				state = state.setIn(searchStorePath + '.stock', searchStock);
+			else
+				state = state.deleteIn(searchStorePath + '.stock');
+
 			return state;
 		});
 	}
@@ -109,8 +115,8 @@ export default class Header extends Component {
 			</Toolbar.Icon>) : undefined;
 
 		const searchNotChanged =
-			(searchFilter === undefined || searchFilter === searchProps.filter) &&
-			(searchStock === undefined || searchStock === searchProps.stock);
+			(searchFilter === undefined || searchProps === undefined || searchFilter === searchProps.filter) &&
+			(searchStock === undefined || searchProps === undefined || searchStock === searchProps.stock);
 
 		const searchDialog = searchProps ? (
 			<Dialog ref={this.searchRef}>
@@ -121,7 +127,7 @@ export default class Header extends Component {
 						helperTextPersistent
 						fullwidth
 						trailingIcon="search"
-						value={searchFilter !== undefined ? searchFilter : searchProps.filter}
+						value={searchFilter}
 						onInput={this.searchFilterInput}
 					>
 						<Icon>menu</Icon>
@@ -129,7 +135,7 @@ export default class Header extends Component {
 					<span>Имеющиеся в наличии&nbsp;&nbsp;</span>
 					<Switch
 						onChange={this.searchStockChange}
-						checked={searchStock !== undefined ? searchStock : searchProps.stock}
+						checked={searchStock}
 					/>
 				</Dialog.Body>
 				<Dialog.Footer>
