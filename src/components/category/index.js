@@ -35,7 +35,8 @@ export default class Category extends Component {
 					const { list } = s;
 
 					this.setState(s, list === undefined ? undefined :
-						() => disp(state => state.cmpSetIn(headerTitleStorePath, list.category.name))
+						() => disp(state => state.cmpSetIn(
+							headerTitleStorePath, list.category.name))
 					);
 				},
 				{ path: storePath + '.list.' + page, alias: 'list' }
