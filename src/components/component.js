@@ -111,6 +111,7 @@ export default class Component extends PreactComponent {
 	// before render(). Return false to skip render
 	shouldComponentUpdate(props, state, context) {
 		const { shouldUpdate } = this;
+		delete this.__mount;
 		return shouldUpdate ? shouldUpdate.call(this, props, state, context) : true;
 	}
 
