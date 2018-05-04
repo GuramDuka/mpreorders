@@ -6,6 +6,8 @@ export const headerTitleStorePath = 'header.title';
 export const headerSearchStorePath = 'header.search';
 export const loaderSpinnerStorePath = 'header.spinner.active';
 //------------------------------------------------------------------------------
+export const inputFieldHelperTextClasses = 'mdc-text-field-helper-text mdc-text-field-helper-text--persistent mdc-text-field-helper-text mdc-text-field-helper-text--persistent';
+//------------------------------------------------------------------------------
 export const termsOfUseAndPrivacyPolicy = `
 Настоящие УСЛОВИЯ ИСПОЛЬЗОВАНИЯ Сайта являются официальным документом Клиника
 доктора Блюма (ИНН 7728741960, адрес: г. Москва, Ленинский проспект 131,

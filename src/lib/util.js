@@ -27,6 +27,10 @@ export function isPrimitiveValue(v) {
 		|| v.constructor === Symbol || v instanceof Symbol;
 }
 //------------------------------------------------------------------------------
+export function bXOR(b1, b2) {
+	return !!(~~!!b1 ^ ~~!!b2);
+}
+//------------------------------------------------------------------------------
 export function sscat(delimiter, ...args) {
 	let s = '';
 

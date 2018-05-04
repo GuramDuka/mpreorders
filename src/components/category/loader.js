@@ -19,7 +19,7 @@ export default function loader() {
 		index: (page - 1) * pageSize
 	};
 
-	if (order)
+	if (order && Object.keys(order).length !== 0)
 		r.order = order;
 
 	if (filter)

@@ -3,23 +3,6 @@ import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
 //import { shallowEqual } from '../lib/util';
 //------------------------------------------------------------------------------
-function pubStorePaths(storePaths) {
-	return disp(state => {
-		const paths = storePaths.values();
-
-		for (const data of paths)
-			if (Array.isArray(data))
-				for (const { path } of data)
-					state = state.pubIn(path);
-			else if (data.constructor === Object || data instanceof Object)
-				state = state.pubIn(data.path);
-			else
-				state = state.pubIn(data);
-
-		return state;
-	});
-}
-//------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Component extends PreactComponent {
@@ -60,14 +43,14 @@ export default class Component extends PreactComponent {
 		const { mount } = this;
 
 		if (mount) {
-			mount.call(this, this.props);
+			mount.call(this, this.props, this.state);
 			this.__mount = true;
 		}
 			
 		const { storePaths } = this;
 
 		if (storePaths && subscribe(storePaths))
-			pubStorePaths(storePaths);
+			disp(state => state.pubIn(storePaths));
 	}
 
 	// prior to removal from the DOM
@@ -81,7 +64,8 @@ export default class Component extends PreactComponent {
 	// before new props get accepted
 	componentWillReceiveProps(props, context) {
 		const { willReceiveProps } = this;
-		const curStorePaths = this.storePaths;
+
+		this.storePaths && unsubscribe(this.storePaths);
 		
 		if (willReceiveProps)
 			willReceiveProps.call(this, props);
@@ -90,22 +74,15 @@ export default class Component extends PreactComponent {
 
 		if (mount) {
 			if (!this.__mount)
-				mount.call(this, props);
+				mount.call(this, props, this.state);
 
 			delete this.__mount;
 		}
 	
 		const { storePaths } = this;
 
-		if (curStorePaths !== storePaths) {
-			unsubscribe(curStorePaths);
-
-			if (storePaths)
-				subscribe(storePaths);
-		}
-
-		if (storePaths)
-			pubStorePaths(storePaths);
+		if (storePaths && subscribe(storePaths))
+			disp(state => state.pubIn(storePaths));
 	}
 
 	// before render(). Return false to skip render

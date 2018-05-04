@@ -13,7 +13,11 @@ import 'preact-material-components/Radio/style.css';
 import Snackbar from 'preact-material-components/Snackbar';
 import 'preact-material-components/Snackbar/style.css';
 import style from './style';
-import { headerTitleStorePath, headerSearchStorePath } from '../../const';
+import {
+	headerTitleStorePath,
+	headerSearchStorePath,
+	inputFieldHelperTextClasses
+} from '../../const';
 import { successor, failer, starter } from '../load';
 import disp from '../../lib/store';
 import { strftime } from '../../lib/strftime';
@@ -570,7 +574,7 @@ export default class Profile extends Component {
 						Другое
 					</label>
 				</div>
-				<p aria-hidden class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent mdc-text-field-helper-text mdc-text-field-helper-text--persistent">
+				<p aria-hidden class={inputFieldHelperTextClasses}>
 					{genderError ? 'Пол (' + genderError + ')' : this.allFields.gender}
 				</p>
 			</div>);

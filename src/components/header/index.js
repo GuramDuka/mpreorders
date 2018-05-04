@@ -15,27 +15,64 @@ import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
 import Icon from 'preact-material-components/Icon';
 import 'preact-material-components/Icon/style.css';
+import Select from 'preact-material-components/Select';
+import 'preact-material-components/Menu/style.css';
+import 'preact-material-components/Select/style.css';
 import Spinner from './spinner';
 import Title from './title';
-//import style from './style';
 import 'preact-material-components/Theme/style.css';
-import { headerSearchStorePath } from '../../const';
+import {
+	headerSearchStorePath,
+	inputFieldHelperTextClasses
+} from '../../const';
 import disp from '../../lib/store';
 import { prevent } from '../../lib/util';
+import style from './style';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
+	searchPropsReceiver = state => this.setState(state)
+
+	searchPropsSubscriber = (state, store) => {
+		const { storePaths, searchPropsReceiver } = this;
+		const { searchStorePath } = state;
+		const cb = searchStorePath && !storePaths.has(searchPropsReceiver) ? () => {
+			const path = [
+				{
+					path: searchStorePath,
+					alias: 'searchProps'
+				},
+				{
+					path: searchStorePath + '.order.field',
+					alias: 'searchOrderField'
+				},
+				{
+					path: searchStorePath + '.order.direction',
+					alias: 'searchOrderDirection'
+				},
+				{
+					path: searchStorePath + '.filter',
+					alias: 'searchFilter'
+				},
+				{
+					path: searchStorePath + '.stock',
+					alias: 'searchStock'
+				}
+			];
+			storePaths.set(searchPropsReceiver, path);
+			store.subscribe(searchPropsReceiver, path);
+			disp(state => state.pubIn(path));
+		} : undefined;
+
+		this.setState(state, cb);
+	}
+
 	storePaths = new Map([
 		[
 			state => this.setState(state),
 			{ path: 'auth', alias: 'auth' }
 		],
 		[
-			(state, store) => this.setState({
-				...state,
-				searchProps: store.getIn(state.searchStorePath),
-				searchFilter: store.getIn(state.searchStorePath + '.filter'),
-				searchStock: store.getIn(state.searchStorePath + '.stock')
-			}),
+			this.searchPropsSubscriber,
 			{ path: headerSearchStorePath, alias: 'searchStorePath' }
 		]
 	])
@@ -78,45 +115,113 @@ export default class Header extends Component {
 	}
 
 	searchFilterInput = e => {
-		this.setState({ searchFilter: e.target.value });
+		const v = e.target.value.trim();
+		this.setState({ searchFilter: v.length !== 0 ? v : undefined });
 		return prevent(e);
 	}
 
 	searchStockChange = e => {
-		this.setState({ searchStock: e.target.checked });
+		const v = e.target.checked;
+		this.setState({ searchStock: v ? v : undefined });
+		return prevent(e);
+	}
+
+	searchOrderFields = [
+		'code',
+		'name',
+		'price',
+		'remainder',
+		'article'
+	]
+
+	searchOrderFieldChange = e => {
+		const v = this.searchOrderFields[e.target.selectedIndex - 1];
+		this.setState({ searchOrderField: v !== 'name' ? v : undefined });
+		return prevent(e);
+	}
+
+	searchOrderDirections = [
+		'asc',
+		'desc'
+	]
+
+	searchOrderDirectionChange = e => {
+		const v = this.searchOrderDirections[e.target.selectedIndex - 1];
+		this.setState({ searchOrderDirection: v !== 'asc' ? v : undefined });
 		return prevent(e);
 	}
 
 	searchDialogApplyClick = e => {
-		const { state } = this;
-		const { searchStorePath, searchFilter, searchStock } = state;
+		const {
+			searchStorePath,
+			searchOrderField,
+			searchOrderDirection,
+			searchFilter,
+			searchStock
+		} = this.state;
 
-		disp(state => {
-			if (searchFilter !== undefined && searchFilter.trim().length !== 0)
-				state = state.setIn(searchStorePath + '.filter', searchFilter);
-			else
-				state = state.deleteIn(searchStorePath + '.filter');
-
-			if (searchStock)
-				state = state.setIn(searchStorePath + '.stock', searchStock);
-			else
-				state = state.deleteIn(searchStorePath + '.stock');
-
-			return state;
-		});
+		disp(state => state
+			.undefIn(searchStorePath + '.filter', searchFilter)
+			.flagIn(searchStorePath + '.stock', searchStock)
+			.undefIn(searchStorePath + '.order.field', searchOrderField, 2)
+			.undefIn(searchStorePath + '.order.direction', searchOrderDirection, 2)
+		);
 	}
 
-	render(props, { darkThemeEnabled, auth, searchProps, searchFilter, searchStock }) {
+	willSetState(state) {
+		const {
+			searchProps,
+			searchFilter,
+			searchOrderField,
+			searchOrderDirection,
+			searchStock
+		} = { ...this.state, ...state };
+
+		state.searchIconStyle = ['material-icons',
+			searchProps === undefined ||
+				(searchProps.order === undefined ||
+					searchProps.order.field === undefined &&
+					searchProps.order.direction === undefined) &&
+				searchProps.filter === undefined &&
+				searchProps.stock === undefined
+				? undefined : style.blink
+		].join(' ');
+
+		const orderFieldNotChanged = searchOrderField === (
+			searchProps === undefined || searchProps.order === undefined ? undefined : searchProps.order.field);
+		const orderDirectionNotChanged = searchOrderDirection === (
+			searchProps === undefined || searchProps.order === undefined ? undefined : searchProps.order.direction);
+		const filterNotChanged = searchFilter === (
+			searchProps === undefined ? undefined : searchProps.filter);
+		const stockNotChanged = searchStock === (
+			searchProps === undefined ? undefined : searchProps.stock);
+
+		state.searchNotChanged = orderFieldNotChanged &&
+			orderDirectionNotChanged &&
+			filterNotChanged &&
+			stockNotChanged
+			? true : undefined;
+	}
+
+	render(props, { darkThemeEnabled, auth,
+		searchIconStyle, searchNotChanged, searchProps,
+		searchOrderField, searchOrderDirection, searchStock, searchFilter }) {
 		const authorized = auth && auth.authorized;
 
 		const searchIcon = searchProps ? (
-			<Toolbar.Icon onClick={this.openSearch}>
+			<Toolbar.Icon onClick={this.openSearch}
+				className={searchIconStyle}
+			>
 				search
 			</Toolbar.Icon>) : undefined;
 
-		const searchNotChanged =
-			(searchFilter === undefined || searchProps === undefined || searchFilter === searchProps.filter) &&
-			(searchStock === undefined || searchProps === undefined || searchStock === searchProps.stock);
+		const searchOrderFieldIndex = this.searchOrderFields.indexOf(
+			searchOrderField !== undefined ? searchOrderField : 'name'
+		) + 1;
+
+		const searchOrderDirectionIndex = this.searchOrderDirections.indexOf(
+			searchOrderDirection !== undefined ? searchOrderDirection : 'asc'
+		) + 1;
 
 		const searchDialog = searchProps ? (
 			<Dialog ref={this.searchRef}>
@@ -134,14 +239,36 @@ export default class Header extends Component {
 					</TextField>
 					<span>Имеющиеся в наличии&nbsp;&nbsp;</span>
 					<Switch
-						onChange={this.searchStockChange}
 						checked={searchStock}
+						onChange={this.searchStockChange}
 					/>
+					<Select hintText="Поле сортировки"
+						selectedIndex={searchOrderFieldIndex}
+						onChange={this.searchOrderFieldChange}
+					>
+						<Select.Item>Код</Select.Item>
+						<Select.Item>Наименование</Select.Item>
+						<Select.Item>Цена</Select.Item>
+						<Select.Item>Остаток</Select.Item>
+						<Select.Item>Артикул</Select.Item>
+					</Select>
+					<p aria-hidden class={inputFieldHelperTextClasses}>
+						&nbsp;&nbsp;Выберите поле сортировки
+					</p>
+					<Select hintText="Направление сортировки"
+						selectedIndex={searchOrderDirectionIndex}
+						onChange={this.searchOrderDirectionChange}
+					>
+						<Select.Item>АБВ...ЭЮЯ</Select.Item>
+						<Select.Item>ЯЮЭ...ВБА</Select.Item>
+					</Select>
+					<p aria-hidden class={inputFieldHelperTextClasses}>
+						&nbsp;&nbsp;Выберите направление сортировки
+					</p>
 				</Dialog.Body>
 				<Dialog.Footer>
 					<Dialog.FooterButton
 						onClick={this.searchDialogApplyClick}
-						disabled={searchNotChanged}
 						accept
 					>
 						OK

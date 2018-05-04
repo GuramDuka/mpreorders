@@ -10,7 +10,7 @@ import { shallowEqual } from '../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-class State {
+class State { // must be singleton
 	topic = 'STORE'
 	actions = new Deque([])
 	trailers = []
@@ -104,6 +104,9 @@ class State {
 			return this;
 		}
 
+		if (path === undefined || path === null)
+			throw new Error('invalid path');
+		
 		if (path.constructor === Object || path instanceof Object)
 			return this.subscribe(functor, path.path, path.alias);
 
@@ -343,7 +346,17 @@ class State {
 	static mPubIn() {}
 
 	pubIn(path, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mPubIn);
+		if (Array.isArray(path))
+			for (const p of path)
+				this.pubIn(p, mutateLevels);
+		else if (path.constructor === Map || path instanceof Map)
+			for (const p of path)
+				this.pubIn(p[1], mutateLevels);
+		else if (path.constructor === Object || path instanceof Object)
+			this.pubIn(path.path, mutateLevels);
+		else
+			this.checkDispatched().getNode(path, true, mutateLevels, State.mPubIn);
+
 		return this;
 	}
 
@@ -407,6 +420,30 @@ class State {
 		return this;
 	}
 
+	static mFlagIn(node, key, value) {
+		if (value)
+			node[key] = true;
+		else
+			delete node[key];
+	}
+
+	flagIn(path, value, mutateLevels = 1) {
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mFlagIn, value);
+		return this;
+	}
+
+	static mUndefIn(node, key, value) {
+		if (value !== undefined)
+			node[key] = value;
+		else
+			delete node[key];
+	}
+
+	undefIn(path, value, mutateLevels = 1) {
+		this.checkDispatched().getNode(path, true, mutateLevels, State.mUndefIn, value);
+		return this;
+	}
+	
 	static mGetIn(node, key, defaultValue) {
 		const value = node[key];
 		return value === undefined ? defaultValue : value;
