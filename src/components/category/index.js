@@ -23,10 +23,7 @@ export default class Category extends Component {
 
 	storePaths = new Map([
 		[
-			state => {
-				console.log(state);
-				this.setState(state, () => loader.call(this));
-			},
+			state => this.setState(state, () => loader.call(this)),
 			[
 				this.varPath('order'),
 				this.varPath('filter'),

@@ -27,7 +27,7 @@ export default class Login extends Component {
 		]
 	])
 
-	didMount() {
+	mount() {
 		disp(store => store.cmpSetIn(headerTitleStorePath, 'Авторизация').
 			deleteIn(headerSearchStorePath));
 	}

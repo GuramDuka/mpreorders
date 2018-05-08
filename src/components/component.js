@@ -16,9 +16,6 @@ export default class Component extends PreactComponent {
 	//if (force || !shallowEqual(this.state, state))
 
 	setState(state, callback) {
-		if (this.dtrace)
-			this.dtrace();
-
 		if (this.willSetState)
 			this.willSetState(state);
 
@@ -43,9 +40,6 @@ export default class Component extends PreactComponent {
 
 	// 	before the component gets mounted to the DOM
 	componentWillMount() {
-		if (this.dtrace)
-			this.dtrace();
-
 		if (this.willMount)
 			this.willMount();
 	}
@@ -54,9 +48,6 @@ export default class Component extends PreactComponent {
 
 	// prior to removal from the DOM
 	componentWillUnmount() {
-		if (this.dtrace)
-			this.dtrace();
-
 		if (this.willUnmount)
 			this.willUnmount();
 
@@ -69,9 +60,6 @@ export default class Component extends PreactComponent {
 	
 	// after the component gets mounted to the DOM
 	componentDidMount() {
-		if (this.dtrace)
-			this.dtrace();
-
 		if (this.didMount)
 			this.didMount(this.props);
 
@@ -94,9 +82,6 @@ export default class Component extends PreactComponent {
 
 	// before new props get accepted
 	componentWillReceiveProps(props, context) {
-		if (this.dtrace)
-			this.dtrace();
-
 		if (this.willReceiveProps)
 			this.willReceiveProps(props);
 
@@ -111,9 +96,6 @@ export default class Component extends PreactComponent {
 
 	// before render(). Return false to skip render
 	shouldComponentUpdate(props, state, context) {
-		if (this.dtrace)
-			this.dtrace();
-
 		const r = this.shouldUpdate
 			? this.shouldUpdate(props, state, context)
 			: super.shouldComponentUpdate
@@ -125,9 +107,6 @@ export default class Component extends PreactComponent {
 
 	// before render()
 	componentWillUpdate(props, state, context) {
-		if (this.dtrace)
-			this.dtrace();
-
 		if (this.willUpdate)
 			this.willUpdate(props, state, context);
 	}
@@ -139,9 +118,6 @@ export default class Component extends PreactComponent {
 
 	// after render()
 	componentDidUpdate(previousProps, previousState, previousContext) {
-		if (this.dtrace)
-			this.dtrace();
-
 		if (this.didUpdate)
 			this.didUpdate(previousProps, previousState, previousContext);
 	}

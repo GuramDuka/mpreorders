@@ -41,7 +41,7 @@ export default class Profile extends Component {
 		]
 	])
 
-	didMount() {
+	mount() {
 		disp(store => store.cmpSetIn(headerTitleStorePath, this.state.header).
 			deleteIn(headerSearchStorePath));
 	}

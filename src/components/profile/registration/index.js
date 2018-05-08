@@ -31,7 +31,7 @@ export default class Registration extends Profile {
 		'fname'
 	]
 
-	willMount() {
+	mount() {
 		this.validateAllFields();
 	}
 

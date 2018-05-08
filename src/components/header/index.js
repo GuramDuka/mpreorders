@@ -30,10 +30,6 @@ import { prevent } from '../../lib/util';
 import style from './style';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
-	dtrace() {
-		this.__name = 'Header';
-	}
-
 	searchPathValidator = s => s === this.state.searchStorePath
 
 	searchPaths = [
