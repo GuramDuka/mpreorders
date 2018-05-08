@@ -30,41 +30,37 @@ import { prevent } from '../../lib/util';
 import style from './style';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
-	searchPropsReceiver = state => this.setState(state)
-
-	searchPropsSubscriber = (state, store) => {
-		const { storePaths, searchPropsReceiver } = this;
-		const { searchStorePath } = state;
-		const cb = searchStorePath && !storePaths.has(searchPropsReceiver) ? () => {
-			const path = [
-				{
-					path: searchStorePath,
-					alias: 'searchProps'
-				},
-				{
-					path: searchStorePath + '.order.field',
-					alias: 'searchOrderField'
-				},
-				{
-					path: searchStorePath + '.order.direction',
-					alias: 'searchOrderDirection'
-				},
-				{
-					path: searchStorePath + '.filter',
-					alias: 'searchFilter'
-				},
-				{
-					path: searchStorePath + '.stock',
-					alias: 'searchStock'
-				}
-			];
-			storePaths.set(searchPropsReceiver, path);
-			store.subscribe(searchPropsReceiver, path);
-			disp(state => state.pubIn(path));
-		} : undefined;
-
-		this.setState(state, cb);
+	dtrace() {
+		this.__name = 'Header';
 	}
+
+	searchPathValidator = s => s === this.state.searchStorePath
+
+	searchPaths = [
+		state => this.setState(state),
+		[
+			{
+				path: /^(.*)\.search\.order\.field$/,
+				alias: 'searchOrderField',
+				validator: this.searchPathValidator
+			},
+			{
+				path: /^(.*)\.search\.order\.direction$/,
+				alias: 'searchOrderDirection',
+				validator: this.searchPathValidator
+			},
+			{
+				path: /^(.*)\.search\.filter$/,
+				alias: 'searchFilter',
+				validator: this.searchPathValidator
+			},
+			{
+				path: /^(.*)\.search\.stock$/,
+				alias: 'searchStock',
+				validator: this.searchPathValidator
+			}
+		]
+	]
 
 	storePaths = new Map([
 		[
@@ -72,9 +68,24 @@ export default class Header extends Component {
 			{ path: 'auth', alias: 'auth' }
 		],
 		[
-			this.searchPropsSubscriber,
+			state => this.setState(state, () =>
+				disp(state => {
+					const r = /([a-z\xE0-\xFF])([A-Z\xC0\xDF])/g;
+					const [functor, paths] = this.searchPaths;
+
+					for (const { alias } of paths)
+						state = state.pubIn([
+							functor,
+							// replace for example searchOrderDirection to search.order.direction
+							this.state.searchStorePath + '.'
+							+ alias.replace(r, '$1.$2').toLowerCase()
+						]);
+					return state;
+				})
+			),
 			{ path: headerSearchStorePath, alias: 'searchStorePath' }
-		]
+		],
+		this.searchPaths
 	])
 
 	closeDrawer = e => this.drawer.MDComponent.open = false
@@ -161,54 +172,40 @@ export default class Header extends Component {
 		} = this.state;
 
 		disp(state => state
-			.undefIn(searchStorePath + '.filter', searchFilter)
-			.flagIn(searchStorePath + '.stock', searchStock)
-			.undefIn(searchStorePath + '.order.field', searchOrderField, 2)
-			.undefIn(searchStorePath + '.order.direction', searchOrderDirection, 2)
+			.undefIn(searchStorePath + '.search.filter', searchFilter)
+			.flagIn(searchStorePath + '.search.stock', searchStock)
+			.undefIn(searchStorePath + '.search.order.field', searchOrderField, 2)
+			.undefIn(searchStorePath + '.search.order.direction', searchOrderDirection, 2)
 		);
 	}
 
 	willSetState(state) {
 		const {
-			searchProps,
 			searchFilter,
 			searchOrderField,
 			searchOrderDirection,
 			searchStock
 		} = { ...this.state, ...state };
 
+		const changed =
+			searchOrderField !== undefined
+			|| searchOrderDirection !== undefined
+			|| searchFilter !== undefined
+			|| searchStock !== undefined;
+
 		state.searchIconStyle = ['material-icons',
-			searchProps === undefined ||
-				(searchProps.order === undefined ||
-					searchProps.order.field === undefined &&
-					searchProps.order.direction === undefined) &&
-				searchProps.filter === undefined &&
-				searchProps.stock === undefined
-				? undefined : style.blink
+			changed ? style.blink : undefined
 		].join(' ');
 
-		const orderFieldNotChanged = searchOrderField === (
-			searchProps === undefined || searchProps.order === undefined ? undefined : searchProps.order.field);
-		const orderDirectionNotChanged = searchOrderDirection === (
-			searchProps === undefined || searchProps.order === undefined ? undefined : searchProps.order.direction);
-		const filterNotChanged = searchFilter === (
-			searchProps === undefined ? undefined : searchProps.filter);
-		const stockNotChanged = searchStock === (
-			searchProps === undefined ? undefined : searchProps.stock);
-
-		state.searchNotChanged = orderFieldNotChanged &&
-			orderDirectionNotChanged &&
-			filterNotChanged &&
-			stockNotChanged
-			? true : undefined;
+		state.searchNotChanged = !changed;
 	}
 
-	render(props, { darkThemeEnabled, auth,
-		searchIconStyle, searchNotChanged, searchProps,
+	render(props, { darkThemeEnabled, auth, searchStorePath,
+		searchIconStyle, searchNotChanged,
 		searchOrderField, searchOrderDirection, searchStock, searchFilter }) {
 		const authorized = auth && auth.authorized;
 
-		const searchIcon = searchProps ? (
+		const searchIcon = searchStorePath ? (
 			<Toolbar.Icon onClick={this.openSearch}
 				className={searchIconStyle}
 			>
@@ -223,7 +220,7 @@ export default class Header extends Component {
 			searchOrderDirection !== undefined ? searchOrderDirection : 'asc'
 		) + 1;
 
-		const searchDialog = searchProps ? (
+		const searchDialog = searchStorePath ? (
 			<Dialog ref={this.searchRef}>
 				<Dialog.Header>Поиск</Dialog.Header>
 				<Dialog.Body>

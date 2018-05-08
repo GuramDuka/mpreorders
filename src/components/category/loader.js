@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 import { bfetch } from '../../backend';
 import disp from '../../lib/store';
-import { nullLink } from '../../const';
+import { nullLink, headerTitleStorePath } from '../../const';
 import { successor, failer, starter } from '../load';
 //------------------------------------------------------------------------------
 export const storePrefix = 'category';
@@ -10,9 +10,6 @@ export default function loader() {
 	const { page, pageSize, props, state } = this;
 	const { category } = props;
 	const { order, filter, stock } = state;
-	const storePath = storePrefix + '.' + category;
-	const storeListPath = storePath + '.list';
-	const storeListPagePath = storeListPath + '.' + page;
 	const r = {
 		type: 'products',
 		piece: pageSize,
@@ -27,7 +24,7 @@ export default function loader() {
 
 	if (stock !== undefined)
 		r.stock = stock;
-		
+
 	if (category !== undefined)
 		r.category = category;
 	else if (parent !== nullLink)
@@ -37,10 +34,9 @@ export default function loader() {
 		// eslint-disable-next-line
 		{ r: { m: 'dict', f: 'filter', r: r } },
 		successor(result =>
-			disp(store =>
-				store.setIn(storeListPagePath, result).
-					cmpSetIn(storeListPath + '.nostore', true)
-			)
+			this.setState({ list: result }, () =>
+				disp(store => store.cmpSetIn(
+					headerTitleStorePath, result.category.name)))
 		),
 		failer(),
 		starter()

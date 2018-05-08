@@ -5,7 +5,7 @@ import 'preact-material-components/Button/style.css';
 import Component from '../../components/component';
 import disp from '../../lib/store';
 import { plinkRoute } from '../../lib/util';
-import { headerTitleStorePath, headerSearchStorePath } from '../../const';
+import { headerSearchStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
 import style from './style';
 import Card from '../products/card';
@@ -14,6 +14,27 @@ import CardStyle from '../products/card/style';
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Category extends Component {
+	varPathValidator = s => s === this.props.category
+	varPath = name => ({
+		path: new RegExp('^' + storePrefix + '\\.(.*)\\.search\\.' + name + '$'),
+		alias: name,
+		validator: this.varPathValidator
+	})
+
+	storePaths = new Map([
+		[
+			state => {
+				console.log(state);
+				this.setState(state, () => loader.call(this));
+			},
+			[
+				this.varPath('order'),
+				this.varPath('filter'),
+				this.varPath('stock')
+			]
+		]
+	])
+
 	mount(props) {
 		// decode page props
 		let [page, pageSize] = props.pageProps.split(',');
@@ -25,33 +46,24 @@ export default class Category extends Component {
 
 		this.goPrev = this.goPage(page - 1);
 		this.goNext = this.goPage(page + 1);
-		
+
 		this.index = ((page > 0 ? page : 1) - 1) * pageSize;
-		const storePath = storePrefix + '.' + props.category;
+		this.storePath = storePrefix + '.' + props.category;
 
-		this.storePaths = new Map([
-			[
-				s => {
-					const { list } = s;
-
-					this.setState(s, list === undefined ? undefined :
-						() => disp(state => state.cmpSetIn(
-							headerTitleStorePath, list.category.name))
-					);
-				},
-				{ path: storePath + '.list.' + page, alias: 'list' }
-			],
-			[
-				state => this.setState(state, () => loader.call(this)),
-				[
-					{ path: storePath + '.order', alias: 'order' },
-					{ path: storePath + '.filter', alias: 'filter' },
-					{ path: storePath + '.stock', alias: 'stock' }
-				]
-			]
-		]);
-
-		disp(state => state.cmpSetIn(headerSearchStorePath, storePath));
+		disp(
+			state => {
+				state = state.cmpSetIn(headerSearchStorePath, this.storePath);
+				for (const [functor, paths] of this.storePaths.entries())
+					for (const { alias } of paths)
+						state = state.pubIn([
+							functor,
+							storePrefix + '.'
+							+ this.props.category + '.search.'
+							+ alias
+						]);
+				return state;
+			}
+		);
 	}
 
 	linkTo = path => plinkRoute(path);
@@ -59,7 +71,7 @@ export default class Category extends Component {
 	goPage = page => this.linkTo('/category/'
 		+ this.props.category + '/' + page + ',' + this.pageSize, page)
 	//goPrev = e => wog.history.back()
-	
+
 	style = [style.category, 'mdc-toolbar-fixed-adjust'].join(' ');
 
 	render(props, { list }) {

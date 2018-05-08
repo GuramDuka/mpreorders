@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
-import { nullLink } from './const';
+//import { nullLink } from './const';
 //------------------------------------------------------------------------------
 export const defaultState = {
-	version: 0,
-	metadataVersion: 7,
+	metaver: 7,
+	version: 0/*,
 	auth: {
 	},
 	header: {
@@ -23,6 +23,6 @@ export const defaultState = {
 				elements: true
 			}
 		}
-	}
+	}*/
 };
 //------------------------------------------------------------------------------

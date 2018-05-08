@@ -28,58 +28,56 @@
 //state = '(' + eval(state) + ')';
 //------------------------------------------------------------------------------
 function stringifyHelper(types, path, value, debug) {
-	if (value === undefined || value === null)
+	if (value === undefined || value === null
+		|| value.constructor === String || value instanceof String)
 		return JSON.stringify(value);
-
-	if (value.constructor === String || value instanceof String) {
-		// let r = value.replace(/'/g, '\\\'');
-		// r = r.replace(/\r/g, '\\r');
-		// r = r.replace(/\n/g, '\\n');
-		// return `'${r}'`;
-		return JSON.stringify(value);
-	}
 
 	if (Array.isArray(value)) {
 		let r = '';
 		const l = value.length;
 
 		for (let i = 0; i < l; i++) {
-			const p = `${path}.#${i}`;
-			const val = value[i];
+			const p = [1, ...path, i];
+			let val = value[i];
 
-			if (val === undefined)
-				types.undef.push(p.substr(1));
-			else
-				r += ',' + stringifyHelper(types, p, val);
+			if (val === undefined) {
+				types.push([1, ...path, i]);
+				val = 0;
+			}
+
+			r += ',' + stringifyHelper(types, [...path, i], val);
 		}
 
 		return `[${r.substr(1)}]`;
 	}
 
 	if (value.constructor === Set || value instanceof Set) {
-		types.sets.push(path.substr(1));
-		return stringifyHelper(types, path, value.values());
+		types.push([2, ...path]);
+		return stringifyHelper(types, path, Array.from(value));
 	}
 
 	if (value.constructor === Map || value instanceof Map) {
-		types.maps.push(path.substr(1));
-		return stringifyHelper(types, path, [...value]);
+		types.push([3, ...path]);
+		return stringifyHelper(types, path, Array.from(value));
 	}
 
 	if (value.constructor === Date || value instanceof Date) {
-		types.dates.push(path.substr(1));
+		types.push([4, ...path]);
 		return stringifyHelper(types, path, value.toISOString());
 	}
 
 	if (value.constructor === RegExp || value instanceof RegExp) {
-		types.regexp.push(path.substr(1));
-		return stringifyHelper(types, path, value.toString());
+		types.push([5, ...path]);
+		return stringifyHelper(types, path, {
+			source: value.source,
+			flags: value.flags
+		});
 	}
 
 	if (value.constructor === Object || value instanceof Object) {
 		if ((!!value.nostore) === true)
 			return '{}';
-	
+
 		const keys = Object.keys(value);
 		const l = keys.length;
 		let r = '';
@@ -87,12 +85,11 @@ function stringifyHelper(types, path, value, debug) {
 		for (let i = 0; i < l; i++) {
 			const key = keys[i];
 			const val = value[key];
-			const p = `${path}.${key}`;
 
 			if (val === undefined)
-				types.undef.push(p.substr(1));
+				types.push([1, ...path, key]);
 			else
-				r += `,${JSON.stringify(key)}:` + stringifyHelper(types, p, val);
+				r += `,${JSON.stringify(key)}:` + stringifyHelper(types, [...path, key], val);
 		}
 
 		return `{${r.substr(1)}}`;
@@ -102,73 +99,58 @@ function stringifyHelper(types, path, value, debug) {
 }
 //------------------------------------------------------------------------------
 export function stringify(value) {
-	const types = { undef: [], dates: [], sets: [], maps: [], regexp: [] };
-	const json = stringifyHelper(types, '', value);
-	// eslint-disable-next-line
-	return JSON.stringify({ json: json, types: types });
+	const types = [];
+	const json = stringifyHelper(types, [], value);
+
+	if (types.length === 0)
+		return json;
+
+	return `{ "json": ${json}, "types": ${JSON.stringify(types)} }`;
 }
 //------------------------------------------------------------------------------
 export function destringify(s) {
-	const state = JSON.parse(s);
-	const { types } = state, json = JSON.parse(state.json);
-	let i;
+	let json = JSON.parse(s);
 
-	for (const path of types.undef) {
-		const vPath = path.split('.');
-		let node = json;
+	const { types } = json, isHardTyped = Array.isArray(types)
+		&& types.length !== 0
+		&& json.json
+		&& (json.json.constructor === Object || json.json instanceof Object);
 
-		for (i = 0; i < vPath.length - 1; i++)
-			node = node[vPath[i]];
+	if (!isHardTyped)
+		return json;
 
-		node[vPath[i]] = undefined;
-	}
-	
-	for (const path of types.dates) {
-		const vPath = path.split('.');
-		let node = json;
+	json = json.json;
 
-		for (i = 0; i < vPath.length - 1; i++)
-			node = node[vPath[i]];
+	for (let j = types.length - 1; j >= 0; j--) {
+		const [type, ...path] = types[j];
+		let i = 0, l = path.length - 1, node = json;
 
-		const p = vPath[i];
-		node[p] = new Date(Date.parse(node[p]));
-	}
+		while (i < l)
+			node = node[path[i++]];
 
-	for (const path of types.sets) {
-		const vPath = path.split('.');
-		let node = json;
+		i = path[i];
 
-		for (i = 0; i < vPath.length - 1; i++)
-			node = node[vPath[i]];
-
-		const p = vPath[i];
-		node[p] = new Set(node[p]);
-	}
-
-	for (const path of types.maps) {
-		const vPath = path.split('.');
-		let node = json;
-
-		for (i = 0; i < vPath.length - 1; i++)
-			node = node[vPath[i]];
-
-		const p = vPath[i];
-		node[p] = new Map(node[p]);
+		switch (type) {
+			case 1:
+				node[i] = undefined;
+				break;
+			case 2:
+				node[i] = new Set(node[i]);
+				break;
+			case 3:
+				node[i] = new Map(node[i]);
+				break;
+			case 4:
+				node[i] = new Date(Date.parse(node[i]));
+				break;
+			case 5:
+				node[i] = new RegExp(node[i].source, node[i].flags);
+				break;
+			default:
+				break;
+		}
 	}
 
-	for (const path of types.regexp) {
-		const vPath = path.split('.');
-		let node = json;
-
-		for (i = 0; i < vPath.length - 1; i++)
-			node = node[vPath[i]];
-
-		const p = vPath[i];
-		const v = node[p];
-		const j = v.lastIndexOf('/') + 1;
-		node[p] = new RegExp(v.substr(0, j), v.substr(j));
-	}
-	
 	return json;
 }
 //------------------------------------------------------------------------------

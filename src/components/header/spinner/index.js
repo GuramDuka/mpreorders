@@ -11,7 +11,7 @@ export default class Spinner extends Component {
 			{ path: 'header.spinner.active', alias: 'active' }
 		]
 	])
-
+	
 	render(props, { active }) {
 		return active ? (
 			<Toolbar.Icon

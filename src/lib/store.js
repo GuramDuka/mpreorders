@@ -15,6 +15,7 @@ class State { // must be singleton
 	actions = new Deque([])
 	trailers = []
 	topicsSubscribers = new Map()
+	rTopicsSubscribers = new Map()
 	subscribers = new Map()
 	pushedSubscribers = new Map()
 
@@ -23,72 +24,92 @@ class State { // must be singleton
 	}
 
 	publish() {
-		const { messages, pushedSubscribers } = this;
-		let r = true;
+		const { pushedSubscribers } = this;
 
-		if (messages && pushedSubscribers && messages.length !== 0 && pushedSubscribers.size !== 0)
-			for (const [functor, msgs] of pushedSubscribers.entries())
-				functor(msgs, this);
-		else
-			r = false;
+		for (const [functor, msgs] of pushedSubscribers.entries())
+			functor(msgs, this);
 
 		// clear messages
 		delete this.messages;
 		pushedSubscribers.clear();
 
-		return r;
+		return this;
 	}
 
-	publishPath(vPath) {
-		// call not from inside disp
-		// antipattern, but only as an exception and it is the fastest method
-		// now this happens only from backend bfetch function for auth
-		if (this.mutatedPaths === undefined)
-			return;
+	pushTopicMessages(vPath, sPath, topicSubscribers, rPath, r, functor) {
+		let msg, t = functor ? [functor] : Array.from(topicSubscribers.values());
 
-		let i, sPath = '';
-
-		vPath.map(v => sPath += '.' + v.key);
-		sPath = sPath.substr(1);
-
-		const topicSubscribers = this.topicsSubscribers.get(sPath);
-
-		// if no one is subscribed to this path then return
-		if (topicSubscribers === undefined)
-			return;
-
-		if ((i = this.mutatedPaths[sPath]) === undefined)
-			this.mutatedPaths[sPath] = i = this.messages.length;
-
-		const v = vPath[vPath.length - 1];
-		const { key, node } = v;
-		const msg = { ...v, path: sPath, value: node[key] };
-
-		this.messages[i] = msg;
-
-		const { subscribers } = this;
-
-		for (const subscriber of topicSubscribers.values()) {
-			const data = subscribers.get(subscriber);
+		for (const subscriber of t) {
+			const data = this.subscribers.get(subscriber);
 
 			if (data === undefined)
 				throw new Error('invalid subscriber');
+
+			const validator = data.validators[rPath], valid = validator === undefined ? true :
+				validator.constructor === Function || validator instanceof Function
+					? validator(sPath.replace(r, '$1'), sPath, r)
+					: sPath === validator;
+
+			if (!valid)
+				continue;
+
+			if (msg === undefined) {
+				let i = this.mutatedPaths[sPath];
+
+				if (i === undefined)
+					this.mutatedPaths[sPath] = i = this.messages.length;
+
+				const v = vPath[vPath.length - 1];
+				const { key, node } = v;
+
+				this.messages[i] = msg = { ...v, path: sPath, value: node[key] };
+			}
 
 			let msgs = this.pushedSubscribers.get(subscriber);
 
 			if (msgs === undefined)
 				this.pushedSubscribers.set(subscriber, msgs = {});
 
-			const alias = data.aliases[sPath];
+			const path = rPath ? rPath : sPath;
+			const alias = data.aliases[path];
 
 			if (alias === undefined)
-				msgs[sPath] = msg;
+				msgs[path] = msg;
 			else
 				msgs[alias] = msg.value;
 		}
+
+		return this;
 	}
 
-	subscribe(functor, path, alias) {
+	publishPath(vPath, functor) {
+		// call not from inside disp
+		// antipattern, but only as an exception and it is the fastest method
+		// now this happens only from backend bfetch function for auth
+		if (this.mutatedPaths === undefined)
+			return;
+
+		let sPath = '';
+
+		for (const v of vPath)
+			sPath += '.' + v.key;
+
+		sPath = sPath.substr(1);
+
+		let topicSubscribers = this.topicsSubscribers.get(sPath);
+
+		// if no one is subscribed to this path then search within regexp subscribers
+		if (topicSubscribers === undefined) {
+			for (const [p, r] of this.rTopicsSubscribers.entries())
+				if (r.test(sPath))
+					this.pushTopicMessages(vPath, sPath, this.topicsSubscribers.get(p), p, r, functor);
+			return this;
+		}
+
+		return this.pushTopicMessages(vPath, sPath, topicSubscribers, undefined, undefined, functor);
+	}
+
+	subscribe(functor, path, alias, validator) {
 		if (functor === undefined || functor === null)
 			throw new Error('invalid subscriber');
 
@@ -106,17 +127,32 @@ class State { // must be singleton
 
 		if (path === undefined || path === null)
 			throw new Error('invalid path');
-		
-		if (path.constructor === Object || path instanceof Object)
-			return this.subscribe(functor, path.path, path.alias);
 
 		if (!(functor.constructor === Function || functor instanceof Function))
 			throw new Error('invalid subscriber');
 
-		let t = this.topicsSubscribers.get(path);
+		let t;
 
-		if (t === undefined)
-			this.topicsSubscribers.set(path, t = new Set());
+		if (path.constructor === RegExp || path instanceof RegExp) {
+			const p = stringify({ source: path.source, flags: path.flags });
+
+			t = this.topicsSubscribers.get(p);
+
+			if (t === undefined) {
+				this.rTopicsSubscribers.set(p, new RegExp(path.source, path.flags));
+				this.topicsSubscribers.set(p, t = new Set());
+			}
+			path = p;
+		}
+		else if (path.constructor === Object || path instanceof Object) {
+			return this.subscribe(functor, path.path, path.alias, path.validator);
+		}
+		else {
+			t = this.topicsSubscribers.get(path);
+
+			if (t === undefined)
+				this.topicsSubscribers.set(path, t = new Set());
+		}
 
 		if (t.has(functor))
 			throw new Error('subscriber already subscribed');
@@ -126,9 +162,14 @@ class State { // must be singleton
 		t = this.subscribers.get(functor);
 
 		if (t === undefined)
-			this.subscribers.set(functor, t = { aliases: {}, topics: 0 });
+			this.subscribers.set(functor, t = {
+				aliases: {},
+				validators: {},
+				topics: 0
+			});
 
 		t.aliases[path] = alias;
+		t.validators[path] = validator;
 		t.topics++;
 
 		return this;
@@ -150,10 +191,23 @@ class State { // must be singleton
 			return this;
 		}
 
-		if (path instanceof Object)
+		const s = this.subscribers.get(functor);
+
+		if (!s)
+			throw new Error('subscriber not subscribed');
+
+		if (path === undefined || path === null) {
+			for (const p of Object.keys(s.aliases))
+				this.unsubscribe(functor, p);
+			return this;
+		}
+
+		if (path.constructor === RegExp || path instanceof RegExp)
+			path = stringify({ source: path.source, flags: path.flags });
+		else if (path.constructor === Object || path instanceof Object)
 			return this.unsubscribe(functor, path.path);
 
-		let t = this.topicsSubscribers.get(path);
+		const t = this.topicsSubscribers.get(path);
 
 		if (t === undefined)
 			throw new Error('path not subscribed');
@@ -166,12 +220,12 @@ class State { // must be singleton
 
 		t.delete(functor);
 
-		if (t.size === 0)
+		if (t.size === 0) {
 			this.topicsSubscribers.delete(path);
+			this.rTopicsSubscribers.delete(path);
+		}
 
-		t = this.subscribers.get(functor);
-
-		if (--t.topics === 0)
+		if (--s.topics === 0)
 			this.subscribers.delete(functor);
 
 		return this;
@@ -191,10 +245,7 @@ class State { // must be singleton
 				throw new Error('invalid value');
 		}
 
-		store.stopDisp();
-
-		if (store.publish())
-			store.store();
+		store.stopDisp().publish().store();
 
 		for (const trailer of trailers)
 			trailer(store);
@@ -217,20 +268,22 @@ class State { // must be singleton
 		if (state !== undefined && state !== null) {
 			state = destringify(state);
 
-			if (defaultState.metadataVersion !== state.metadataVersion)
+			if (defaultState.metaver !== state.metaver)
 				state = defaultState;
 		}
 		else
 			state = defaultState;
 
-		state.version++;
 		this.root = state;
 	}
 
 	store() {
-		const { root } = this;
-		wog.localStorage.setItem('state', stringify(root));
-		root.version++;
+		if (this.dirty) {
+			const { root } = this;
+			root.version = (~~root.version) + 1;
+			wog.localStorage.setItem('state', stringify(root));
+			delete this.dirty;
+		}
 	}
 
 	startDisp() {
@@ -291,8 +344,10 @@ class State { // must be singleton
 			for (let i = 0; i < j; i++) {
 				const { key, node } = vPath[i];
 
-				if (node[key] !== (n = vPath[i + 1].node))
+				if (node[key] !== (n = vPath[i + 1].node)) {
 					node[key] = n;
+					this.dirty = true;
+				}
 			}
 		}
 
@@ -336,6 +391,7 @@ class State { // must be singleton
 
 	static mSetIn(node, key, value) {
 		node[key] = value;
+		this.dirty = true;
 	}
 
 	setIn(path, value, mutateLevels = 1) {
@@ -343,17 +399,53 @@ class State { // must be singleton
 		return this;
 	}
 
-	static mPubIn() {}
+	static mPubIn() { }
 
 	pubIn(path, mutateLevels = 1) {
-		if (Array.isArray(path))
-			for (const p of path)
+		if (Array.isArray(path)) {
+			const [functor, paths] = path;
+
+			if (functor.constructor === Function || functor instanceof Function) {
+				if (Array.isArray(paths))
+					for (const p of paths)
+						this.pubIn([functor, p], mutateLevels);
+				else {
+					const vPath = this.getPath(paths, true);
+
+					if (mutateLevels > vPath.length)
+						throw new Error('invalid mutate levels');
+
+					while (mutateLevels > 0) {
+						this.publishPath(vPath.slice(0, vPath.length), functor);
+						vPath.pop();
+						mutateLevels--;
+					}
+				}
+			}
+			else
+				for (const p of path)
+					this.pubIn(p, mutateLevels);
+		}
+		else if (path.constructor === Function || path instanceof Function) {
+			const s = this.subscribers.get(path);
+
+			if (!s)
+				throw new Error('subscriber not subscribed');
+
+			for (const p of Object.keys(s.aliases))
 				this.pubIn(p, mutateLevels);
+
+			return this;
+		}
+		else if (path.constructor === RegExp || path instanceof RegExp)
+			// silently ignore regexp path, user component must publish manually independently
+			;
 		else if (path.constructor === Map || path instanceof Map)
-			for (const p of path)
-				this.pubIn(p[1], mutateLevels);
-		else if (path.constructor === Object || path instanceof Object)
+			for (const p of path.values())
+				this.pubIn(p, mutateLevels);
+		else if (path.constructor === Object || path instanceof Object) {
 			this.pubIn(path.path, mutateLevels);
+		}
 		else
 			this.checkDispatched().getNode(path, true, mutateLevels, State.mPubIn);
 
@@ -369,6 +461,8 @@ class State { // must be singleton
 		// eslint-disable-next-line
 		for (const k in value)
 			v[k] = value[k];
+
+		this.dirty = true;
 	}
 
 	mergeIn(path, iterable, mutateLevels = 1) {
@@ -378,6 +472,7 @@ class State { // must be singleton
 
 	static mUpdateIn(node, key, functor) {
 		node[key] = functor(node[key]);
+		this.dirty = true;
 	}
 
 	updateIn(path, functor, mutateLevels = 1) {
@@ -392,6 +487,7 @@ class State { // must be singleton
 			node[key] = v = {};
 
 		functor(v, key, node);
+		this.dirty = true;
 	}
 
 	editIn(path, functor, mutateLevels = 1) {
@@ -401,6 +497,7 @@ class State { // must be singleton
 
 	static mDeleteIn(node, key) {
 		delete node[key];
+		this.dirty = true;
 	}
 
 	deleteIn(path, mutateLevels = 1) {
@@ -413,6 +510,7 @@ class State { // must be singleton
 			delete node[key];
 		else
 			node[key] = true;
+		this.dirty = true;
 	}
 
 	toggleIn(path, mutateLevels = 1) {
@@ -425,6 +523,7 @@ class State { // must be singleton
 			node[key] = true;
 		else
 			delete node[key];
+		this.dirty = true;
 	}
 
 	flagIn(path, value, mutateLevels = 1) {
@@ -437,13 +536,14 @@ class State { // must be singleton
 			node[key] = value;
 		else
 			delete node[key];
+		this.dirty = true;
 	}
 
 	undefIn(path, value, mutateLevels = 1) {
 		this.checkDispatched().getNode(path, true, mutateLevels, State.mUndefIn, value);
 		return this;
 	}
-	
+
 	static mGetIn(node, key, defaultValue) {
 		const value = node[key];
 		return value === undefined ? defaultValue : value;

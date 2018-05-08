@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import { Component as PreactComponent } from 'preact';
 import disp, { subscribe, unsubscribe } from '../lib/store';
+import { shallowEqual } from '../lib/util';
 //import { shallowEqual } from '../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
@@ -15,93 +16,134 @@ export default class Component extends PreactComponent {
 	//if (force || !shallowEqual(this.state, state))
 
 	setState(state, callback) {
-		const { willSetState, didSetState } = this;
-		const cb = didSetState ?
+		if (this.dtrace)
+			this.dtrace();
+
+		if (this.willSetState)
+			this.willSetState(state);
+
+		if (this.willUpdateState)
+			for (const n of Object.keys(state))
+				if (!shallowEqual(this.state[n], state[n])) {
+					this.willUpdateState(state);
+					break;
+				}
+
+		const cb = this.didSetState ?
 			() => {
-				didSetState.call(this, this.state, state);
-				callback && callback();
+				this.didSetState(this.state, state);
+
+				if (callback)
+					callback();
 			}
 			: callback;
 
-		willSetState && willSetState.call(this, state);
 		return super.setState.call(this, state, cb);
 	}
 
 	// 	before the component gets mounted to the DOM
 	componentWillMount() {
-		const { willMount } = this;
-		willMount && willMount.call(this);
+		if (this.dtrace)
+			this.dtrace();
+
+		if (this.willMount)
+			this.willMount();
 	}
 
-	// after the component gets mounted to the DOM
-	componentDidMount() {
-		const { didMount } = this;
-
-		if (didMount)
-			didMount.call(this, this.props);
-
-		const { mount } = this;
-
-		if (mount) {
-			mount.call(this, this.props, this.state);
-			this.__mount = true;
-		}
-			
-		const { storePaths } = this;
-
-		if (storePaths && subscribe(storePaths))
-			disp(state => state.pubIn(storePaths));
-	}
+	static __mountId = 0
 
 	// prior to removal from the DOM
 	componentWillUnmount() {
-		const { willUnmount } = this;
-		willUnmount && willUnmount.call(this);
-		const { storePaths } = this;
-		storePaths && unsubscribe(storePaths);
+		if (this.dtrace)
+			this.dtrace();
+
+		if (this.willUnmount)
+			this.willUnmount();
+
+		if (this.storePaths)
+			unsubscribe(this.storePaths);
+
+		if (this.__mount)
+			unsubscribe(this.__mount);
+	}
+	
+	// after the component gets mounted to the DOM
+	componentDidMount() {
+		if (this.dtrace)
+			this.dtrace();
+
+		if (this.didMount)
+			this.didMount(this.props);
+
+		if (this.mount) {
+			this.__mount = state => {
+				this.mount(this.__props);
+				delete this.__props;
+			};
+
+			subscribe(this.__mount, '$__mount__#' + (++Component.__mountId));
+
+			this.__props = this.props;
+
+			disp(state => state.pubIn(this.__mount));
+		}
+
+		if (this.storePaths && subscribe(this.storePaths))
+			disp(state => state.pubIn(this.storePaths));
 	}
 
 	// before new props get accepted
 	componentWillReceiveProps(props, context) {
-		const { willReceiveProps } = this;
+		if (this.dtrace)
+			this.dtrace();
 
-		this.storePaths && unsubscribe(this.storePaths);
-		
-		if (willReceiveProps)
-			willReceiveProps.call(this, props);
+		if (this.willReceiveProps)
+			this.willReceiveProps(props);
 
-		const { mount } = this;
-
-		if (mount) {
-			if (!this.__mount)
-				mount.call(this, props, this.state);
-
-			delete this.__mount;
+		if (this.mount/* && !shallowEqual(this.props, props)*/) {
+			this.__props = props;
+			disp(state => state.pubIn(this.__mount));
 		}
-	
-		const { storePaths } = this;
 
-		if (storePaths && subscribe(storePaths))
-			disp(state => state.pubIn(storePaths));
+		if (this.storePaths)
+			disp(state => state.pubIn(this.storePaths));
 	}
 
 	// before render(). Return false to skip render
 	shouldComponentUpdate(props, state, context) {
-		const { shouldUpdate } = this;
-		delete this.__mount;
-		return shouldUpdate ? shouldUpdate.call(this, props, state, context) : true;
+		if (this.dtrace)
+			this.dtrace();
+
+		const r = this.shouldUpdate
+			? this.shouldUpdate(props, state, context)
+			: super.shouldComponentUpdate
+				? super.shouldComponentUpdate.call(this, props, state, context)
+				: true;
+
+		return r;
 	}
 
 	// before render()
 	componentWillUpdate(props, state, context) {
-		const { willUpdate } = this;
-		willUpdate && willUpdate.call(this, props, state, context);
+		if (this.dtrace)
+			this.dtrace();
+
+		if (this.willUpdate)
+			this.willUpdate(props, state, context);
 	}
+
+	// render(props, state, context) {
+	// 	delete this.__mountCalled;
+	// 	return super.render.call(this, props, state, context);
+	// }
 
 	// after render()
 	componentDidUpdate(previousProps, previousState, previousContext) {
-		const { didUpdate } = this;
-		didUpdate && didUpdate.call(this, previousProps, previousState, previousContext);
+		if (this.dtrace)
+			this.dtrace();
+
+		if (this.didUpdate)
+			this.didUpdate(previousProps, previousState, previousContext);
 	}
 
 	// mergeState(state, callback) {

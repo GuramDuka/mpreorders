@@ -82,7 +82,7 @@ export function bfetch(opts_, success, fail, start) {
 		// antipattern, but only as an exception and it is the fastest method
 		const auth = getStore().getIn('auth');
 
-		if (auth.authorized) {
+		if (auth && auth.authorized) {
 			headers = headers ? headers : new Headers();
 			headers.append('X-Access-Data', auth.link + ', ' + auth.hash);
 		}
@@ -152,7 +152,7 @@ export function bfetch(opts_, success, fail, start) {
 			disp(store => {
 				const auth = store.getIn('auth');
 
-				if (auth.link !== xaLink || auth.employee !== xaEmployee)
+				if (!auth || auth.link !== xaLink || auth.employee !== xaEmployee)
 					store = store.deleteIn('auth.authorized', 2);
 
 				return store;

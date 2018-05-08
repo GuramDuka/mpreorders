@@ -10,27 +10,20 @@ import 'preact-material-components/Checkbox/style.css';
 import Component from '../../components/component';
 import disp from '../../lib/store';
 import { headerTitleStorePath, headerSearchStorePath } from '../../const';
-import loader, { storePrefix } from './loader';
+import loader from './loader';
 import style from './style';
 import { prevent, plinkRoute } from '../../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Categories extends Component {
-	storePaths = new Map([
-		[
-			state => this.setState(state),
-			{ path: storePrefix + '.list', alias: 'list' }
-		]
-	])
-
-	didMount() {
-		disp(store => store.cmpSetIn(headerTitleStorePath, 'Категории')
-			.deleteIn(headerSearchStorePath));
-	}
-
 	mount() {
-		loader.call(this);
+		disp(
+			store => store.setIn(headerTitleStorePath, 'Категории')
+				.deleteIn(headerSearchStorePath)
+			,
+			() => loader.call(this)
+		);
 	}
 
 	linkTo = path => plinkRoute(path)
@@ -51,7 +44,7 @@ export default class Categories extends Component {
 	style = [style.categories, 'mdc-toolbar-fixed-adjust'].join(' ');
 
 	render(props, { list, checked }) {
-		if (list === undefined || list.rows === undefined)
+		if (list === undefined)
 			return undefined;
 
 		checked || (checked = {});
