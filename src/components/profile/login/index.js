@@ -104,11 +104,10 @@ export default class Login extends Component {
 	render(props, state) {
 		const { auth } = state;
 
-		if (auth === undefined)
-			return undefined;
-
-		const user = this.user !== undefined ? this.user : auth.user;
-		const pass = this.pass !== undefined ? this.pass : auth.pass;
+		const user = this.user !== undefined
+			? this.user	: auth ? auth.user : undefined;
+		const pass = this.pass !== undefined
+			? this.pass : auth ? auth.pass : undefined;
 
 		const { isLoading } = state;
 

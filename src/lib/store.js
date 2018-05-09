@@ -313,7 +313,7 @@ class State { // must be singleton
 		return this;
 	}
 
-	getPath(path, createNode) {
+	getPath(path) {
 		let rPath;
 
 		if (path === undefined || path === null)
@@ -338,18 +338,18 @@ class State { // must be singleton
 			n = nn;
 		}
 
-		if (createNode) {
-			const j = vPath.length - 1;
+		// if (createNode) {
+		// 	const j = vPath.length - 1;
 
-			for (let i = 0; i < j; i++) {
-				const { key, node } = vPath[i];
+		// 	for (let i = 0; i < j; i++) {
+		// 		const { key, node } = vPath[i];
 
-				if (node[key] !== (n = vPath[i + 1].node)) {
-					node[key] = n;
-					this.dirty = true;
-				}
-			}
-		}
+		// 		if (node[key] !== (n = vPath[i + 1].node)) {
+		// 			node[key] = n;
+		// 			this.dirty = true;
+		// 		}
+		// 	}
+		// }
 
 		if (vPath.length === 0)
 			throw new Error('invalid path');
@@ -357,17 +357,35 @@ class State { // must be singleton
 		return vPath;
 	}
 
-	getNode(path, createNode, mutateLevels, manipulator, arg0, equ) {
-		const vPath = this.getPath(path, createNode);
+	tracebackPath(vPath, setNodes = false) {
+		let n, d = false;
+
+		for (let i = vPath.length - 1; i > 0; i--) {
+			const { key, node } = vPath[i - 1];
+
+			if (node[key] !== (n = vPath[i].node))
+				if (setNodes) {
+					node[key] = n;
+					this.dirty = d = true;
+				}
+				else
+					d = true;
+		}
+
+		return d;
+	}
+
+	getNode(path, mutateLevels, manipulator, arg0, equ) {
+		const vPath = this.getPath(path);
 		const { key, node } = vPath[vPath.length - 1];
 
 		if (equ && equ(node[key], arg0))
 			return arg0;
 
-		const r = manipulator.call(this, node, key, arg0);
-
 		if (mutateLevels > vPath.length)
 			throw new Error('invalid mutate levels');
+			
+		const r = manipulator.call(this, node, key, arg0, vPath);
 
 		while (mutateLevels > 0) {
 			this.publishPath(vPath.slice(0, vPath.length));
@@ -384,21 +402,6 @@ class State { // must be singleton
 		return this;
 	}
 
-	cmpSetIn(path, value, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mSetIn, value, shallowEqual);
-		return this;
-	}
-
-	static mSetIn(node, key, value) {
-		node[key] = value;
-		this.dirty = true;
-	}
-
-	setIn(path, value, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mSetIn, value);
-		return this;
-	}
-
 	static mPubIn() { }
 
 	pubIn(path, mutateLevels = 1) {
@@ -410,7 +413,7 @@ class State { // must be singleton
 					for (const p of paths)
 						this.pubIn([functor, p], mutateLevels);
 				else {
-					const vPath = this.getPath(paths, true);
+					const vPath = this.getPath(paths);
 
 					if (mutateLevels > vPath.length)
 						throw new Error('invalid mutate levels');
@@ -447,100 +450,187 @@ class State { // must be singleton
 			this.pubIn(path.path, mutateLevels);
 		}
 		else
-			this.checkDispatched().getNode(path, true, mutateLevels, State.mPubIn);
+			this.checkDispatched().getNode(path, mutateLevels, State.mPubIn);
 
 		return this;
 	}
 
-	static mMergeIn(node, key, value) {
-		let v = node[key];
+	cmpSetIn(path, value, mutateLevels = 1) {
+		this.checkDispatched().getNode(path, mutateLevels, State.mSetIn, value, shallowEqual);
+		return this;
+	}
 
-		if (v === undefined)
-			node[key] = v = {};
-
-		// eslint-disable-next-line
-		for (const k in value)
-			v[k] = value[k];
-
+	static mSetIn(node, key, value, vPath) {
+		node[key] = value;
+		this.tracebackPath(vPath, true);
 		this.dirty = true;
 	}
 
-	mergeIn(path, iterable, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mMergeIn, iterable);
+	setIn(path, value, mutateLevels = 1) {
+		this.checkDispatched().getNode(path, mutateLevels, State.mSetIn, value);
 		return this;
 	}
 
-	static mUpdateIn(node, key, functor) {
+	static mMergeIn(node, key, value, vPath) {
+		let v = node[key], d = false;
+
+		if (v === undefined) {
+			node[key] = v = {};
+			d = true;
+		}
+
+		// eslint-disable-next-line
+		for (const k in value) {
+			v[k] = value[k];
+			d = true;
+		}
+
+		if (d) {
+			this.tracebackPath(vPath, true);
+			this.dirty = true;
+		}
+	}
+
+	mergeIn(path, iterable, mutateLevels = 1) {
+		this.checkDispatched().getNode(path, mutateLevels, State.mMergeIn, iterable);
+		return this;
+	}
+
+	static mUpdateIn(node, key, functor, vPath) {
 		node[key] = functor(node[key]);
+		this.tracebackPath(vPath, true);
 		this.dirty = true;
 	}
 
 	updateIn(path, functor, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mUpdateIn, functor);
+		this.checkDispatched().getNode(path, mutateLevels, State.mUpdateIn, functor);
 		return this;
 	}
 
-	static mEditIn(node, key, functor) {
+	static mEditIn(node, key, functor, vPath) {
 		let v = node[key];
 
 		if (v === undefined)
 			node[key] = v = {};
 
 		functor(v, key, node);
+		this.tracebackPath(vPath, true);
 		this.dirty = true;
 	}
 
 	editIn(path, functor, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mEditIn, functor);
+		this.checkDispatched().getNode(path, mutateLevels, State.mEditIn, functor);
 		return this;
 	}
 
-	static mDeleteIn(node, key) {
-		delete node[key];
-		this.dirty = true;
+	static mDeleteIn(node, key, arg0, vPath) {
+		if (node.constructor === Object || node instanceof Object) {
+			const keys = Object.keys(node).length;
+			delete node[key];
+			if (keys !== Object.keys(node).length) {
+				this.tracebackPath(vPath, true);
+				this.dirty = true;
+			}
+		}
+		else {
+			delete node[key];
+			this.dirty = true;
+		}
 	}
 
 	deleteIn(path, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mDeleteIn);
+		this.checkDispatched().getNode(path, mutateLevels, State.mDeleteIn);
 		return this;
 	}
 
-	static mToggleIn(node, key) {
-		if (node[key])
-			delete node[key];
-		else
-			node[key] = true;
-		this.dirty = true;
+	static mToggleIn(node, key, arg0, vPath) {
+		if (node.constructor === Object || node instanceof Object) {
+			if (node[key]) {
+				const keys = Object.keys(node).length;
+				delete node[key];
+				if (keys !== Object.keys(node).length) {
+					this.tracebackPath(vPath, true);
+					this.dirty = true;
+				}
+			}
+			else {
+				node[key] = true;
+				this.tracebackPath(vPath, true);
+				this.dirty = true;
+			}
+		}
+		else {
+			if (node[key])
+				delete node[key];
+			else
+				node[key] = true;
+			this.tracebackPath(vPath, true);
+			this.dirty = true;
+		}
 	}
 
 	toggleIn(path, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mToggleIn);
+		this.checkDispatched().getNode(path, mutateLevels, State.mToggleIn);
 		return this;
 	}
 
-	static mFlagIn(node, key, value) {
-		if (value)
-			node[key] = true;
-		else
-			delete node[key];
-		this.dirty = true;
+	static mFlagIn(node, key, value, vPath) {
+		if (node.constructor === Object || node instanceof Object) {
+			if (value) {
+				node[key] = true;
+				this.tracebackPath(vPath, true);
+				this.dirty = true;
+			}
+			else {
+				const keys = Object.keys(node).length;
+				delete node[key];
+				if (keys !== Object.keys(node).length) {
+					this.tracebackPath(vPath, true);
+					this.dirty = true;
+				}
+			}
+		}
+		else {
+			if (value)
+				node[key] = true;
+			else
+				delete node[key];
+			this.dirty = true;
+		}
 	}
 
 	flagIn(path, value, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mFlagIn, value);
+		this.checkDispatched().getNode(path, mutateLevels, State.mFlagIn, value);
 		return this;
 	}
 
-	static mUndefIn(node, key, value) {
-		if (value !== undefined)
-			node[key] = value;
-		else
-			delete node[key];
-		this.dirty = true;
+	static mUndefIn(node, key, value, vPath) {
+		if (node.constructor === Object || node instanceof Object) {
+			if (value !== undefined) {
+				node[key] = value;
+				this.tracebackPath(vPath, true);
+				this.dirty = true;
+			}
+			else {
+				const keys = Object.keys(node).length;
+				delete node[key];
+				if (keys !== Object.keys(node).length) {
+					this.tracebackPath(vPath, true);
+					this.dirty = true;
+				}
+			}
+		}
+		else {
+			if (value !== undefined)
+				node[key] = value;
+			else
+				delete node[key];
+			this.dirty = true;
+		}
 	}
 
 	undefIn(path, value, mutateLevels = 1) {
-		this.checkDispatched().getNode(path, true, mutateLevels, State.mUndefIn, value);
+		this.checkDispatched().getNode(path, mutateLevels, State.mUndefIn, value);
 		return this;
 	}
 
@@ -550,11 +640,11 @@ class State { // must be singleton
 	}
 
 	getIn(path, defaultValue) {
-		return this.getNode(path, false, 0, State.mGetIn, defaultValue);
+		return this.getNode(path, 0, State.mGetIn, defaultValue);
 	}
 
 	mapIn(path, defaultValue = {}) {
-		return this.getNode(path, false, 0, State.mGetIn, defaultValue);
+		return this.getNode(path, 0, State.mGetIn, defaultValue);
 	}
 }
 //------------------------------------------------------------------------------
