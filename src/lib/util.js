@@ -320,15 +320,12 @@ export function prevent(e) {
 	return false;
 }
 //------------------------------------------------------------------------------
-export function preventRoute(e, path) {
+export function pRoute(e, path) {
 	route(path);
 	return prevent(e);
 }
 //------------------------------------------------------------------------------
 export function plinkRoute(path) {
-	return e => {
-		route(path);
-		return prevent(e);
-	};
+	return e => pRoute(e, path);
 }
 //------------------------------------------------------------------------------

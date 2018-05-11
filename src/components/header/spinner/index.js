@@ -12,10 +12,12 @@ export default class Spinner extends Component {
 		]
 	])
 	
+	style = ['material-icons', style.spin].join(' ')
+
 	render(props, { active }) {
 		return active ? (
 			<Toolbar.Icon
-				className={['material-icons', style.spin].join(' ')}
+				className={this.style}
 			>
 				refresh
 			</Toolbar.Icon>
