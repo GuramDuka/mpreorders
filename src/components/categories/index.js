@@ -26,7 +26,7 @@ export default class Categories extends Component {
 		);
 	}
 
-	linkTo = path => plinkRoute(path)
+	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
 
 	goCategory = (link, page = 1, pageSize = 40) =>
 		this.linkTo('/category/' + link + '/' + page + ',' + pageSize);
@@ -58,7 +58,7 @@ export default class Categories extends Component {
 				/>
 				<Button unelevated
 					disabled={checked[link] && checkedKeys.length > 1}
-					onClick={this.goCategory(link)}
+					{...this.goCategory(link)}
 				>
 					{name}
 				</Button>
@@ -68,7 +68,7 @@ export default class Categories extends Component {
 			items.push((
 				<List.Item>
 					<Button unelevated
-						onClick={this.goCategory(checkedKeys.join(','))}
+						{...this.goCategory(checkedKeys.join(','))}
 					>
 						Открыть выбранные
 					</Button>

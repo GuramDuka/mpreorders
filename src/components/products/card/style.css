@@ -22,16 +22,23 @@
 	@value imgHeight: 150px;
 }
 
-:local(.card) {
-}
-
 :local(.media) {
+	/*composes: bg;*/
 	background-position: center center;
-	background-size: auto 100%;
 	background-repeat: no-repeat;
+	background-size: auto 100%;
 	height: imgHeight;
 }
 
 :local(.m) {
 	margin-bottom: 8px;
+}
+
+:local(.dn) {
+	display: none;
+}
+
+:local(.im) {
+	width: 100%;
+	height: auto;
 }

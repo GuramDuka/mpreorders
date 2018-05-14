@@ -92,11 +92,14 @@ export default class Header extends Component {
 	settingsRef = e => this.settings = e
 	searchRef = e => this.search = e
 
-	linkTo = path => e => {
-		route(path);
-		this.closeDrawer();
-		return prevent(e);
-	}
+	linkTo = path => ({
+		href: path,
+		onClick: e => {
+			route(path);
+			this.closeDrawer();
+			return prevent(e);
+		}
+	})
 
 	goHome = this.linkTo('/')
 	goProfile = this.linkTo('/profile')
@@ -133,6 +136,12 @@ export default class Header extends Component {
 		return prevent(e);
 	}
 
+	searchImageChange = e => {
+		const v = e.target.checked;
+		this.setState({ searchImage: v ? v : undefined });
+		return prevent(e);
+	}
+	
 	searchOrderFields = [
 		'code',
 		'name',
@@ -164,12 +173,14 @@ export default class Header extends Component {
 			searchOrderField,
 			searchOrderDirection,
 			searchFilter,
-			searchStock
+			searchStock,
+			searchImage
 		} = this.state;
 
 		disp(state => state
 			.undefIn(searchStorePath + '.search.filter', searchFilter)
 			.flagIn(searchStorePath + '.search.stock', searchStock)
+			.flagIn(searchStorePath + '.search.image', searchImage)
 			.undefIn(searchStorePath + '.search.order.field', searchOrderField, 2)
 			.undefIn(searchStorePath + '.search.order.direction', searchOrderDirection, 2)
 		);
@@ -180,14 +191,16 @@ export default class Header extends Component {
 			searchFilter,
 			searchOrderField,
 			searchOrderDirection,
-			searchStock
+			searchStock,
+			searchImage
 		} = { ...this.state, ...state };
 
 		const changed =
 			searchOrderField !== undefined
 			|| searchOrderDirection !== undefined
 			|| searchFilter !== undefined
-			|| searchStock !== undefined;
+			|| searchStock !== undefined
+			|| searchImage !== undefined;
 
 		state.searchIconStyle = ['material-icons',
 			changed ? style.blink : undefined
@@ -198,7 +211,10 @@ export default class Header extends Component {
 
 	render(props, { darkThemeEnabled, auth, searchStorePath,
 		searchIconStyle, searchNotChanged,
-		searchOrderField, searchOrderDirection, searchStock, searchFilter }) {
+		searchOrderField, searchOrderDirection,
+		searchFilter,
+		searchStock,
+		searchImage }) {
 		const authorized = auth && auth.authorized;
 
 		const searchIcon = searchStorePath ? (
@@ -234,6 +250,11 @@ export default class Header extends Component {
 					<Switch
 						checked={searchStock}
 						onChange={this.searchStockChange}
+					/>
+					<span>Имеющие изображение&nbsp;&nbsp;</span>
+					<Switch
+						checked={searchImage}
+						onChange={this.searchImageChange}
 					/>
 					<Select hintText="Поле сортировки"
 						selectedIndex={searchOrderFieldIndex}
@@ -300,32 +321,32 @@ export default class Header extends Component {
 					</Toolbar.Row>
 				</Toolbar>
 				<Drawer.TemporaryDrawer ref={this.drawerRef}>
-					<Drawer.TemporaryDrawerContent>
-						<Drawer.DrawerItem onClick={this.goHome}>
+					<Drawer.DrawerContent>
+						<Drawer.DrawerItem {...this.goHome}>
 							<List.ItemGraphic>home</List.ItemGraphic>
 							Начало
 						</Drawer.DrawerItem>
-						<Drawer.DrawerItem onClick={this.goCategories}>
+						<Drawer.DrawerItem {...this.goCategories}>
 							<List.ItemGraphic>view_stream</List.ItemGraphic>
 							Категории
 						</Drawer.DrawerItem>
-						<Drawer.DrawerItem onClick={this.goProducts}>
+						<Drawer.DrawerItem {...this.goProducts}>
 							<List.ItemGraphic>view_list</List.ItemGraphic>
 							Каталог
 						</Drawer.DrawerItem>
-						<Drawer.DrawerItem onClick={this.goOrders}>
+						<Drawer.DrawerItem {...this.goOrders}>
 							<List.ItemGraphic>reorder</List.ItemGraphic>
 							Заказы
 						</Drawer.DrawerItem>
-						<Drawer.DrawerItem onClick={this.goCart}>
+						<Drawer.DrawerItem {...this.goCart}>
 							<List.ItemGraphic>shopping_cart</List.ItemGraphic>
 							Корзина
 						</Drawer.DrawerItem>
-						<Drawer.DrawerItem onClick={authorized ? this.goProfile : this.goLogin}>
+						<Drawer.DrawerItem {...(authorized ? this.goProfile : this.goLogin)}>
 							<List.ItemGraphic>{authorized ? 'verified_user' : 'account_circle'}</List.ItemGraphic>
 							{authorized ? 'Профиль' : 'Вход/Регистрация'}
 						</Drawer.DrawerItem>
-					</Drawer.TemporaryDrawerContent>
+					</Drawer.DrawerContent>
 				</Drawer.TemporaryDrawer>
 				<Dialog ref={this.settingsRef}>
 					<Dialog.Header>Настройки</Dialog.Header>

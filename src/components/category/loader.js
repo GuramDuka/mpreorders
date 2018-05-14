@@ -9,7 +9,7 @@ export const storePrefix = 'category';
 export default function loader() {
 	const { page, pageSize, props, state } = this;
 	const { category } = props;
-	const { order, filter, stock } = state;
+	const { order, filter, stock, image } = state;
 	const r = {
 		type: 'products',
 		piece: pageSize,
@@ -25,6 +25,9 @@ export default function loader() {
 	if (stock !== undefined)
 		r.stock = stock;
 
+	if (image !== undefined)
+		r.image = image;
+		
 	if (category !== undefined)
 		r.category = category;
 	else if (parent !== nullLink)

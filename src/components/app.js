@@ -10,6 +10,7 @@ import Login from '../routes/profile/login';
 import Registration from '../routes/profile/registration';
 import Categories from '../routes/categories';//import Categories from 'async!../routes/categories';
 import Category from '../routes/category';//import Category from 'async!../routes/category';
+import Product from '../routes/product';//import Product from 'async!../routes/product';
 //------------------------------------------------------------------------------
 /** fall-back route (handles unroutable URLs) */
 const Error = ({ type, url }) => (
@@ -38,6 +39,7 @@ export default class App extends Component {
 					<Registration path="/registration/" />
 					<Category path="/category/:category/:pageProps" />
 					<Categories path="/categories/" />
+					<Product path="/product/:link" />
 					<Error type="404" default />
 				</Router>
 			</div>

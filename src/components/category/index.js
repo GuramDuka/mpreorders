@@ -2,6 +2,8 @@
 import wog from 'window-or-global';
 import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
+import Dialog from 'preact-material-components/Dialog';
+import 'preact-material-components/Dialog/style.css';
 import Component from '../../components/component';
 import disp from '../../lib/store';
 import { prevent, plinkRoute } from '../../lib/util';
@@ -27,7 +29,8 @@ export default class Category extends Component {
 			[
 				this.varPath('order'),
 				this.varPath('filter'),
-				this.varPath('stock')
+				this.varPath('stock'),
+				this.varPath('image')
 			]
 		]
 	])
@@ -67,7 +70,7 @@ export default class Category extends Component {
 
 	goPage = page => this.linkTo('/category/'
 		+ this.props.category + '/' + page + ',' + this.pageSize)
-	
+
 	goNextStyle = [ProductCardStyle.m, style.fr].join(' ')
 
 	//goPrev = e => wog.history.back()
@@ -82,15 +85,25 @@ export default class Category extends Component {
 
 	goUpStyle = [ProductCardStyle.m, style.fr, style.mr].join(' ')
 
+	imageMagnifierRef = e => this.imageMagnifier = e
+	openImageMagnifier = url => this.setState(
+		{ imageMagnifierUrl: undefined },
+		() => this.setState(
+			{ imageMagnifierUrl: url },
+			() => this.imageMagnifier.MDComponent.show()
+		)
+	)
+
 	style = [style.category, 'mdc-toolbar-fixed-adjust'].join(' ');
 
-	render(props, { list }) {
+	render(props, { list, imageMagnifierUrl }) {
 		if (list === undefined)
 			return undefined;
 
 		const view = list.rows.map((row, i) => (
 			<ProductCard
 				classes={ProductCardStyle.m}
+				openImageMagnifier={this.openImageMagnifier}
 				key={row.link}
 				data={row}
 			/>));
@@ -124,6 +137,17 @@ export default class Category extends Component {
 
 		return (
 			<div class={this.style}>
+				<Dialog ref={this.imageMagnifierRef}>
+					{/*<Dialog.Header>Изображение</Dialog.Header>*/}
+					<Dialog.Body>
+						<img class={style.im} src={imageMagnifierUrl} />
+					</Dialog.Body>
+					<Dialog.Footer>
+						<Dialog.FooterButton accept>
+							Закрыть
+						</Dialog.FooterButton>
+					</Dialog.Footer>
+				</Dialog>
 				{view}
 			</div>);
 	}

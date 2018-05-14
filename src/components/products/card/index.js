@@ -1,30 +1,35 @@
 //------------------------------------------------------------------------------
+import wog from 'window-or-global';
 import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import 'preact-material-components/Button/style.css';
-import { prevent } from '../../../lib/util';
+import { prevent, plinkRoute } from '../../../lib/util';
 import Component from '../../component';
 import style from './style';
 import { nullLink } from '../../../const';
-import { icoUrl } from '../../../backend';
+import { icoUrl, imgUrl } from '../../../backend';
 //import nopic from '../../../assets/nopic.svg';
 //import hourglassImage from '../../../assets/hourglass.svg';
 //import loadingImage from '../../../assets/loading-process.svg';
 import styleSpin from '../../header/spinner/style.css';
 //------------------------------------------------------------------------------
+const icoWidth = wog.document && wog.getComputedStyle
+	? Math.min(360,
+		~~wog.getComputedStyle(wog.document.getElementById('app'))
+			.width.replace(/px$/, '') * 0.65)
+	: 0;
+const icoHeight = wog.document && wog.getComputedStyle
+	? Math.min(200,
+		~~wog.getComputedStyle(wog.document.getElementById('app'))
+			.height.replace(/px$/, '') * 0.65)
+	: 0;
+//------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class ProductCard extends Component {
-	willMount() {
-		this.transform(this.props);
-	}
-
-	willReceiveProps(props) {
-		this.transform(props);
-	}
-
-	transform(props) {
+	mount(props) {
 		const {
+			link,
 			code,
 			name,
 			article,
@@ -34,6 +39,9 @@ export default class ProductCard extends Component {
 			price,
 			primaryImageLink
 		} = props.data;
+
+		this.goProduct = this.linkTo('/product/' + link);
+
 		// regex replace comma without space after
 		const cr = /(,(?=\S)|:)/g;
 		const sr = /(\s{2})/g;
@@ -60,17 +68,22 @@ export default class ProductCard extends Component {
 		this.subTitle = subTitle.substr(2);
 
 		//const imgHeight = ~~style.imgHeight.substr(0, style.imgHeight.length - 2);
-		this.primaryImageUrl = primaryImageLink && primaryImageLink !== nullLink
-			? icoUrl(primaryImageLink, undefined, 150, 16)
-			: '/assets/nopic.svg';
+		this.setState({
+			primaryImageUrl: primaryImageLink && primaryImageLink !== nullLink
+				? icoUrl(primaryImageLink, icoWidth, icoHeight, 16)
+				: '/assets/nopic.svg'
+		});
+
+		// let { width, height } = wog.getComputedStyle(wog.document.getElementById('app'));
+		// width = ~~width.replace(/px$/, '');
+		// height = ~~height.replace(/px$/, '');
+		// console.log(width, height, width * 0.65, height * 0.65);
 	}
 
 	primaryImageOnLoad = e => {
 		this.setState({
 			isPrimaryImageLoaded: true,
-			primaryImage: {
-				backgroundImage: `url(${this.primaryImageUrl})`
-			}
+			isPrimaryImageLoadError: undefined
 		});
 		return prevent(e);
 	}
@@ -83,35 +96,46 @@ export default class ProductCard extends Component {
 		return prevent(e);
 	}
 
-	render({ classes }, { isPrimaryImageLoaded, isPrimaryImageLoadError, primaryImage }) {
+	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
+
+	openImageMagnifier = e => {
+		const { props } = this;
+		const { primaryImageLink } = props.data;
+
+		if (primaryImageLink && primaryImageLink !== nullLink)
+			props.openImageMagnifier(imgUrl(primaryImageLink));
+
+		return prevent(e);
+	}
+
+	ims = [style.im, styleSpin.spin].join(' ')
+
+	render({ classes }, { isPrimaryImageLoaded, isPrimaryImageLoadError, primaryImageUrl }) {
 		return (
 			<Card className={[style.card, ...classes].join(' ')}>
 				<div>
 					<h4 class="mdc-typography--title">{this.title}</h4>
 					<div class="mdc-typography--caption">{this.subTitle}</div>
 				</div>
-				<Card.Media
-					style={primaryImage}
-					className={style.media}
-				>
-					{isPrimaryImageLoaded ? undefined : (
-						<img src={this.primaryImageUrl}
-							style={{ display: 'none' }}
+				<Card.Media>
+					{isPrimaryImageLoaded ? undefined :
+						<img class={style.dn}
+							src={primaryImageUrl}
 							onLoad={this.primaryImageOnLoad}
 							onError={this.primaryImageOnError}
-						/>)}
-					{isPrimaryImageLoaded ? undefined : (
-						<div className={[style.media, styleSpin.spin].join(' ')}
-							style={{
-								backgroundImage: 'url('
-									+ (isPrimaryImageLoadError
-										? '/assets/hourglass.svg'
-										: '/assets/loading-process.svg')
-									+ ')'
-							}}
-						/>)}
+						/>}
+					<img class={isPrimaryImageLoaded ? style.im : this.ims}
+						src={isPrimaryImageLoaded
+							? isPrimaryImageLoadError
+								? '/assets/hourglass.svg'
+								: primaryImageUrl
+							: '/assets/loading-process.svg'}
+						onClick={this.openImageMagnifier}
+					/>
 				</Card.Media>
-				<Card.ActionButton>OKAY</Card.ActionButton>
+				<Card.ActionButton {...this.goProduct}>
+					ПЕРЕЙТИ
+				</Card.ActionButton>
 			</Card >);
 	}
 }
