@@ -44,8 +44,6 @@ export default class Component extends PreactComponent {
 			this.willMount();
 	}
 
-	static __mountId = 0
-
 	// prior to removal from the DOM
 	componentWillUnmount() {
 		if (this.willUnmount)
@@ -58,10 +56,7 @@ export default class Component extends PreactComponent {
 			unsubscribe(this.__mount);
 	}
 
-	__mountCaller = () => {
-		this.__mount();
-		delete this.__mount;
-	}
+	static __mountId = 0
 	
 	// after the component gets mounted to the DOM
 	componentDidMount() {
@@ -69,9 +64,14 @@ export default class Component extends PreactComponent {
 			this.didMount(this.props);
 
 		if (this.mount) {
-			this.__mount = state => this.mount(this.props);
-			subscribe(this.__mountCaller, '$__mount__#' + (++Component.__mountId));
-			disp(state => state.pubIn(this.__mountCaller));
+			if (!this.__mount)
+				this.__mount = () => {
+					this.mount(this.__props);
+					delete this.__props;
+				};
+			this.__props = this.props;
+			subscribe(this.__mount, '$__mount__#' + (++Component.__mountId));
+			disp(state => state.pubIn(this.__mount));
 		}
 
 		if (this.storePaths && subscribe(this.storePaths))
@@ -84,8 +84,8 @@ export default class Component extends PreactComponent {
 			this.willReceiveProps(props);
 
 		if (this.mount/* && !shallowEqual(this.props, props)*/) {
-			this.__mount = state => this.mount(props);
-			disp(state => state.pubIn(this.__mountCaller));
+			this.__props = props;
+			disp(state => state.pubIn(this.__mount));
 		}
 
 		if (this.storePaths)

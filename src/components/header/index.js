@@ -54,6 +54,11 @@ export default class Header extends Component {
 				path: /^(.*)\.search\.stock$/,
 				alias: 'searchStock',
 				validator: this.searchPathValidator
+			},
+			{
+				path: /^(.*)\.search\.image$/,
+				alias: 'searchImage',
+				validator: this.searchPathValidator
 			}
 		]
 	]
@@ -141,7 +146,7 @@ export default class Header extends Component {
 		this.setState({ searchImage: v ? v : undefined });
 		return prevent(e);
 	}
-	
+
 	searchOrderFields = [
 		'code',
 		'name',
@@ -246,16 +251,24 @@ export default class Header extends Component {
 					>
 						<Icon>menu</Icon>
 					</TextField>
-					<span>Имеющиеся в наличии&nbsp;&nbsp;</span>
-					<Switch
-						checked={searchStock}
-						onChange={this.searchStockChange}
-					/>
-					<span>Имеющие изображение&nbsp;&nbsp;</span>
-					<Switch
-						checked={searchImage}
-						onChange={this.searchImageChange}
-					/>
+					<div>
+						<span class={style.fl}>Имеющиеся в наличии</span>
+						<div class={style.fr}>
+							<Switch
+								checked={searchStock}
+								onChange={this.searchStockChange}
+							/>
+						</div>
+					</div>
+					<div>
+						<span class={style.fl}>Имеющие изображение</span>
+						<div class={style.fr}>
+							<Switch
+								checked={searchImage}
+								onChange={this.searchImageChange}
+							/>
+						</div>
+					</div>
 					<Select hintText="Поле сортировки"
 						selectedIndex={searchOrderFieldIndex}
 						onChange={this.searchOrderFieldChange}
