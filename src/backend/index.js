@@ -83,15 +83,13 @@ export function bfetch(opts_, success, fail, start) {
 		const auth = getStore().getIn('auth');
 
 		if (auth && auth.authorized) {
-			headers = headers ? headers : new Headers();
-			headers.append('X-Access-Data', auth.link + ', ' + auth.hash);
-		}
-
-		// need for caching authorized request separate from regular not authorized
-		if (opts.r && auth) {
-			if (opts.a === true && auth.authorized)
+			// need for caching authorized request separate from regular not authorized
+			if (!opts.r)
+				opts.r = {};
+			
+			if (opts.a === true)
 				r.a = true;
-			else if (opts.a === '' && auth.link)
+			else if (opts.a === '')
 				r.a = auth.link;
 
 			if (auth.employee) {
@@ -99,6 +97,11 @@ export function bfetch(opts_, success, fail, start) {
 					r.e = true;
 				else if (opts.e === '' && auth.employee)
 					r.e = auth.employee;
+			}
+
+			if (r.a || r.e) {
+				headers = headers ? headers : new Headers();
+				headers.append('X-Access-Data', auth.link + ', ' + auth.hash);
 			}
 		}
 	}
@@ -135,7 +138,7 @@ export function bfetch(opts_, success, fail, start) {
 		const contentType = response.headers.get('content-type');
 
 		// check if access denied
-		if (!opts.noauth) {
+		if (!opts.noauth && opts.r && (opts.r.a || opts.r.e)) {
 			let xaLink = response.headers.get('x-access-data'), xaEmployee;
 
 			if (xaLink) {
@@ -149,14 +152,11 @@ export function bfetch(opts_, success, fail, start) {
 			if (xaLink === null)
 				xaLink = undefined;
 
-			disp(store => {
-				const auth = store.getIn('auth');
+			// antipattern, but only as an exception and it is the fastest method
+			const auth = getStore().getIn('auth');
 
-				if (!auth || auth.link !== xaLink || auth.employee !== xaEmployee)
-					store = store.deleteIn('auth.authorized', 2);
-
-				return store;
-			});
+			if (!auth || auth.link !== xaLink || auth.employee !== xaEmployee)
+				disp(store => store.deleteIn('auth.authorized', 2));
 		}
 
 		data.headers = response.headers;

@@ -10,18 +10,22 @@ import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
 import Radio from 'preact-material-components/Radio';
 import 'preact-material-components/Radio/style.css';
+import Checkbox from 'preact-material-components/Checkbox';
+import Formfield from 'preact-material-components/FormField';
+import 'preact-material-components/Checkbox/style.css';
 import Snackbar from 'preact-material-components/Snackbar';
 import 'preact-material-components/Snackbar/style.css';
-import style from './style';
+import style from './style.scss';
 import {
 	headerTitleStorePath,
 	headerSearchStorePath,
-	inputFieldHelperTextClasses
+	inputFieldHelperTextClasses,
+	termsOfUseAndPrivacyPolicy
 } from '../../const';
 import { successor, failer, starter } from '../load';
 import disp from '../../lib/store';
-import { strftime } from '../../lib/strftime';
-import { plinkRoute } from '../../lib/util';
+import strftime from '../../lib/strftime';
+import { plinkRoute, prevent } from '../../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -31,6 +35,7 @@ export default class Profile extends Component {
 		pushFunction: 'profile_push',
 		pushError: 'Ошибка записи',
 		notAuthorizedRouteUrl: '/login',
+		notUseTerms: true,
 		header: 'Профиль'
 	}
 
@@ -431,7 +436,10 @@ export default class Profile extends Component {
 		starter(opts => this.isLoading(true))
 	)
 
-	style = [style.profile, 'mdc-toolbar-fixed-adjust'].join(' ');
+	acceptTerms = e => {
+		this.setState({ isTermsAccepted: e.target.checked });
+		return prevent(e);
+	}
 
 	snackbarRef = e => this.snackbar = e;
 
@@ -467,7 +475,8 @@ export default class Profile extends Component {
 			birthdayError,
 			genderError,
 			familyError, fnameError, snameError,
-			phoneError
+			phoneError,
+			isTermsAccepted
 		} = state;
 
 		const isLoading = state.isLoading;
@@ -638,15 +647,33 @@ export default class Profile extends Component {
 
 		const pushButton = (
 			<Button unelevated
-				disabled={!valid || isLoading}
+				disabled={!valid || isLoading || (!isTermsAccepted && !state.notUseTerms)}
 				className={style.button}
 				onClick={this.push}
 			>
 				<Button.Icon>backup</Button.Icon>{state.pushButtonName}
 			</Button>);
 
+		const terms = state.notUseTerms ? undefined : [
+			<h3 style={{ textAlign: 'center' }}>
+				Условия использования и политика конфиденциальности
+			</h3>,
+			<div style={{ marginTop: 4, textAlign: 'justify', fontSize: '80%', lineHeight: '1.25em' }}>
+				{termsOfUseAndPrivacyPolicy}
+			</div>,
+			<Formfield>
+				<strong style={{ float: 'left', maxWidth: '85%', textAlign: 'right' }}>
+					Я согласен с условиями использования и политикой конфиденциальности
+				</strong>
+				<Checkbox style={{ float: 'right' }}
+					required
+					checked={isTermsAccepted}
+					onChange={this.acceptTerms}
+				/>
+			</Formfield>];
+
 		return (
-			<div class={this.style}>
+			<div class={style.profile}>
 				<Snackbar ref={this.snackbarRef} class={style.snackbar} />
 
 				<form onSubmit={false}>
@@ -662,6 +689,7 @@ export default class Profile extends Component {
 					{snameField}
 				</form>
 
+				{terms}
 				{logoutButton}
 				{pushButton}
 

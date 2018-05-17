@@ -23,7 +23,7 @@
 
 @value DesktopsAndLaptops: only screen and (min-width: 1224px);
 
-@value LargeScreens: only screen  and (min-width: 1824px);
+@value LargeScreens: only screen and (min-width: 1824px);
 
 @value iPhone4Landscape: only screen and (min-device-width: 320px) and (max-device-width: 480px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 2);
 @value iPhone4Portrait: only screen and (min-device-width: 320px) and (max-device-width: 480px) and (orientation: portrait) and (-webkit-min-device-pixel-ratio: 2);

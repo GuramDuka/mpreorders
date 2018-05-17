@@ -22,23 +22,35 @@
 	@value imgHeight: 150px;
 }
 
-:local(.media) {
+$mdc-toolbar-mobile-landscape-width-breakpoint: true;
+$mdc-snackbar-tablet-breakpoint: true;
+$mdc-toolbar-mobile-landscape-row-height: 0;
+
+@media (max-width: ($mdc-snackbar-tablet-breakpoint - 1)) {
+}
+
+.media {
 	/*composes: bg;*/
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-size: auto 100%;
 	height: imgHeight;
+
+	@media (max-width: $mdc-toolbar-mobile-landscape-width-breakpoint)
+		and (orientation: landscape) {
+		min-height: $mdc-toolbar-mobile-landscape-row-height;
+	}
 }
 
-:local(.m) {
+.m {
 	margin-bottom: 8px;
 }
 
-:local(.dn) {
+.dn {
 	display: none;
 }
 
-:local(.im) {
+.im {
 	width: 100%;
 	height: auto;
 }

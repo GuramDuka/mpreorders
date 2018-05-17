@@ -10,7 +10,7 @@ import TextField from 'preact-material-components/TextField';
 import 'preact-material-components/TextField/style.css';
 import Snackbar from 'preact-material-components/Snackbar';
 import 'preact-material-components/Snackbar/style.css';
-import style from './style';
+import style from './style.scss';
 import { headerTitleStorePath, headerSearchStorePath } from '../../../const';
 import { successor, failer, starter } from '../../load';
 import disp from '../../../lib/store';
@@ -99,8 +99,6 @@ export default class Login extends Component {
 		e && this.snackbar.MDComponent.show({ message: e });
 	}
 
-	style = [style.login, 'mdc-toolbar-fixed-adjust'].join(' ');
-
 	render(props, state) {
 		const { auth } = state;
 
@@ -154,7 +152,7 @@ export default class Login extends Component {
 			</Button>);
 
 		return (
-			<div class={this.style}>
+			<div class={style.login}>
 				<Snackbar ref={this.snackbarRef} style={style.snackbar} />
 
 				<form onSubmit={false}>

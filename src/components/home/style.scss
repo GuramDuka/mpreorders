@@ -1,0 +1,17 @@
+@import "preact-material-components/TopAppBar/mdc-top-app-bar.scss";
+
+.home {
+	padding-top: $mdc-top-app-bar-row-height;
+	padding-right: 20px;
+	padding-left: 20px;
+	min-height: 100%;
+	width: 100%;
+}
+
+.cardHeader {
+	padding: 16px;
+}
+
+.cardBody {
+	padding: 16px;
+}

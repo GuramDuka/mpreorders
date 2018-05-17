@@ -5,7 +5,7 @@ import 'preact-material-components/Card/style.css';
 import 'preact-material-components/Button/style.css';
 import { prevent, plinkRoute } from '../../../lib/util';
 import Component from '../../component';
-import style from './style';
+import style from './style.scss';
 import { nullLink } from '../../../const';
 import { icoUrl, imgUrl } from '../../../backend';
 //import nopic from '../../../assets/nopic.svg';
@@ -110,9 +110,9 @@ export default class ProductCard extends Component {
 
 	ims = [style.im, styleSpin.spin].join(' ')
 
-	render({ classes }, { isPrimaryImageLoaded, isPrimaryImageLoadError, primaryImageUrl }) {
+	render(props, { isPrimaryImageLoaded, isPrimaryImageLoadError, primaryImageUrl }) {
 		return (
-			<Card className={[style.card, ...classes].join(' ')}>
+			<Card>
 				<div>
 					<h4 class="mdc-typography--title">{this.title}</h4>
 					<div class="mdc-typography--caption">{this.subTitle}</div>

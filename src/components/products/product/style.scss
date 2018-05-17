@@ -1,0 +1,54 @@
+@import "preact-material-components/TopAppBar/mdc-top-app-bar.scss";
+
+.product {
+	padding-top: $mdc-top-app-bar-row-height;
+}
+
+.p0 {
+	padding: 0;
+}
+
+$cell-border: 1px solid gray;
+
+.lightBorderTable {
+	width: 100%;
+	border: none;
+	border-spacing: 0;
+	border-collapse: collapse;
+
+	tr {
+		th {
+			border-left: $cell-border;
+		}
+		
+		th:first-of-type {
+			border-left: none;
+		}
+	}
+
+	tbody {
+		tr {
+			td {
+				padding: 4px;
+				border-left: $cell-border;
+				border-bottom: $cell-border;
+			}
+			
+			td:first-of-type {
+				border-left: none;
+			}
+		}
+
+		tr:first-of-type {
+			td {
+				border-top: $cell-border;
+			}
+		}
+
+		tr:last-of-type {
+			td {
+				border-bottom: none;
+			}
+		}
+	}
+}

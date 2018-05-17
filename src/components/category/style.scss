@@ -1,0 +1,21 @@
+@import "preact-material-components/TopAppBar/mdc-top-app-bar.scss";
+
+.category {
+	padding-top: $mdc-top-app-bar-row-height;
+	min-height: 100%;
+	width: 100%;
+}
+
+.fr {
+	float: right;
+}
+
+.mr {
+	margin-right: 8px;
+}
+
+.im {
+	width: 100%;
+	height: auto;
+}
+	

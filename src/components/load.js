@@ -3,9 +3,22 @@ import { loaderSpinnerStorePath } from '../const';
 import { transform } from '../lib/util';
 import disp from '../lib/store';
 //------------------------------------------------------------------------------
+function incSpin(store) {
+	return store.setIn(loaderSpinnerStorePath,
+		~~store.getIn(loaderSpinnerStorePath) + 1);
+}
+//------------------------------------------------------------------------------
+function decSpin(store) {
+	const counter = ~~store.getIn(loaderSpinnerStorePath) - 1;
+
+	return counter === 0
+		? store.deleteIn(loaderSpinnerStorePath)
+		: store.setIn(loaderSpinnerStorePath, counter);
+}
+//------------------------------------------------------------------------------
 export function successor(...successors) {
 	return result => {
-		disp(store => store.deleteIn(loaderSpinnerStorePath));
+		disp(decSpin);
 
 		result = transform(result);
 
@@ -16,7 +29,7 @@ export function successor(...successors) {
 //------------------------------------------------------------------------------
 export function failer(...failers) {
 	return error => {
-		disp(store => store.deleteIn(loaderSpinnerStorePath));
+		disp(decSpin);
 
 		for (const fail of failers)
 			fail && fail(error);
@@ -25,7 +38,7 @@ export function failer(...failers) {
 //------------------------------------------------------------------------------
 export function starter(...starters) {
 	return opts => {
-		disp(store => store.setIn(loaderSpinnerStorePath, true));
+		disp(incSpin);
 
 		for (const start of starters)
 			start && start(opts);

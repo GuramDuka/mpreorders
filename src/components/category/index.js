@@ -1,5 +1,8 @@
 //------------------------------------------------------------------------------
 import wog from 'window-or-global';
+import { route } from 'preact-router';
+import LayoutGrid from 'preact-material-components/LayoutGrid';
+import 'preact-material-components/LayoutGrid/style.css';
 import Button from 'preact-material-components/Button';
 import 'preact-material-components/Button/style.css';
 import Dialog from 'preact-material-components/Dialog';
@@ -9,9 +12,9 @@ import disp from '../../lib/store';
 import { prevent, plinkRoute } from '../../lib/util';
 import { headerSearchStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
-import style from './style';
+import style from './style.scss';
 import ProductCard from '../products/card';
-import ProductCardStyle from '../products/card/style';
+import ProductCardStyle from '../products/card/style.scss';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -35,6 +38,14 @@ export default class Category extends Component {
 		]
 	])
 
+	didSetState({ list }) {
+		if (list && this.page > list.pages)
+			if (list.pages !== 0)
+				route(this.pageHref(list.pages), true);
+			else
+				route('/categories', true);
+	}
+	
 	mount(props) {
 		// decode page props
 		let [page, pageSize] = props.pageProps.split(',');
@@ -67,9 +78,8 @@ export default class Category extends Component {
 	}
 
 	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
-
-	goPage = page => this.linkTo('/category/'
-		+ this.props.category + '/' + page + ',' + this.pageSize)
+	pageHref = page => '/category/' + this.props.category + '/' + page + ',' + this.pageSize
+	goPage = page => this.linkTo(this.pageHref(page))
 
 	goNextStyle = [ProductCardStyle.m, style.fr].join(' ')
 
@@ -94,19 +104,18 @@ export default class Category extends Component {
 		)
 	)
 
-	style = [style.category, 'mdc-toolbar-fixed-adjust'].join(' ');
-
 	render(props, { list, imageMagnifierUrl }) {
 		if (list === undefined)
 			return undefined;
 
-		const view = list.rows.map((row, i) => (
-			<ProductCard
-				classes={ProductCardStyle.m}
-				openImageMagnifier={this.openImageMagnifier}
-				key={row.link}
-				data={row}
-			/>));
+		const view = list.rows.map(row => (
+			<LayoutGrid.Cell>
+				<ProductCard
+					openImageMagnifier={this.openImageMagnifier}
+					key={row.link}
+					data={row}
+				/>
+			</LayoutGrid.Cell>));
 
 		// this.page > 1 && view.push(
 		// 	<Button unelevated
@@ -117,28 +126,9 @@ export default class Category extends Component {
 		// 		НАЗАД
 		// 	</Button>);
 
-		if (this.page < list.pages)
-			view.push(
-				<Button unelevated
-					className={this.goNextStyle}
-					{...this.goNext}
-				>
-					<Button.Icon>arrow_forward</Button.Icon>
-					{this.page + 1}
-				</Button>);
-
-		view.push(
-			<Button unelevated
-				className={this.goUpStyle}
-				onClick={this.goUp}
-			>
-				<Button.Icon onClick={this.goUp}>arrow_upward</Button.Icon>
-			</Button>);
-
 		return (
-			<div class={this.style}>
+			<div class={style.category}>
 				<Dialog ref={this.imageMagnifierRef}>
-					{/*<Dialog.Header>Изображение</Dialog.Header>*/}
 					<Dialog.Body>
 						<img class={style.im} src={imageMagnifierUrl} />
 					</Dialog.Body>
@@ -148,7 +138,25 @@ export default class Category extends Component {
 						</Dialog.FooterButton>
 					</Dialog.Footer>
 				</Dialog>
-				{view}
+				<LayoutGrid>
+					<LayoutGrid.Inner>
+						{view}
+					</LayoutGrid.Inner>
+				</LayoutGrid>
+				{this.page < list.pages ?
+					<Button unelevated
+						className={this.goNextStyle}
+						{...this.goNext}
+					>
+						<Button.Icon>arrow_forward</Button.Icon>
+						{this.page + 1}
+					</Button> : undefined}
+				<Button unelevated
+					className={this.goUpStyle}
+					onClick={this.goUp}
+				>
+					<Button.Icon onClick={this.goUp}>arrow_upward</Button.Icon>
+				</Button>
 			</div>);
 	}
 }

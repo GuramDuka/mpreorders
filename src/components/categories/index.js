@@ -11,7 +11,7 @@ import Component from '../../components/component';
 import disp from '../../lib/store';
 import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import loader from './loader';
-import style from './style';
+import style from './style.scss';
 import { prevent, plinkRoute } from '../../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,8 +40,6 @@ export default class Categories extends Component {
 		this.setState({ checked: checked });
 		return prevent(e);
 	}
-
-	style = [style.categories, 'mdc-toolbar-fixed-adjust'].join(' ');
 
 	render(props, { list, checked }) {
 		if (list === undefined)
@@ -75,7 +73,7 @@ export default class Categories extends Component {
 				</List.Item>));
 
 		return (
-			<div class={this.style}>
+			<div class={style.categories}>
 				<List>
 					{items}
 				</List>

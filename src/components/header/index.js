@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
 import Component from '../component';
 import { route } from 'preact-router';
+import TopAppBar from 'preact-material-components/TopAppBar';
+import 'preact-material-components/TopAppBar/style.css';
 import Toolbar from 'preact-material-components/Toolbar';
 import 'preact-material-components/Toolbar/style.css';
 import Drawer from 'preact-material-components/Drawer';
@@ -27,7 +29,7 @@ import {
 } from '../../const';
 import disp from '../../lib/store';
 import { prevent } from '../../lib/util';
-import style from './style';
+import style from './style.scss';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
 	searchPathValidator = s => s === this.state.searchStorePath
@@ -310,70 +312,135 @@ export default class Header extends Component {
 				</Dialog.Footer>
 			</Dialog>) : undefined;
 
+		const drawer = (
+			<Drawer.TemporaryDrawer ref={this.drawerRef}>
+				<Drawer.DrawerContent>
+					<Drawer.DrawerItem {...this.goHome}>
+						<List.ItemGraphic>home</List.ItemGraphic>
+						Начало
+					</Drawer.DrawerItem>
+					<Drawer.DrawerItem {...this.goCategories}>
+						<List.ItemGraphic>view_stream</List.ItemGraphic>
+						Категории
+					</Drawer.DrawerItem>
+					<Drawer.DrawerItem {...this.goProducts}>
+						<List.ItemGraphic>view_list</List.ItemGraphic>
+						Каталог
+					</Drawer.DrawerItem>
+					<Drawer.DrawerItem {...this.goOrders}>
+						<List.ItemGraphic>reorder</List.ItemGraphic>
+						Заказы
+					</Drawer.DrawerItem>
+					<Drawer.DrawerItem {...this.goCart}>
+						<List.ItemGraphic>shopping_cart</List.ItemGraphic>
+						Корзина
+					</Drawer.DrawerItem>
+					<Drawer.DrawerItem {...(authorized ? this.goProfile : this.goLogin)}>
+						<List.ItemGraphic>{authorized ? 'verified_user' : 'account_circle'}</List.ItemGraphic>
+						{authorized ? 'Профиль' : 'Вход/Регистрация'}
+					</Drawer.DrawerItem>
+				</Drawer.DrawerContent>
+			</Drawer.TemporaryDrawer>);
+
+		const dialog = (
+			<Dialog ref={this.settingsRef}>
+				<Dialog.Header>Настройки</Dialog.Header>
+				<Dialog.Body>
+					<span>Тёмная тема&nbsp;&nbsp;</span>
+					<Switch onClick={this.toggleDarkTheme} checked={darkThemeEnabled} />
+				</Dialog.Body>
+				<Dialog.Footer>
+					<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>
+				</Dialog.Footer>
+			</Dialog>);
+
 		return (
-			<div>
-				<Toolbar className="toolbar" fixed>
-					<Toolbar.Row>
-						<Toolbar.Section align-start>
-							<Toolbar.Icon menu onClick={this.openDrawer}>
-								menu
-							</Toolbar.Icon>
-							<Title />
-						</Toolbar.Section>
-						<Toolbar.Section align-end>
-							<Spinner />
-							{searchIcon}
-							<Toolbar.Icon onClick={this.openSettings}>
-								settings
-							</Toolbar.Icon>
-							{/* Zero Width Space https://unicode-table.com/ru/200B/
-							  * Need for right positioning when title.length === 0
-							  */}
-							<Toolbar.Title style={{ margin: 0 }}>&#x200B;</Toolbar.Title>
-						</Toolbar.Section>
-					</Toolbar.Row>
-				</Toolbar>
-				<Drawer.TemporaryDrawer ref={this.drawerRef}>
-					<Drawer.DrawerContent>
-						<Drawer.DrawerItem {...this.goHome}>
-							<List.ItemGraphic>home</List.ItemGraphic>
-							Начало
-						</Drawer.DrawerItem>
-						<Drawer.DrawerItem {...this.goCategories}>
-							<List.ItemGraphic>view_stream</List.ItemGraphic>
-							Категории
-						</Drawer.DrawerItem>
-						<Drawer.DrawerItem {...this.goProducts}>
-							<List.ItemGraphic>view_list</List.ItemGraphic>
-							Каталог
-						</Drawer.DrawerItem>
-						<Drawer.DrawerItem {...this.goOrders}>
-							<List.ItemGraphic>reorder</List.ItemGraphic>
-							Заказы
-						</Drawer.DrawerItem>
-						<Drawer.DrawerItem {...this.goCart}>
-							<List.ItemGraphic>shopping_cart</List.ItemGraphic>
-							Корзина
-						</Drawer.DrawerItem>
-						<Drawer.DrawerItem {...(authorized ? this.goProfile : this.goLogin)}>
-							<List.ItemGraphic>{authorized ? 'verified_user' : 'account_circle'}</List.ItemGraphic>
-							{authorized ? 'Профиль' : 'Вход/Регистрация'}
-						</Drawer.DrawerItem>
-					</Drawer.DrawerContent>
-				</Drawer.TemporaryDrawer>
-				<Dialog ref={this.settingsRef}>
-					<Dialog.Header>Настройки</Dialog.Header>
-					<Dialog.Body>
-						<span>Тёмная тема&nbsp;&nbsp;</span>
-						<Switch onClick={this.toggleDarkTheme} checked={darkThemeEnabled} />
-					</Dialog.Body>
-					<Dialog.Footer>
-						<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>
-					</Dialog.Footer>
-				</Dialog>
+			<TopAppBar class={style.topappbar} fixed>
+				<TopAppBar.Row>
+					<TopAppBar.Section align-start>
+						<TopAppBar.Icon navigation onClick={this.openDrawer}>
+							menu
+						</TopAppBar.Icon>
+						<Title />
+					</TopAppBar.Section>
+					<TopAppBar.Section align-end>
+						<Spinner />
+						{searchIcon}
+						<TopAppBar.Icon onClick={this.openSettings}>
+							settings
+						</TopAppBar.Icon>
+						<TopAppBar.Icon>more_vert</TopAppBar.Icon>
+					</TopAppBar.Section>
+				</TopAppBar.Row>
+				{drawer}
+				{dialog}
 				{searchDialog}
-			</div >
-		);
+			</TopAppBar>);
+
+		// return (
+		// 	<div>
+		// 		<Toolbar className="toolbar" fixed>
+		// 			<Toolbar.Row>
+		// 				<Toolbar.Section align-start>
+		// 					<Toolbar.Icon menu onClick={this.openDrawer}>
+		// 						menu
+		// 					</Toolbar.Icon>
+		// 					<Title />
+		// 				</Toolbar.Section>
+		// 				<Toolbar.Section align-end>
+		// 					<Spinner />
+		// 					{searchIcon}
+		// 					<Toolbar.Icon onClick={this.openSettings}>
+		// 						settings
+		// 					</Toolbar.Icon>
+		// 					{/* Zero Width Space https://unicode-table.com/ru/200B/
+		// 					  * Need for right positioning when title.length === 0
+		// 					  */}
+		// 					<Toolbar.Title style={{ margin: 0 }}>&#x200B;</Toolbar.Title>
+		// 				</Toolbar.Section>
+		// 			</Toolbar.Row>
+		// 		</Toolbar>
+		// 		<Drawer.TemporaryDrawer ref={this.drawerRef}>
+		// 			<Drawer.DrawerContent>
+		// 				<Drawer.DrawerItem {...this.goHome}>
+		// 					<List.ItemGraphic>home</List.ItemGraphic>
+		// 					Начало
+		// 				</Drawer.DrawerItem>
+		// 				<Drawer.DrawerItem {...this.goCategories}>
+		// 					<List.ItemGraphic>view_stream</List.ItemGraphic>
+		// 					Категории
+		// 				</Drawer.DrawerItem>
+		// 				<Drawer.DrawerItem {...this.goProducts}>
+		// 					<List.ItemGraphic>view_list</List.ItemGraphic>
+		// 					Каталог
+		// 				</Drawer.DrawerItem>
+		// 				<Drawer.DrawerItem {...this.goOrders}>
+		// 					<List.ItemGraphic>reorder</List.ItemGraphic>
+		// 					Заказы
+		// 				</Drawer.DrawerItem>
+		// 				<Drawer.DrawerItem {...this.goCart}>
+		// 					<List.ItemGraphic>shopping_cart</List.ItemGraphic>
+		// 					Корзина
+		// 				</Drawer.DrawerItem>
+		// 				<Drawer.DrawerItem {...(authorized ? this.goProfile : this.goLogin)}>
+		// 					<List.ItemGraphic>{authorized ? 'verified_user' : 'account_circle'}</List.ItemGraphic>
+		// 					{authorized ? 'Профиль' : 'Вход/Регистрация'}
+		// 				</Drawer.DrawerItem>
+		// 			</Drawer.DrawerContent>
+		// 		</Drawer.TemporaryDrawer>
+		// 		<Dialog ref={this.settingsRef}>
+		// 			<Dialog.Header>Настройки</Dialog.Header>
+		// 			<Dialog.Body>
+		// 				<span>Тёмная тема&nbsp;&nbsp;</span>
+		// 				<Switch onClick={this.toggleDarkTheme} checked={darkThemeEnabled} />
+		// 			</Dialog.Body>
+		// 			<Dialog.Footer>
+		// 				<Dialog.FooterButton accept>Закрыть</Dialog.FooterButton>
+		// 			</Dialog.Footer>
+		// 		</Dialog>
+		// 		{searchDialog}
+		// 	</div >
+		// );
 	}
 }
 //------------------------------------------------------------------------------

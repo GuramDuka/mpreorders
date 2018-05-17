@@ -126,7 +126,7 @@ function replaceAggregate(m0, m1) {
 	return (f === 'locale' ? lcTime[m1] : f);
 }
 //------------------------------------------------------------------------------
-export function strftime(fmt, timestamp) {
+export default function strftime(fmt, timestamp) {
 	//       discuss at: http://locutus.io/php/strftime/
 	//      original by: Blues (http://tech.bluesmoon.info/)
 	// reimplemented by: Brett Zamir (http://brett-zamir.me)

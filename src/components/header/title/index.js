@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 import Component from '../../component';
-import Toolbar from 'preact-material-components/Toolbar';
-import 'preact-material-components/Toolbar/style.css';
-//import style from './style';
+import TopAppBar from 'preact-material-components/TopAppBar';
+import 'preact-material-components/TopAppBar/style.css';
+import style from './style.scss';
 //------------------------------------------------------------------------------
 export default class Title extends Component {
 	storePaths = new Map([
@@ -16,10 +16,10 @@ export default class Title extends Component {
 		// Zero Width Space https://unicode-table.com/ru/200B/
 		// Need for right positioning when title.length === 0
 		return (
-			<Toolbar.Title>
+			<TopAppBar.Title class={style.title}>
 				&#x200B;
 				{title}
-			</Toolbar.Title>);
+			</TopAppBar.Title>);
 	}
 }
 //------------------------------------------------------------------------------
