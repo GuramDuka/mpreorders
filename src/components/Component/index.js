@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 import { Component as PreactComponent } from 'preact';
-import disp, { subscribe, unsubscribe } from '../lib/store';
-import { shallowEqual } from '../lib/util';
-//import { shallowEqual } from '../lib/util';
+import disp, { subscribe, unsubscribe } from '../../lib/store';
+import { shallowEqual } from '../../lib/util';
+//import { shallowEqual } from '../../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -38,12 +38,6 @@ export default class Component extends PreactComponent {
 		return super.setState.call(this, state, cb);
 	}
 
-	// 	before the component gets mounted to the DOM
-	componentWillMount() {
-		if (this.willMount)
-			this.willMount();
-	}
-
 	// prior to removal from the DOM
 	componentWillUnmount() {
 		if (this.willUnmount)
@@ -58,10 +52,10 @@ export default class Component extends PreactComponent {
 
 	static __mountId = 0
 	
-	// after the component gets mounted to the DOM
-	componentDidMount() {
-		if (this.didMount)
-			this.didMount(this.props);
+	// 	before the component gets mounted to the DOM and
+	componentWillMount() {
+		if (this.willMount)
+			this.willMount();
 
 		if (this.mount) {
 			if (!this.__mount)
@@ -76,6 +70,12 @@ export default class Component extends PreactComponent {
 
 		if (this.storePaths && subscribe(this.storePaths))
 			disp(state => state.pubIn(this.storePaths));
+	}
+
+	// after the component gets mounted to the DOM
+	componentDidMount() {
+		if (this.didMount)
+			this.didMount(this.props);
 	}
 
 	// before new props get accepted

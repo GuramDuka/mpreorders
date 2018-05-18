@@ -7,7 +7,7 @@
  * https://npm.taobao.org/package/postcss-modules-values
  * make local aliases to imported values
  */
-
+/*
 @value small as bp-small, medium as bp-medium, large as bp-large from "../../../assets/breackpoints.css";
  
 @media bp-small {
@@ -28,17 +28,28 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 
 @media (max-width: ($mdc-snackbar-tablet-breakpoint - 1)) {
 }
+@media (max-width: $mdc-toolbar-mobile-landscape-width-breakpoint)
+	and (orientation: landscape) {
+	min-height: $mdc-toolbar-mobile-landscape-row-height;
+}
+*/
+@import "preact-material-components/LayoutGrid/_mixins";
+
+$media-height: (
+  desktop: 250px,
+  tablet: 200px,
+  phone: 150px
+) !default;
 
 .media {
-	/*composes: bg;*/
 	background-position: center center;
 	background-repeat: no-repeat;
-	background-size: auto 100%;
-	height: imgHeight;
+	background-size: contain;
 
-	@media (max-width: $mdc-toolbar-mobile-landscape-width-breakpoint)
-		and (orientation: landscape) {
-		min-height: $mdc-toolbar-mobile-landscape-row-height;
+	@each $size in map-keys($mdc-layout-grid-columns) {
+		@include mdc-layout-grid-media-query_($size) {
+			height: map-get($media-height, $size);
+		}
 	}
 }
 
@@ -50,7 +61,28 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 	display: none;
 }
 
-.im {
-	width: 100%;
-	height: auto;
+.title {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.subTitle {
+	@extend .title;
+}
+
+@keyframes r {
+	0%    { transform: rotate(0deg);   }
+	12.5% { transform: rotate(45deg);  }
+	25%   { transform: rotate(90deg);  }
+	37.5% { transform: rotate(135deg); }
+	50%   { transform: rotate(180deg); }
+	62.5% { transform: rotate(225deg); }
+	75%   { transform: rotate(270deg); }
+	87.5% { transform: rotate(315deg); }
+	100%  { transform: rotate(360deg); }
+}
+
+.spin {
+	animation: r 10s step-end infinite;
 }

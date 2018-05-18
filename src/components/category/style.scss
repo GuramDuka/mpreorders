@@ -14,8 +14,42 @@
 	margin-right: 8px;
 }
 
-.im {
-	width: 100%;
-	height: auto;
+/*@import "preact-material-components/LayoutGrid/_mixins";
+
+$media-height: (
+  desktop: 250px,
+  tablet: 200px,
+  phone: 150px
+) !default;*/
+
+.media {
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+
+	/*@each $size in map-keys($mdc-layout-grid-columns) {
+		@include mdc-layout-grid-media-query_($size) {
+			height: map-get($media-height, $size);
+		}
+	@media (max-width: $mdc-toolbar-mobile-landscape-width-breakpoint)
+		and (orientation: landscape) {
+		min-height: $mdc-toolbar-mobile-landscape-row-height;
+	}
+	}*/
+
+	/*@media (max-height: 640px) {
+		min-height: 640px - $mdc-top-app-bar-row-height;
+	}*/
+	height: 100%;
 }
-	
+
+.dia {
+	:global(.mdc-dialog__surface) {
+		max-width: 98%;
+		height: 98%;
+
+		:global(.mdc-dialog__body) {
+			height: 100%;
+		}
+	}
+}

@@ -4,7 +4,7 @@ export const zLink = nullLink.replace(/0/g, 'z');
 //------------------------------------------------------------------------------
 export const headerTitleStorePath = 'header.title';
 export const headerSearchStorePath = 'header.search';
-export const loaderSpinnerStorePath = 'header.spinner.active';
+export const loaderSpinnerStorePath = 'header.spinner';
 //------------------------------------------------------------------------------
 export const inputFieldHelperTextClasses = 'mdc-text-field-helper-text mdc-text-field-helper-text--persistent mdc-text-field-helper-text mdc-text-field-helper-text--persistent';
 //------------------------------------------------------------------------------

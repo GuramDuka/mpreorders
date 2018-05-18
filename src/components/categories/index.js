@@ -7,7 +7,7 @@ import 'preact-material-components/Button/style.css';
 //import 'preact-material-components/IconToggle/style.css';
 import Checkbox from 'preact-material-components/Checkbox';
 import 'preact-material-components/Checkbox/style.css';
-import Component from '../../components/component';
+import Component from '../Component';
 import disp from '../../lib/store';
 import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import loader from './loader';

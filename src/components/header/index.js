@@ -1,14 +1,14 @@
 //------------------------------------------------------------------------------
-import Component from '../component';
+import Component from '../Component';
 import { route } from 'preact-router';
 import TopAppBar from 'preact-material-components/TopAppBar';
 import 'preact-material-components/TopAppBar/style.css';
-import Toolbar from 'preact-material-components/Toolbar';
-import 'preact-material-components/Toolbar/style.css';
 import Drawer from 'preact-material-components/Drawer';
 import 'preact-material-components/Drawer/style.css';
 import Dialog from 'preact-material-components/Dialog';
 import 'preact-material-components/Dialog/style.css';
+import LayoutGrid from 'preact-material-components/LayoutGrid';
+import 'preact-material-components/LayoutGrid/style.css';
 import Switch from 'preact-material-components/Switch';
 import 'preact-material-components/Switch/style.css';
 import List from 'preact-material-components/List';
@@ -20,8 +20,8 @@ import 'preact-material-components/Icon/style.css';
 import Select from 'preact-material-components/Select';
 import 'preact-material-components/Menu/style.css';
 import 'preact-material-components/Select/style.css';
-import Spinner from './spinner';
-import Title from './title';
+import Spinner from './Spinner';
+import Title from './Title';
 import 'preact-material-components/Theme/style.css';
 import {
 	headerSearchStorePath,
@@ -225,11 +225,12 @@ export default class Header extends Component {
 		const authorized = auth && auth.authorized;
 
 		const searchIcon = searchStorePath ? (
-			<Toolbar.Icon onClick={this.openSearch}
+			<TopAppBar.Icon navigation
+				onClick={this.openSearch}
 				className={searchIconStyle}
 			>
 				search
-			</Toolbar.Icon>) : undefined;
+			</TopAppBar.Icon>) : undefined;
 
 		const searchOrderFieldIndex = this.searchOrderFields.indexOf(
 			searchOrderField !== undefined ? searchOrderField : 'name'
@@ -241,59 +242,67 @@ export default class Header extends Component {
 
 		const searchDialog = searchStorePath ? (
 			<Dialog ref={this.searchRef}>
-				<Dialog.Header>Поиск</Dialog.Header>
+				<Dialog.Header>
+					Поиск и фильтрация
+				</Dialog.Header>
 				<Dialog.Body>
-					<TextField
-						helperText="Вводите текст ..."
-						helperTextPersistent
-						fullwidth
-						trailingIcon="search"
-						value={searchFilter}
-						onInput={this.searchFilterInput}
-					>
-						<Icon>menu</Icon>
-					</TextField>
-					<div>
-						<span class={style.fl}>Имеющиеся в наличии</span>
-						<div class={style.fr}>
-							<Switch
-								checked={searchStock}
-								onChange={this.searchStockChange}
-							/>
-						</div>
-					</div>
-					<div>
-						<span class={style.fl}>Имеющие изображение</span>
-						<div class={style.fr}>
-							<Switch
-								checked={searchImage}
-								onChange={this.searchImageChange}
-							/>
-						</div>
-					</div>
-					<Select hintText="Поле сортировки"
-						selectedIndex={searchOrderFieldIndex}
-						onChange={this.searchOrderFieldChange}
-					>
-						<Select.Item>Код</Select.Item>
-						<Select.Item>Наименование</Select.Item>
-						<Select.Item>Цена</Select.Item>
-						<Select.Item>Остаток</Select.Item>
-						<Select.Item>Артикул</Select.Item>
-					</Select>
-					<p aria-hidden class={inputFieldHelperTextClasses}>
-						&nbsp;&nbsp;Выберите поле сортировки
-					</p>
-					<Select hintText="Направление сортировки"
-						selectedIndex={searchOrderDirectionIndex}
-						onChange={this.searchOrderDirectionChange}
-					>
-						<Select.Item>АБВ...ЭЮЯ</Select.Item>
-						<Select.Item>ЯЮЭ...ВБА</Select.Item>
-					</Select>
-					<p aria-hidden class={inputFieldHelperTextClasses}>
-						&nbsp;&nbsp;Выберите направление сортировки
-					</p>
+					<LayoutGrid>
+						<LayoutGrid.Inner>
+							<LayoutGrid.Cell>
+								<TextField
+									helperText="Вводите текст ..."
+									helperTextPersistent
+									fullwidth
+									trailingIcon="search"
+									value={searchFilter}
+									onInput={this.searchFilterInput}
+								>
+									<Icon>menu</Icon>
+								</TextField>
+							</LayoutGrid.Cell>
+							<LayoutGrid.Cell>
+								<span class={style.fl}>Имеющиеся в наличии</span>
+								<div class={style.fr}>
+									<Switch
+										checked={searchStock}
+										onChange={this.searchStockChange}
+									/>
+								</div>
+								<span class={style.fl}>Имеющие изображение</span>
+								<div class={style.fr}>
+									<Switch
+										checked={searchImage}
+										onChange={this.searchImageChange}
+									/>
+								</div>
+							</LayoutGrid.Cell>
+							<LayoutGrid.Cell>
+								<Select hintText="Поле сортировки"
+									selectedIndex={searchOrderFieldIndex}
+									onChange={this.searchOrderFieldChange}
+								>
+									<Select.Item>Код</Select.Item>
+									<Select.Item>Наименование</Select.Item>
+									<Select.Item>Цена</Select.Item>
+									<Select.Item>Остаток</Select.Item>
+									<Select.Item>Артикул</Select.Item>
+								</Select>
+								<p aria-hidden class={inputFieldHelperTextClasses}>
+									&nbsp;&nbsp;Выберите поле сортировки
+								</p>
+								<Select hintText="Направление сортировки"
+									selectedIndex={searchOrderDirectionIndex}
+									onChange={this.searchOrderDirectionChange}
+								>
+									<Select.Item>АБВ...ЭЮЯ</Select.Item>
+									<Select.Item>ЯЮЭ...ВБА</Select.Item>
+								</Select>
+								<p aria-hidden class={inputFieldHelperTextClasses}>
+									&nbsp;&nbsp;Выберите направление сортировки
+								</p>
+							</LayoutGrid.Cell>
+						</LayoutGrid.Inner>
+					</LayoutGrid>
 				</Dialog.Body>
 				<Dialog.Footer>
 					<Dialog.FooterButton
@@ -355,27 +364,31 @@ export default class Header extends Component {
 			</Dialog>);
 
 		return (
-			<TopAppBar class={style.topappbar} fixed>
-				<TopAppBar.Row>
-					<TopAppBar.Section align-start>
-						<TopAppBar.Icon navigation onClick={this.openDrawer}>
-							menu
-						</TopAppBar.Icon>
-						<Title />
-					</TopAppBar.Section>
-					<TopAppBar.Section align-end>
-						<Spinner />
-						{searchIcon}
-						<TopAppBar.Icon onClick={this.openSettings}>
-							settings
-						</TopAppBar.Icon>
-						<TopAppBar.Icon>more_vert</TopAppBar.Icon>
-					</TopAppBar.Section>
-				</TopAppBar.Row>
+			<div>
 				{drawer}
 				{dialog}
 				{searchDialog}
-			</TopAppBar>);
+				<TopAppBar class={style.topappbar} fixed>
+					<TopAppBar.Row>
+						<TopAppBar.Section align-start>
+							<TopAppBar.Icon navigation onClick={this.openDrawer}>
+								menu
+							</TopAppBar.Icon>
+							<Title />
+						</TopAppBar.Section>
+						<TopAppBar.Section align-end>
+							<Spinner />
+							{searchIcon}
+							<TopAppBar.Icon navigation onClick={this.openSettings}>
+								settings
+							</TopAppBar.Icon>
+							<TopAppBar.Icon navigation>
+								more_vert
+							</TopAppBar.Icon>
+						</TopAppBar.Section>
+					</TopAppBar.Row>
+				</TopAppBar>
+			</div>);
 
 		// return (
 		// 	<div>

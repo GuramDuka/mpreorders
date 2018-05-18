@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import Component from '../../components/component';
+import Component from '../Component';
 import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import style from './style.scss';

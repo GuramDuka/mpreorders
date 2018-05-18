@@ -1,6 +1,4 @@
 //------------------------------------------------------------------------------
-//import wog from 'window-or-global';
-//import fetch from 'whatwg-fetch';
 //import AbortController from 'abortcontroller-polyfill';
 import { copy, serializeURIParams } from '../lib/util';
 import disp, { getStore } from '../lib/store';

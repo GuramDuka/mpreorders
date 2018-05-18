@@ -3,17 +3,23 @@ import { loaderSpinnerStorePath } from '../const';
 import { transform } from '../lib/util';
 import disp from '../lib/store';
 //------------------------------------------------------------------------------
+function spinPath() {
+	return loaderSpinnerStorePath + '.active';
+}
+//------------------------------------------------------------------------------
 function incSpin(store) {
-	return store.setIn(loaderSpinnerStorePath,
-		~~store.getIn(loaderSpinnerStorePath) + 1);
+	const p = spinPath();
+	return store.cmpSetIn(loaderSpinnerStorePath + '.nostore', true)
+		.setIn(p, ~~store.getIn(p) + 1);
 }
 //------------------------------------------------------------------------------
 function decSpin(store) {
-	const counter = ~~store.getIn(loaderSpinnerStorePath) - 1;
+	const p = spinPath();
+	const counter = ~~store.getIn(p) - 1;
 
 	return counter === 0
-		? store.deleteIn(loaderSpinnerStorePath)
-		: store.setIn(loaderSpinnerStorePath, counter);
+		? store.deleteIn(p)
+		: store.setIn(p, counter);
 }
 //------------------------------------------------------------------------------
 export function successor(...successors) {

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import Component from '../../component';
+import Component from '../../Component';
 import TopAppBar from 'preact-material-components/TopAppBar';
 import 'preact-material-components/TopAppBar/style.css';
 import style from './style.scss';

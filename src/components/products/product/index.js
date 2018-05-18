@@ -1,15 +1,10 @@
 //------------------------------------------------------------------------------
 import DOMPurify from 'dompurify';
-import LayoutGrid from 'preact-material-components/LayoutGrid';
-import 'preact-material-components/LayoutGrid/style.css';
 import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
-import Fab from 'preact-material-components/Fab';
-import 'preact-material-components/Fab/style.css';
-import Icon from 'preact-material-components/Icon';
-import 'preact-material-components/Icon/style.css';
 import { Component as PreactComponent } from 'preact';
-import Component from '../../component';
+import Component from '../../Component';
+import VerticalActionBar from '../../VerticalActionBar';
 import disp from '../../../lib/store';
 import { headerSearchStorePath } from '../../../const';
 import { prevent, plinkRoute } from '../../../lib/util';
@@ -171,23 +166,21 @@ class ExpandableItem extends PreactComponent {
 	}
 
 	render({ title, meta, render }, { data, isExpanded }) {
-		const graphic = isExpanded
-			? <List.ItemGraphic>expand_less</List.ItemGraphic>
-			: <List.ItemGraphic>expand_more</List.ItemGraphic>;
-		const children = data ? render(data) : undefined;
 		return (
 			<div>
 				<List className={style.p0} onClick={this.onClick}>
 					<List.Divider />
 					<List.Item>
-						{graphic}
+						<List.ItemGraphic>
+							{`expand_${isExpanded ? 'less' : 'more'}`}
+						</List.ItemGraphic>
 						{title}
 						<List.ItemMeta>
 							{meta}
 						</List.ItemMeta>
 					</List.Item>
 					{isExpanded ? <List.Divider /> : undefined}
-					{isExpanded ? children : undefined}
+					{isExpanded && data ? render(data) : undefined}
 					<List.Divider />
 				</List>
 			</div>);
@@ -213,7 +206,10 @@ export default class Product extends Component {
 
 	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
 
-	render(props, { auth, data }) {
+	favoriteIcons = ['favorite_border', 'favorite']
+	inCartIcons = ['add_shopping_cart', 'remove_shopping_cart']
+
+	render(props, { auth, data, isFavorite, isInCart }) {
 		if (data === undefined)
 			return undefined;
 
@@ -292,31 +288,14 @@ export default class Product extends Component {
 		return (
 			<div class={style.product}>
 				{items}
-				<Fab mini>
-					<Icon>favorite</Icon>
-				</Fab>
-				<Fab mini>
-					<Icon>remove_shopping_cart</Icon>
-				</Fab>
-				<LayoutGrid>
-					<LayoutGrid.Inner>
-						<LayoutGrid.Cell>
-							<Fab mini primary>
-								<Icon>favorite_border</Icon>
-							</Fab>
-						</LayoutGrid.Cell>
-						<LayoutGrid.Cell>
-							<Fab mini primary>
-								<Icon>add_shopping_cart</Icon>
-							</Fab>
-						</LayoutGrid.Cell>
-						<LayoutGrid.Cell>
-							<Fab mini secondary>
-								<Icon>add</Icon>
-							</Fab>
-						</LayoutGrid.Cell>
-					</LayoutGrid.Inner>
-				</LayoutGrid>
+				<VerticalActionBar>
+					<VerticalActionBar.Fab>
+						{this.favoriteIcons[isFavorite ? 1 : 0]}
+					</VerticalActionBar.Fab>
+					<VerticalActionBar.Fab>
+						{this.inCartIcons[isInCart ? 1 : 0]}
+					</VerticalActionBar.Fab>
+				</VerticalActionBar>
 			</div>
 		);
 	}

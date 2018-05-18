@@ -1,19 +1,20 @@
 //------------------------------------------------------------------------------
-import wog from 'window-or-global';
 import { route } from 'preact-router';
 //------------------------------------------------------------------------------
+export const root = typeof window === 'object' ? window : global;
+//------------------------------------------------------------------------------
 export function isDevelopment() {
-	return (wog.process
-		&& wog.process.env
-		&& wog.process.env.NODE_ENV === 'development')
-		|| (wog.webpackJsonp && wog.webpackJsonp.name.length !== 0);
+	return (root.process
+		&& root.process.env
+		&& root.process.env.NODE_ENV === 'development')
+		|| (root.webpackJsonp && root.webpackJsonp.name.length !== 0);
 }
 //------------------------------------------------------------------------------
 export function isProduction() {
-	return (wog.process
-		&& wog.process.env
-		&& wog.process.env.NODE_ENV === 'production')
-		|| (wog.webpackJsonp && wog.webpackJsonp.name.length === 0);
+	return (root.process
+		&& root.process.env
+		&& root.process.env.NODE_ENV === 'production')
+		|| (root.webpackJsonp && root.webpackJsonp.name.length === 0);
 }
 //------------------------------------------------------------------------------
 export function isPrimitiveValue(v) {

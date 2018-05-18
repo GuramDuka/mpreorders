@@ -1,5 +1,4 @@
 //------------------------------------------------------------------------------
-import wog from 'window-or-global';
 import Deque from 'double-ended-queue';
 //import uuidv1 from 'uuid/v1';
 //import * as PubSub from 'pubsub-js';
@@ -7,6 +6,7 @@ import setZeroTimeout from '../lib/zerotimeout';
 import { defaultState } from '../config';
 import { stringify, destringify } from '../lib/json';
 import { shallowEqual } from '../lib/util';
+import root from '../lib/root';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -261,9 +261,9 @@ class State { // must be singleton
 	}
 
 	restore() {
-		// On preact build prerendering wog.localStorage === undefined
+		// On preact build prerendering root.localStorage === undefined
 		// Alternatively use 'preact build --no-prerender' to disable prerendering.
-		let state = wog.localStorage && wog.localStorage.getItem('state');
+		let state = root.localStorage && root.localStorage.getItem('state');
 
 		if (state !== undefined && state !== null) {
 			state = destringify(state);
@@ -274,14 +274,14 @@ class State { // must be singleton
 		else
 			state = defaultState;
 
-		this.root = state;
+		this.__root = state;
 	}
 
 	store() {
 		if (this.dirty) {
-			const { root } = this;
-			root.version = (~~root.version) + 1;
-			wog.localStorage.setItem('state', stringify(root));
+			const { __root } = this;
+			__root.version = (~~__root.version) + 1;
+			root.localStorage.setItem('state', stringify(__root));
 			delete this.dirty;
 		}
 	}
@@ -328,7 +328,7 @@ class State { // must be singleton
 			rPath = s.length === 0 ? (p.length === 0 ? [] : [p]) : s;
 		}
 
-		let nn, n = this.root, vPath = [];
+		let nn, n = this.__root, vPath = [];
 
 		for (const k of rPath) {
 			if ((nn = n[k]) === undefined)

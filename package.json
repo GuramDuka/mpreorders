@@ -54,7 +54,6 @@
     "universal-localstorage": "",
     "uuid": "^3.2.1",
     "webpack-dev-server": "^2.11.2",
-    "whatwg-fetch": "^2.0.4",
-    "window-or-global": "^1.0.1"
+    "whatwg-fetch": "^2.0.4"
   }
 }

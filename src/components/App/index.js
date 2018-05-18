@@ -1,20 +1,22 @@
 //------------------------------------------------------------------------------
 //import debug from 'preact/devtools';
 //------------------------------------------------------------------------------
-import Component from './component';
+import { Component } from 'preact';
 import { Router } from 'preact-router';
-import Header from './header';
-import Home from '../routes/home';//import Home from 'async!../routes/home';
-import Profile from '../routes/profile';//import Profile from 'async!../routes/profile';
-import Login from '../routes/profile/login';
-import Registration from '../routes/profile/registration';
-import Categories from '../routes/categories';//import Categories from 'async!../routes/categories';
-import Category from '../routes/category';//import Category from 'async!../routes/category';
-import Product from '../routes/product';//import Product from 'async!../routes/product';
+import Header from '../Header';
+import Home from '../../routes/Home';//import Home from 'async!../routes/Home';
+import Profile from '../../routes/Profile';//import Profile from 'async!../routes/Profile';
+import Login from '../../routes/Profile/Login';
+import Registration from '../../routes/Profile/Registration';
+import Categories from '../../routes/Categories';//import Categories from 'async!../routes/Categories';
+import Category from '../../routes/Category';//import Category from 'async!../routes/Category';
+import Product from '../../routes/Product';//import Product from 'async!../routes/Product';
+//------------------------------------------------------------------------------
+import style from './style.scss';
 //------------------------------------------------------------------------------
 /** fall-back route (handles unroutable URLs) */
 const Error = ({ type, url }) => (
-	<section class="error">
+	<section class={style.error}>
 		<h2>Error {type}</h2>
 		<p>It looks like we hit a snag.</p>
 		<pre>{url}</pre>

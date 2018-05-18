@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
-//import wog from 'window-or-global';
 import { route } from 'preact-router';
-import Component from '../../components/component';
+import Component from '../Component';
 import { bfetch } from '../../backend';
 import { SHA256 } from 'jshashes';
 import Button from 'preact-material-components/Button';
