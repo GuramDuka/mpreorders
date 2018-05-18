@@ -1,0 +1,14 @@
+:local(.profile) {
+	padding: 20px;
+	min-height: 100%;
+	width: 100%;
+}
+
+:local(.button) {
+	margin-top: 4px;
+	margin-right: 4px;
+}
+
+:local(.radio) {
+	vertical-align: middle;
+}

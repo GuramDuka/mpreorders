@@ -1,0 +1,27 @@
+
+/* animation */
+
+@keyframes blink {  
+	from { opacity: 1.0; }
+	to { opacity: 0.0; }
+}
+
+/* http://www.roblaplaca.com/examples/bezierBuilder/
+  cubic-bezier(.13, 1.01, -.01, 1.01)
+ */
+
+.blink {
+	animation: blink 0.6s cubic-bezier(1.0, 0, 0.7, 1.0) infinite alternate;
+}
+
+.fl {
+	float: left;
+}
+
+.fr {
+	float: right;
+}
+
+.topappbar {
+	z-index: 4;
+}
