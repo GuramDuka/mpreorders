@@ -75,7 +75,7 @@ export default class Category extends Component {
 			}
 		);
 
-		this.setState({ list: undefined });
+		//this.setState({ list: undefined });
 	}
 
 	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
@@ -125,9 +125,10 @@ export default class Category extends Component {
 					onClick={this.closeImageMagnifier}
 				>
 					<Dialog.Body>
-						<div class={style.media}
-							style={{ backgroundImage: `url(${imageMagnifierUrl}})` }}
-						/>
+						{imageMagnifierUrl ?
+							<div class={style.media}
+								style={{ backgroundImage: `url(${imageMagnifierUrl}})` }}
+							/> : undefined}
 					</Dialog.Body>
 					<Dialog.Footer>
 						<Dialog.FooterButton accept>

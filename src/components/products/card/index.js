@@ -101,46 +101,56 @@ export default class ProductCard extends Component {
 			width = ~~width.replace(/px$/, '');
 			height = ~~height.replace(/px$/, '');
 
-			if (width && height) {
+			if (width > 0 && height > 0) {
 				const { props } = this;
 				const { primaryImageLink } = props.data;
-				const primaryImageUrl = icoUrl(primaryImageLink,
-					width,
-					height,
-					16);
 
-				let cache = root.document.getElementById('cache');
+				if (primaryImageLink && primaryImageLink !== nullLink) {
+					const primaryImageUrl = icoUrl(primaryImageLink,
+						width,
+						height,
+						16);
 
-				if (!cache) {
-					cache = root.document.createElement('div');
-					cache.id = 'cache';
-					cache.style.display = 'none';
-					root.document.body.appendChild(cache);
-				}
+					let cache = root.document.getElementById('cache');
 
-				let entry = root.document.evaluate(
-					`img[@src='${primaryImageUrl}']`,
-					cache,
-					null,
-					XPathResult.FIRST_ORDERED_NODE_TYPE,
-					null).singleNodeValue;
+					if (!cache) {
+						cache = root.document.createElement('div');
+						cache.id = 'cache';
+						cache.style.display = 'none';
+						root.document.body.appendChild(cache);
+					}
 
-				if (entry) {
-					if (entry.done) {
-						this.setState({
-							primaryImageUrl: entry.src,
-							isPrimaryImageLoaded: true
-						});
+					let entry = root.document.evaluate(
+						`img[@src='${primaryImageUrl}']`,
+						cache,
+						null,
+						XPathResult.FIRST_ORDERED_NODE_TYPE,
+						null).singleNodeValue;
+
+					if (entry) {
+						if (entry.done) {
+							this.setState({
+								primaryImageUrl: entry.src,
+								isPrimaryImageLoaded: true
+							});
+							loop = false;
+						}
+					}
+					else {
+						entry = root.document.createElement('img');
+						entry.style.display = 'none';
+						entry.onload = this.primaryImageOnLoad;
+						entry.onerror = this.primaryImageOnError;
+						entry.src = primaryImageUrl;
+						cache.appendChild(entry);
 						loop = false;
 					}
 				}
 				else {
-					entry = root.document.createElement('img');
-					entry.style.display = 'none';
-					entry.onload = this.primaryImageOnLoad;
-					entry.onerror = this.primaryImageOnError;
-					entry.src = primaryImageUrl;
-					cache.appendChild(entry);
+					this.setState({
+						primaryImageUrl: '/assets/hourglass.svg',
+						isPrimaryImageLoaded: true
+					});
 					loop = false;
 				}
 			}
@@ -163,8 +173,8 @@ export default class ProductCard extends Component {
 
 	primaryImageOnError(e) {
 		this.setState({
-			isPrimaryImageLoaded: true,
-			primaryImageUrl: '/assets/hourglass.svg'
+			primaryImageUrl: '/assets/hourglass.svg',
+			isPrimaryImageLoaded: true
 		});
 		return prevent(e);
 	}
