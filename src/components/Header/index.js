@@ -5,6 +5,7 @@ import TopAppBar from 'preact-material-components/TopAppBar';
 import 'preact-material-components/TopAppBar/style.css';
 import Drawer from 'preact-material-components/Drawer';
 import 'preact-material-components/Drawer/style.css';
+import { cssClasses } from '@material/dialog/constants';
 import Dialog from 'preact-material-components/Dialog';
 import 'preact-material-components/Dialog/style.css';
 import LayoutGrid from 'preact-material-components/LayoutGrid';
@@ -30,6 +31,9 @@ import {
 import disp from '../../lib/store';
 import { prevent } from '../../lib/util';
 import style from './style.scss';
+//------------------------------------------------------------------------------
+// disable animation, due to slow on mobile
+cssClasses.ANIMATING = 'mdc-dialog--noanimating';
 //------------------------------------------------------------------------------
 export default class Header extends Component {
 	searchPathValidator = s => s === this.state.searchStorePath

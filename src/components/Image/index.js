@@ -24,7 +24,7 @@ export default class Image extends Component {
 	static __id = 0
 	static __cacheId = '$__image_cache__#'
 	static __cacheTuples = new Deque([])
-	static __cacheMaxTuples = 40 * 3
+	static __cacheMaxTuples = 40 * 10
 	
 	constructor() {
 		super();
@@ -70,8 +70,7 @@ export default class Image extends Component {
 		if (cache && --cache.refCount === 0)
 			cache.remove();
 
-		while (!Image.__cacheTuples.isEmpty())
-			this.removeCacheEntry(Image.__cacheTuples.shift());
+		this.removeCacheEntry(this.state.imageClass);
 	}
 
 	mount(props) {
