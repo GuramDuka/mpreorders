@@ -1,29 +1,30 @@
 //------------------------------------------------------------------------------
+import Deque from 'double-ended-queue';
 import { Component } from 'preact';
 import { imgReq, imgUrl, imgKey, bfetch } from '../../backend';
 import { nullLink } from '../../const';
 import root from '../../lib/root';
-import {
-	webpRuntimeInitialized,
-	webp2png
-} from '../../lib/webp';
+import { webpRuntimeInitialized, webp2png } from '../../lib/webp';
 //import { convert } from '../../../../lib/rgba2data';
 import style from './style.scss';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Image extends Component {
-	static __id = 0
-	static __cacheId = '$__image_cache__#'
 	static isWebPSupported = (() => {
 		const canvas = root.document
 			? root.document.createElement('canvas')
 			: {};
 		canvas.width = canvas.height = 1;
 		return canvas.toDataURL
-			? canvas.toDataURL('image/webp').indexOf('image/webp') === 5
+			? canvas.toDataURL('image/webp').indexOf('image/webp') === 6
 			: false;
 	})();
+
+	static __id = 0
+	static __cacheId = '$__image_cache__#'
+	static __cacheTuples = new Deque([])
+	static __cacheMaxTuples = 40 * 3
 	
 	constructor() {
 		super();
@@ -39,6 +40,20 @@ export default class Image extends Component {
 	}
 
 	componentDidMount() {
+		let cache = root.document.getElementById(Image.__cacheId);
+
+		if (cache) {
+			cache.refCount++;
+		}
+		else {
+			cache = root.document.createElement('style');
+			cache.id = Image.__cacheId;
+			cache.refCount = 1;
+			root.document.head.appendChild(cache);
+			cache.sheet.insertRule(`.nopic { background-image: url(/assets/nopic.svg) }`, 0);
+			cache.sheet.insertRule(`.picld { background-image: url(/assets/loading-process.svg) }`, 0);
+		}
+
 		root.addEventListener('resize', this.windowOnResize);
 	}
 
@@ -49,6 +64,14 @@ export default class Image extends Component {
 	componentWillUnmount() {
 		delete this.mounted;
 		root.removeEventListener('resize', this.windowOnResize);
+
+		let cache = root.document.getElementById(Image.__cacheId);
+
+		if (cache && --cache.refCount === 0)
+			cache.remove();
+
+		while (!Image.__cacheTuples.isEmpty())
+			this.removeCacheEntry(Image.__cacheTuples.shift());
 	}
 
 	mount(props) {
@@ -60,17 +83,43 @@ export default class Image extends Component {
 		this.waitStyleComputed();
 	}
 
-	insertCacheEntry(cache, imageKey, imageUrl) {
-		const index = cache.sheet.cssRules.length;
-		cache.sheet.insertRule(`.${imageKey} { background-image: url(${imageUrl}); }`, index);
-		cache.entries.set(index, imageKey);
-		cache.entries.set(imageKey, index);
+	findCacheEntry(key) {
+		return root.document.getElementById(key);
+		// return root.document.evaluate(
+		// 	`style[@key='${key}']`,
+		// 	root.document.head,
+		// 	null,
+		// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
+		// 	null).singleNodeValue;
+	}
 
-		if (cache.entries.size === 42) {
+	removeCacheEntry(key) {
+		const entry = this.findCacheEntry(key);
 
+		if (entry && --entry.refCount === 0)
+			entry.remove();
+	}
+	
+	insertCacheEntry(entry, key, url) {
+		while (Image.__cacheTuples.length >= Image.__cacheMaxTuples)
+			this.removeCacheEntry(Image.__cacheTuples.shift());
+
+		if (entry) {
+			entry.refCount++;
+		}
+		else {
+			entry = root.document.createElement('style');
+			entry.id = key;
+			//entry.setAttribute('key', key);
+			entry.refCount = 1;
+			root.document.head.appendChild(entry);
+			//const index = cache.sheet.cssRules.length;
+			entry.sheet.insertRule(`.${key} { background-image: url(${url}); }`);
 		}
 
-		this.setState({ imageClass: imageKey });
+		Image.__cacheTuples.push(key);
+
+		this.setState({ imageClass: key });
 	}
 
 	waitStyleComputed() {
@@ -97,38 +146,18 @@ export default class Image extends Component {
 				if (link && link !== nullLink) {
 					const imageKey = imgKey(link, width, height);
 
-					let cache = root.document.getElementById(Image.__cacheId);
-
-					if (!cache) {
-						cache = root.document.createElement('style');
-						cache.id = Image.__cacheId;
-						root.document.head.appendChild(cache);
-						cache.sheet.insertRule(`.nopic { background-image: url(/assets/nopic.svg) }`, 0);
-						cache.sheet.insertRule(`.picld { background-image: url(/assets/loading-process.svg) }`, 0);
-					}
-
-					// let entry = root.document.evaluate(
-					// 	`style[@key='${imageKey}']`,
-					// 	cache,
-					// 	null,
-					// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
-					// 	null).singleNodeValue;
-
-					if (!cache.entries)
-						cache.entries = new Map();
-
-					let entry = cache.entries.get(imageKey);
+					let entry = this.findCacheEntry(imageKey);
 
 					if (entry) {
 						this.setState({ imageClass: imageKey });
 					}
 					else if (Image.isWebPSupported) {
-						this.insertCacheEntry(cache, imageKey, imgUrl(link, width, height));
+						this.insertCacheEntry(entry, imageKey, imgUrl(link, width, height));
 					}
 					else {
 						bfetch(
 							imgReq(link, width, height),
-							result => this.insertCacheEntry(cache, imageKey, webp2png(result)),
+							result => this.insertCacheEntry(entry, imageKey, webp2png(result)),
 							error => this.setState({ imageClass: 'nopic' })
 						);
 						this.setState({ imageClass: 'picld' });
