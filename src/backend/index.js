@@ -7,11 +7,9 @@ import disp, { getStore } from '../lib/store';
 // proxy_cache_path /var/cache/nginx/ram use_temp_path=off keys_zone=ram:4M inactive=1d max_size=1024M;
 
 // upstream mpreorders_backend_upstream {
-// 	# The keepalive parameter sets the maximum number of idle keepalive connections
-// 	# to upstream servers that are preserved in the cache of each worker process. When
-// 	# this number is exceeded, the least recently used connections are closed.
 // 	keepalive 8;
-// 	server 31.210.212.158:65480;
+// 	server 31.210.212.158:65480 weight=1;
+// 	server 213.109.6.191:65480 weight=5;
 // 	#server 178.210.36.54:65480;
 // }
 
@@ -31,8 +29,10 @@ import disp, { getStore } from '../lib/store';
 // 	proxy_set_header X-Server-Name $server_name;
 // 	proxy_set_header X-Server-Port $server_port;
 
+// 	# https://nginx.ru/ru/docs/http/ngx_http_upstream_module.html#keepalive
 // 	proxy_http_version 1.1;
-// 	proxy_set_header Connection "Keep-Alive";
+// 	#proxy_set_header Connection "Keep-Alive";
+// 	proxy_set_header Connection "";
 // 	proxy_read_timeout     600;
 // 	proxy_connect_timeout  600;
 
@@ -41,16 +41,26 @@ import disp, { getStore } from '../lib/store';
 // 	sendfile on;
 // 	tcp_nopush on;
 // 	proxy_cache_lock on;
-//  proxy_cache_lock_timeout 1h;
-//  proxy_cache_use_stale updating;
-//  proxy_cache_methods GET HEAD;
-//  proxy_cache ram;
-//  proxy_cache_key "$proxy_host$uri$is_args$args";
-//  proxy_cache_revalidate off;
-//  proxy_max_temp_file_size 4m;
+// 	proxy_cache_lock_timeout 1h;
+// 	proxy_cache_use_stale updating;
+// 	proxy_cache_methods GET HEAD;
+// 	proxy_cache ram;
+// 	proxy_cache_key "$proxy_host$uri$is_args$args";
+// 	proxy_cache_revalidate off;
+// 	proxy_max_temp_file_size 4m;
 
-// 	proxy_set_header 'Service-Worker-Allowed' '/';
-// 	add_header 'Service-Worker-Allowed' '/';
+// 	#gzip               off;
+// 	#gzip_http_version  1.0;
+// 	#gzip_vary          on;
+// 	#gzip_min_length    512;
+// 	#gzip_comp_level    3;
+// 	#gzip_proxied       any;
+// 	#gzip_types         text/plain text/css text/javascript application/javascript application/json application/x-javascript text/xml application/xml application/xml+rss;
+
+// 	#proxy_set_header 'Service-Worker-Allowed' '/';
+// 	#add_header 'Service-Worker-Allowed' '/';
+// 	#add_header 'Access-Control-Allow-Origin' '*';
+// 	#proxy_set_header 'Access-Control-Allow-Origin' '*';
 // }
 //------------------------------------------------------------------------------
 //const BACKEND_URL = 'http://31.210.212.158:65480/opt/hs/react';
@@ -84,7 +94,7 @@ export function bfetch(opts_, success, fail, start) {
 			// need for caching authorized request separate from regular not authorized
 			if (!opts.r)
 				opts.r = {};
-			
+
 			if (opts.a === true)
 				r.a = true;
 			else if (opts.a === '')
@@ -165,7 +175,9 @@ export function bfetch(opts_, success, fail, start) {
 			if (contentType.includes('text/'))
 				return response.text();
 			if (contentType.includes('image/'))
-				return response.arrayBuffer();
+				return opts.blob
+					? response.blob()
+					: response.arrayBuffer();
 		}
 
 		// will be caught below
@@ -180,10 +192,18 @@ export function bfetch(opts_, success, fail, start) {
 
 		result.date = new Date(data.headers.get('date'));
 
+		const eol = data.headers.get('EndOfLifeTime');
+
+		if (eol)
+			result.endOfLifeTime = new Date(eol);
+
 		let xMaxAge = data.headers.get('cache-control');
-		xMaxAge = xMaxAge && xMaxAge.split(',').find(v => v.match(/max-age/gi));
-		xMaxAge = xMaxAge && xMaxAge.replace(/max-age|[= ]/gi, '');
-		result.maxAge = ~~xMaxAge; // fast convert string to integer
+
+		if (xMaxAge) {
+			xMaxAge = xMaxAge && xMaxAge.split(',').find(v => v.match(/max-age/gi));
+			xMaxAge = xMaxAge && xMaxAge.replace(/max-age|[= ]/gi, '');
+			result.maxAge = ~~xMaxAge; // fast convert string to integer
+		}
 
 		success && success(result, opts);
 	}).catch(error => {
@@ -195,8 +215,9 @@ export function bfetch(opts_, success, fail, start) {
 	return retv;
 }
 //------------------------------------------------------------------------------
-export function imgR(u, w, h, cs, jq) {
-	const r = { m: 'img', u };
+export function imgReq(u, w, h, t) {
+	// eslint-disable-next-line
+	const r = { m: 'image', u: u };
 
 	if (w !== undefined)
 		r.w = w;
@@ -204,24 +225,32 @@ export function imgR(u, w, h, cs, jq) {
 	if (h !== undefined)
 		r.h = h;
 
-	if (cs !== undefined)
-		r.cs = cs;
+	if (t)
+		r.t = t;
 
-	if (jq !== undefined)
-		r.jq = jq;
+	// eslint-disable-next-line
+	return { r: r };
+}
+//------------------------------------------------------------------------------
+export function imgUrl(u, w, h, t) {
+	return BACKEND_URL + '?' + serializeURIParams(imgReq(u, w, h, t));
+}
+//------------------------------------------------------------------------------
+export function imgKey(u, w, h, t) {
+	let k = 'i' + u.replace(/-/g, '');
 
-	return r;
-}
-//------------------------------------------------------------------------------
-export function icoR(u, w, h, cs, jq) {
-	return { ...imgR(u, w, h, cs, jq), f: 'ico' };
-}
-//------------------------------------------------------------------------------
-export function icoUrl(u, w, h, cs, jq) {
-	return BACKEND_URL + '?' + serializeURIParams({ r: icoR(u, w, h, cs, jq) });
-}
-//------------------------------------------------------------------------------
-export function imgUrl(u) {
-	return BACKEND_URL + '?' + serializeURIParams({ r: imgR(u) });
+	if (t)
+		k += '_' + t;
+	
+	if (w !== undefined)
+		k += '_' + w;
+
+	if (h !== undefined) {
+		if (w === undefined)
+			k += '_';
+		k += 'x' + h;
+	}
+
+	return k;
 }
 //------------------------------------------------------------------------------

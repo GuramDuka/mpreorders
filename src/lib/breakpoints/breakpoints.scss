@@ -8,18 +8,57 @@
 
 @include breakpoint('sm') {           //from `sm` (>=0px)
 	body {
-	  background-color: red;
+		//background-color: red;
 	}
-  }
+}
   
-  @include breakpoint('md', 'lg') {     //from `md` to `lg - 1px` (>=768px to <1024px)
+@include breakpoint('md', 'lg') {     //from `md` to `lg - 1px` (>=768px to <1024px)
 	body {
-	  background-color: green;
+		//background-color: green;
 	}
-  }
+}
   
-  @include breakpoint('lg') {           //from `lg` (>=1024px)
+@include breakpoint('lg') {           //from `lg` (>=1024px)
 	body {
-	  background-color: blue;
+		//background-color: blue;
 	}
-  }
+}
+
+@import "preact-material-components/LayoutGrid/_mixins";
+
+$media-width: (
+	desktop: 350px,
+	tablet: 300px,
+	phone: 250px
+) !default;
+
+$media-height: (
+	desktop: 250px,
+	tablet: 200px,
+	phone: 150px
+) !default;
+
+@mixin media-height() {
+	@each $size in map-keys($mdc-layout-grid-columns) {
+		@include mdc-layout-grid-media-query_($size) {
+			height: map-get($media-height, $size);
+		}
+	}
+}
+
+@mixin media-width() {
+	@each $size in map-keys($mdc-layout-grid-columns) {
+		@include mdc-layout-grid-media-query_($size) {
+			width: map-get($media-width, $size);
+		}
+	}
+}
+
+@mixin media-wh() {
+	@each $size in map-keys($mdc-layout-grid-columns) {
+		@include mdc-layout-grid-media-query_($size) {
+			width: map-get($media-width, $size);
+			height: map-get($media-height, $size);
+		}
+	}
+}

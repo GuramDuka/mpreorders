@@ -5,3 +5,9 @@ $breakpoints: (
   "md": 768px,  //targeting >=768px tablets (e.g. portrait iPad)
   "lg": 1004px  //targeting >=1024px tablets (e.g. landscape iPad) and desktops but leaving room for the scroll bar
 );
+
+$media-height: (
+  desktop: 250px,
+  tablet: 200px,
+  phone: 150px
+) !default;

@@ -245,6 +245,9 @@ export function transform(raw, store) {
 						case 6: // link
 							now[n] = r[j];
 							break;
+						case 7: // array
+							now[n] = r[j];
+							break;
 						default:
 							throw new Error('Unsupported value type in row transformation');
 					}

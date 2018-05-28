@@ -62,5 +62,8 @@ export default function (config, env, helpers) {
 	//cfg.plugins.forEach(v => console.log(v));
 	//console.log('--------------------------------------------------------------------------------');
 
+	// avoid error: Can't resolve 'fs'
+	cfg.node.fs = 'empty';
+
 	return cfg;
 }

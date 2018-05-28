@@ -294,8 +294,8 @@ export default class Header extends Component {
 									selectedIndex={searchOrderDirectionIndex}
 									onChange={this.searchOrderDirectionChange}
 								>
-									<Select.Item>АБВ...ЭЮЯ</Select.Item>
-									<Select.Item>ЯЮЭ...ВБА</Select.Item>
+									<Select.Item>123АБВ ... 789ЭЮЯ</Select.Item>
+									<Select.Item>987ЯЮЭ ... 321ВБА</Select.Item>
 								</Select>
 								<p aria-hidden class={inputFieldHelperTextClasses}>
 									&nbsp;&nbsp;Выберите направление сортировки
@@ -344,6 +344,10 @@ export default class Header extends Component {
 						<List.ItemGraphic>shopping_cart</List.ItemGraphic>
 						Корзина
 					</Drawer.DrawerItem>
+					<Drawer.DrawerItem onClick={this.openSettings}>
+						<List.ItemGraphic>settings</List.ItemGraphic>
+						Настройки
+					</Drawer.DrawerItem>
 					<Drawer.DrawerItem {...(authorized ? this.goProfile : this.goLogin)}>
 						<List.ItemGraphic>{authorized ? 'verified_user' : 'account_circle'}</List.ItemGraphic>
 						{authorized ? 'Профиль' : 'Вход/Регистрация'}
@@ -379,9 +383,6 @@ export default class Header extends Component {
 						<TopAppBar.Section align-end>
 							<Spinner />
 							{searchIcon}
-							<TopAppBar.Icon navigation onClick={this.openSettings}>
-								settings
-							</TopAppBar.Icon>
 							<TopAppBar.Icon navigation>
 								more_vert
 							</TopAppBar.Icon>

@@ -1,5 +1,7 @@
 //------------------------------------------------------------------------------
 import DOMPurify from 'dompurify';
+import ImageList from 'preact-material-components/ImageList';
+import 'preact-material-components/ImageList/style.css';
 import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
 import { Component as PreactComponent } from 'preact';
@@ -9,6 +11,7 @@ import disp from '../../../lib/store';
 import { headerSearchStorePath } from '../../../const';
 import { prevent, plinkRoute } from '../../../lib/util';
 import strftime from '../../../lib/strftime';
+import { imgUrl } from '../../../backend';
 import loader from './loader';
 import style from './style.scss';
 //------------------------------------------------------------------------------
@@ -221,7 +224,8 @@ export default class Product extends Component {
 			manufacturer,
 			remainder,
 			reserve,
-			price
+			price,
+			images
 		} = data.rows[0];
 
 		// regex replace comma without space after
@@ -252,13 +256,21 @@ export default class Product extends Component {
 			<div>
 				{display}
 			</div>,
-			<div>
-				Изображения
-				Изображения
-				Изображения
+			<div style={{ overflowX: 'scroll', overflowY: 'auto' }}>{images.map(v => (
+				<div class={style.media}
+					style={{ backgroundImage: `url(${imgUrl(v)})` }}
+				/>))}
 			</div>,
-			<ExpandableItem link={link} f="prop" render={propRender} title="Свойства" meta="list" />,
-			<ExpandableItem link={link} f="desc" render={descRender} title="Описание" meta="info" />
+			<ExpandableItem link={link}
+				f="prop" render={propRender}
+				title="Свойства"
+				meta="list"
+			/>,
+			<ExpandableItem link={link}
+				f="desc" render={descRender}
+				title="Описание"
+				meta="info"
+			/>
 		];
 
 		if (auth && auth.authorized && auth.employee)
@@ -300,4 +312,4 @@ export default class Product extends Component {
 		);
 	}
 }
-//------------------------------------------------------------------------------
+		//------------------------------------------------------------------------------

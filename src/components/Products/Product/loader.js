@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 import { bfetch } from '../../../backend';
+import { successor, failer, starter } from '../../load';
 import disp from '../../../lib/store';
 import { headerTitleStorePath } from '../../../const';
-import { successor, failer, starter } from '../../load';
 //------------------------------------------------------------------------------
 export default function loader() {
 	const { props } = this;
