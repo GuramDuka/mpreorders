@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-import Deque from 'double-ended-queue';
+import { LRUMap } from 'lru_map';
 import { Component } from 'preact';
 import { imgReq, imgUrl, imgKey, bfetch } from '../../backend';
 import { nullLink } from '../../const';
@@ -22,8 +22,20 @@ class Image extends Component {
 
 	static __id = 0
 	static __cacheId = '$__image_cache__#'
-	static __cacheTuples = new Deque([])
-	static __cacheMaxTuples = 40 * 10
+	static __cacheLRU = (() => {
+		const c = new LRUMap(40 * 30);
+		c.shift = function () {
+			let entry = LRUMap.prototype.shift.call(this);
+			const [ key ] = entry;
+			const e = root.document.getElementById(key);
+			
+			if (e)
+				e.remove();
+
+			return entry;
+		};
+		return c;
+	})()
 
 	constructor() {
 		super();
@@ -66,10 +78,8 @@ class Image extends Component {
 
 		let cache = root.document.getElementById(Image.__cacheId);
 
-		if (cache && --cache.refCount === 0)
+		if (--cache.refCount === 0)
 			cache.remove();
-
-		this.removeCacheEntry(this.state.imageClass);
 	}
 
 	mount(props) {
@@ -85,41 +95,28 @@ class Image extends Component {
 		this.waitStyleComputed();
 	}
 
-	findCacheEntry(key) {
-		return root.document.getElementById(key);
-		// return root.document.evaluate(
-		// 	`style[@key='${key}']`,
-		// 	root.document.head,
-		// 	null,
-		// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
-		// 	null).singleNodeValue;
-	}
+	// findCacheEntry(key) {
+	// 	return root.document.getElementById(key);
+	// 	// return root.document.evaluate(
+	// 	// 	`style[@key='${key}']`,
+	// 	// 	root.document.head,
+	// 	// 	null,
+	// 	// 	XPathResult.FIRST_ORDERED_NODE_TYPE,
+	// 	// 	null).singleNodeValue;
+	// }
 
-	removeCacheEntry(key) {
-		const entry = this.findCacheEntry(key);
+	insertCacheEntry(key, url) {
+		let entry = Image.__cacheLRU.get(key);
 
-		if (entry && --entry.refCount === 0)
-			entry.remove();
-	}
-
-	insertCacheEntry(entry, key, url) {
-		while (Image.__cacheTuples.length >= Image.__cacheMaxTuples)
-			this.removeCacheEntry(Image.__cacheTuples.shift());
-
-		if (entry) {
-			entry.refCount++;
-		}
-		else {
+		if (!entry) {
 			entry = root.document.createElement('style');
 			entry.id = key;
-			//entry.setAttribute('key', key);
-			entry.refCount = 1;
 			root.document.head.appendChild(entry);
 			//const index = cache.sheet.cssRules.length;
 			entry.sheet.insertRule(`.${key} { background-image: url(${url}); }`);
-		}
 
-		Image.__cacheTuples.push(key);
+			Image.__cacheLRU.set(key, true);
+		}
 
 		this.setState({ imageClass: key });
 	}
@@ -155,18 +152,18 @@ class Image extends Component {
 
 					const imageKey = imgKey(r);
 
-					let entry = this.findCacheEntry(imageKey);
+					let entry = Image.__cacheLRU.get(imageKey);
 
 					if (entry) {
 						this.setState({ imageClass: imageKey });
 					}
 					else if (Image.isWebPSupported) {
-						this.insertCacheEntry(entry, imageKey, imgUrl(r));
+						this.insertCacheEntry(imageKey, imgUrl(r));
 					}
 					else {
 						bfetch(
 							imgReq(r),
-							result => this.insertCacheEntry(entry, imageKey, webp2png(result)),
+							result => this.insertCacheEntry(imageKey, webp2png(result)),
 							error => this.setState({ imageClass: 'nopic' })
 						);
 						this.setState({ imageClass: 'picld' });
