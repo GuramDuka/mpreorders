@@ -4,9 +4,7 @@ import Card from 'preact-material-components/Card';
 import 'preact-material-components/Card/style.css';
 import 'preact-material-components/Button/style.css';
 import Image from '../../Image';
-import { prevent, plinkRoute } from '../../../lib/util';
-import { nullLink } from '../../../const';
-import { imgUrl } from '../../../backend';
+import { plinkRoute } from '../../../lib/util';
 //import nopic from '../../../assets/nopic.svg';
 //import hourglassImage from '../../../assets/hourglass.svg';
 //import loadingImage from '../../../assets/loading-process.svg';
@@ -65,18 +63,15 @@ export default class ProductCard extends Component {
 
 	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
 
-	openImageMagnifier = e => {
-		const { props } = this;
-		const { primaryImageLink } = props.data;
-
-		if (primaryImageLink && primaryImageLink !== nullLink)
-			props.openImageMagnifier(imgUrl(primaryImageLink));
-
-		return prevent(e);
-	}
-
 	titleStyle = [style.title, 'mdc-typography--title'].join(' ')
 	subTitleStyle = [style.subTitle, 'mdc-typography--caption'].join(' ')
+
+	showImageMagnifier = e => {
+		const { showImageMagnifier, data } = this.props;
+
+		if (showImageMagnifier)
+			showImageMagnifier(e, data.primaryImageLink);
+	}
 
 	render(props, state) {
 		return (
@@ -87,7 +82,7 @@ export default class ProductCard extends Component {
 				<div class={this.subTitleStyle}>
 					{this.subTitle}
 				</div>
-				<Card.Media onClick={this.openImageMagnifier}>
+				<Card.Media onClick={this.showImageMagnifier}>
 					<Image link={props.data.primaryImageLink} />
 				</Card.Media>
 				<Card.ActionButton {...this.goProduct}>

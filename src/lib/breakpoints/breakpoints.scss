@@ -38,27 +38,39 @@ $media-height: (
 	phone: 150px
 ) !default;
 
-@mixin media-height() {
+@mixin media-height($mh: null) {
 	@each $size in map-keys($mdc-layout-grid-columns) {
+		@if $mh == null {
+			$mh: $media-height;
+		}
 		@include mdc-layout-grid-media-query_($size) {
-			height: map-get($media-height, $size);
+			height: map-get($mh, $size);
 		}
 	}
 }
 
-@mixin media-width() {
+@mixin media-width($mw: null) {
 	@each $size in map-keys($mdc-layout-grid-columns) {
+		@if $mw == null {
+			$mw: $media-width;
+		}
 		@include mdc-layout-grid-media-query_($size) {
-			width: map-get($media-width, $size);
+			width: map-get($mw, $size);
 		}
 	}
 }
 
-@mixin media-wh() {
+@mixin media-wh($mw: null, $mh: null) {
 	@each $size in map-keys($mdc-layout-grid-columns) {
+		@if $mw == null {
+			$mw: $media-width;
+		}
+		@if $mh == null {
+			$mh: $media-height;
+		}
 		@include mdc-layout-grid-media-query_($size) {
-			width: map-get($media-width, $size);
-			height: map-get($media-height, $size);
+			width: map-get($mw, $size);
+			height: map-get($mh, $size);
 		}
 	}
 }

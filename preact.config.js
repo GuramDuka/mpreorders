@@ -65,5 +65,10 @@ export default function (config, env, helpers) {
 	// avoid error: Can't resolve 'fs'
 	cfg.node.fs = 'empty';
 
+	if (cfg.performance) {
+		cfg.performance.maxAssetSize = 2000000;
+		cfg.performance.maxEntrypointSize = 2000000;
+	}
+
 	return cfg;
 }

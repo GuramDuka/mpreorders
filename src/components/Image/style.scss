@@ -63,3 +63,47 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 .dn {
 	display: none;
 }
+
+/*.magnifier1 {
+	:global(.mdc-dialog--animating) {
+		.mdc-dialog__backdrop {
+			transition: none;
+		  }
+		
+		  .mdc-dialog__surface {
+			transition: none;
+		  }
+	}
+
+	:global(.mdc-dialog__surface) {
+		max-width: 98%;
+		height: 98%;
+
+		:global(.mdc-dialog__body) {
+			height: 100%;
+		}
+
+		.media {
+			height: 100%;
+		}
+	}
+
+	.media {
+		height: 100%;
+	}
+}*/
+
+@import "@material/elevation/mixins";
+@import "@material/theme/mixins";
+
+.magnifier {
+	position: fixed;
+	left: 1%;
+	top: 1%;
+	width: 98%;
+	height: 98%;
+	z-index: 5;
+	border-radius: 2px;
+
+	@include mdc-theme-prop(background-color, background);
+}

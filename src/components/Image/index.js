@@ -5,19 +5,18 @@ import { imgReq, imgUrl, imgKey, bfetch } from '../../backend';
 import { nullLink } from '../../const';
 import root from '../../lib/root';
 import { webpRuntimeInitialized, webp2png } from '../../lib/webp';
-//import { convert } from '../../../../lib/rgba2data';
 import style from './style.scss';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-export default class Image extends Component {
+class Image extends Component {
 	static isWebPSupported = (() => {
 		const canvas = root.document
 			? root.document.createElement('canvas')
 			: {};
 		canvas.width = canvas.height = 1;
 		return canvas.toDataURL
-			? canvas.toDataURL('image/webp').indexOf('image/webp') === 6
+			? canvas.toDataURL('image/webp').indexOf('image/webp') === 5
 			: false;
 	})();
 
@@ -25,7 +24,7 @@ export default class Image extends Component {
 	static __cacheId = '$__image_cache__#'
 	static __cacheTuples = new Deque([])
 	static __cacheMaxTuples = 40 * 10
-	
+
 	constructor() {
 		super();
 
@@ -36,10 +35,6 @@ export default class Image extends Component {
 	}
 
 	componentWillMount() {
-		this.mount(this.props);
-	}
-
-	componentDidMount() {
 		let cache = root.document.getElementById(Image.__cacheId);
 
 		if (cache) {
@@ -54,6 +49,10 @@ export default class Image extends Component {
 			cache.sheet.insertRule(`.picld { background-image: url(/assets/loading-process.svg) }`, 0);
 		}
 
+		this.mount(this.props);
+	}
+
+	componentDidMount() {
 		root.addEventListener('resize', this.windowOnResize);
 	}
 
@@ -75,7 +74,11 @@ export default class Image extends Component {
 
 	mount(props) {
 		this.mounted = true;
-		this.setState({ imageClass: undefined }, this.waitStyleComputed);
+
+		if (Image.isWebPSupported)
+			this.waitStyleComputed(props);
+		else
+			this.setState({ imageClass: undefined }, this.waitStyleComputed);
 	}
 
 	windowOnResize(e) {
@@ -98,7 +101,7 @@ export default class Image extends Component {
 		if (entry && --entry.refCount === 0)
 			entry.remove();
 	}
-	
+
 	insertCacheEntry(entry, key, url) {
 		while (Image.__cacheTuples.length >= Image.__cacheMaxTuples)
 			this.removeCacheEntry(Image.__cacheTuples.shift());
@@ -121,7 +124,7 @@ export default class Image extends Component {
 		this.setState({ imageClass: key });
 	}
 
-	waitStyleComputed() {
+	waitStyleComputed(props) {
 		if (!this.mounted)
 			return;
 
@@ -139,11 +142,18 @@ export default class Image extends Component {
 			height = ~~height.replace(/px$/, '');
 
 			if (width > 0 && height > 0) {
-				const { props } = this;
-				const { link } = props;
+				const { link, lossless, noresize } = props ? props : this.props;
 
 				if (link && link !== nullLink) {
-					const imageKey = imgKey(link, width, height);
+					const r = { u: link, w: width, h: height };
+
+					if (lossless)
+						r.lossless = true;
+
+					if (noresize)
+						r.w = r.h = undefined;
+
+					const imageKey = imgKey(r);
 
 					let entry = this.findCacheEntry(imageKey);
 
@@ -151,11 +161,11 @@ export default class Image extends Component {
 						this.setState({ imageClass: imageKey });
 					}
 					else if (Image.isWebPSupported) {
-						this.insertCacheEntry(entry, imageKey, imgUrl(link, width, height));
+						this.insertCacheEntry(entry, imageKey, imgUrl(r));
 					}
 					else {
 						bfetch(
-							imgReq(link, width, height),
+							imgReq(r),
 							result => this.insertCacheEntry(entry, imageKey, webp2png(result)),
 							error => this.setState({ imageClass: 'nopic' })
 						);
@@ -178,10 +188,12 @@ export default class Image extends Component {
 		const m = { ...props };
 
 		m.id = this.ids;
-		m.class = (Array.isArray(m.class) ? [...m.class] : [m.class]).concat(
+		m.class = [
 			style.media,
 			imageClass,
 			imageClass === 'picld' ? style.spin : ''
+		].concat(
+			Array.isArray(m.class) ? [...m.class] : [m.class]
 		).join(' ').trim();
 
 		return (
@@ -190,4 +202,30 @@ export default class Image extends Component {
 			</div>);
 	}
 }
+//------------------------------------------------------------------------------
+class Magnifier extends Component {
+	show = link => this.setState(
+		// eslint-disable-next-line
+		{ link: link }
+	)
+
+	close = e => this.setState({ link: undefined });
+
+	render(props, { link }) {
+		const s = [
+			style.magnifier,
+			link === undefined ? style.dn : ''
+		].join(' ').trim();
+
+		return (
+			<Image lossless noresize
+				class={s}
+				onClick={this.close}
+				link={link}
+			/>);
+	}
+}
+//------------------------------------------------------------------------------
+Image.Magnifier = Magnifier;
+export default Image;
 //------------------------------------------------------------------------------

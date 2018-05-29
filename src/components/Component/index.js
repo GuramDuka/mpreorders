@@ -110,7 +110,6 @@ export default class Component extends PreactComponent {
 	}
 
 	// render(props, state, context) {
-	// 	delete this.__mountCalled;
 	// 	return super.render.call(this, props, state, context);
 	// }
 

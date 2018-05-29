@@ -215,42 +215,61 @@ export function bfetch(opts_, success, fail, start) {
 	return retv;
 }
 //------------------------------------------------------------------------------
-export function imgReq(u, w, h, t) {
-	// eslint-disable-next-line
-	const r = { m: 'image', u: u };
+export function imgReq(...args) {
+	const [ arg0 ] = args;
+	const r = { m: 'image' };
 
-	if (w !== undefined)
-		r.w = w;
-
-	if (h !== undefined)
-		r.h = h;
-
-	if (t)
-		r.t = t;
-
+	if (arg0.constructor === Object || arg0 instanceof Object) {
+		for (const k of Object.keys(arg0))
+			if (arg0[k] !== undefined)
+				r[k] = arg0[k];
+	}
+	else
+		[ r.u, r.w, r.h ] = args;
+		
 	// eslint-disable-next-line
 	return { r: r };
 }
 //------------------------------------------------------------------------------
-export function imgUrl(u, w, h, t) {
-	return BACKEND_URL + '?' + serializeURIParams(imgReq(u, w, h, t));
+export function imgUrl(...args) {
+	const [ arg0 ] = args;
+	const s = BACKEND_URL + '?';
+	const r = {};
+
+	if (arg0.constructor === Object || arg0 instanceof Object) {
+		for (const k of Object.keys(arg0))
+			r[k] = arg0[k];
+	}
+	else
+		[ r.u, r.w, r.h ] = args;
+
+	return s + serializeURIParams(imgReq(r));
 }
 //------------------------------------------------------------------------------
-export function imgKey(u, w, h, t) {
-	let k = 'i' + u.replace(/-/g, '');
+export function imgKey(...args) {
+	const r = imgReq(...args).r;
+	const { u, w, h } = r;
 
-	if (t)
-		k += '_' + t;
-	
+	delete r.m;
+	delete r.u;
+	delete r.w;
+	delete r.h;
+
+	let key = 'i' + u.replace(/-/g, '');
+
 	if (w !== undefined)
-		k += '_' + w;
+		key += '_' + w;
 
 	if (h !== undefined) {
 		if (w === undefined)
-			k += '_';
-		k += 'x' + h;
+			key += '_';
+		key += 'x' + h;
 	}
 
-	return k;
+	for (const k of Object.keys(r))
+		if (r[k] !== undefined)
+			key += '_' + k + '_' + r[k];
+
+	return key;
 }
 //------------------------------------------------------------------------------

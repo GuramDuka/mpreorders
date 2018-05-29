@@ -2,8 +2,6 @@
 import { route } from 'preact-router';
 import LayoutGrid from 'preact-material-components/LayoutGrid';
 import 'preact-material-components/LayoutGrid/style.css';
-import Dialog from 'preact-material-components/Dialog';
-import 'preact-material-components/Dialog/style.css';
 import Component from '../Component';
 import disp from '../../lib/store';
 import root from '../../lib/root';
@@ -14,10 +12,18 @@ import style from './style.scss';
 import ProductCard from '../Products/Card';
 import ProductCardStyle from '../Products/Card/style.scss';
 import VerticalActionBar from '../VerticalActionBar';
+import Image from '../Image';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 export default class Category extends Component {
+	constructor() {
+		super();
+
+		this.imageMagnifierRef = this.imageMagnifierRef.bind(this);
+		this.showImageMagnifier = this.showImageMagnifier.bind(this);
+	}
+
 	varPathValidator = s => s === this.props.category
 	varPath = name => ({
 		path: new RegExp('^' + storePrefix + '\\.(.*)\\.search\\.' + name + '$'),
@@ -97,57 +103,38 @@ export default class Category extends Component {
 	goUpStyle = [ProductCardStyle.m, style.fr, style.mr].join(' ')
 
 	imageMagnifierRef = e => this.imageMagnifier = e
-	openImageMagnifier = url => this.setState(
-		{ imageMagnifierUrl: undefined },
-		() => this.setState(
-			{ imageMagnifierUrl: url },
-			() => this.imageMagnifier.MDComponent.show()
-		)
-	)
 
-	closeImageMagnifier = () => this.imageMagnifier.MDComponent.close()
+	showImageMagnifier = (e, link) => {
+		this.imageMagnifier.show(link);
+		return prevent(e);
+	}
 
-	render(props, { list, imageMagnifierUrl }) {
+	render(props, { list }) {
 		if (list === undefined)
 			return undefined;
 
-		const view = list.rows.map(row => (
-			<LayoutGrid.Cell>
-				<ProductCard
-					openImageMagnifier={this.openImageMagnifier}
-					data={row}
-				/>
-			</LayoutGrid.Cell>));
-
 		return (
 			<div class={style.category}>
-				<Dialog ref={this.imageMagnifierRef} class={style.dia}
-					onClick={this.closeImageMagnifier}
-				>
-					<Dialog.Body>
-						{imageMagnifierUrl ?
-							<div class={style.media}
-								style={{ backgroundImage: `url(${imageMagnifierUrl}})` }}
-							/> : undefined}
-					</Dialog.Body>
-					<Dialog.Footer>
-						<Dialog.FooterButton accept>
-							Закрыть
-						</Dialog.FooterButton>
-					</Dialog.Footer>
-				</Dialog>
+				<Image.Magnifier ref={this.imageMagnifierRef} />
 				<LayoutGrid>
 					<LayoutGrid.Inner>
-						{view}
+						{list.rows.map(row => (
+							<LayoutGrid.Cell>
+								<ProductCard data={row}
+									showImageMagnifier={this.showImageMagnifier}
+								/>
+							</LayoutGrid.Cell>))}
 					</LayoutGrid.Inner>
 				</LayoutGrid>
 				<VerticalActionBar popup fixed>
 					<VerticalActionBar.Fab onClick={this.goUp}>
 						arrow_upward
 					</VerticalActionBar.Fab>
-					{this.page < list.pages ? <VerticalActionBar.Fab {...this.goNext}>
-						arrow_forward
-					</VerticalActionBar.Fab> : undefined}
+					{this.page < list.pages
+						? <VerticalActionBar.Fab {...this.goNext}>
+							arrow_forward
+						</VerticalActionBar.Fab>
+						: undefined}
 				</VerticalActionBar>
 			</div>);
 	}
