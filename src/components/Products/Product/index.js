@@ -1,17 +1,15 @@
 //------------------------------------------------------------------------------
 import DOMPurify from 'dompurify';
-import ImageList from 'preact-material-components/ImageList';
-import 'preact-material-components/ImageList/style.css';
 import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
 import { Component as PreactComponent } from 'preact';
 import Component from '../../Component';
+import Image from '../../Image';
 import VerticalActionBar from '../../VerticalActionBar';
 import disp from '../../../lib/store';
 import { headerSearchStorePath } from '../../../const';
 import { prevent, plinkRoute } from '../../../lib/util';
 import strftime from '../../../lib/strftime';
-import { imgUrl } from '../../../backend';
 import loader from './loader';
 import style from './style.scss';
 //------------------------------------------------------------------------------
@@ -55,7 +53,10 @@ function descRender(data) {
 					}}
 				/>);
 		else
-			a.push(<span>{data.description}</span>);
+			a.push(
+				<div style={{ textAlign: 'justify' }}>
+					{data.description}
+				</div>);
 
 	return a;
 }
@@ -256,10 +257,9 @@ export default class Product extends Component {
 			<div>
 				{display}
 			</div>,
-			<div style={{ overflowX: 'scroll', overflowY: 'auto' }}>{images.map(v => (
-				<div class={style.media}
-					style={{ backgroundImage: `url(${imgUrl(v)})` }}
-				/>))}
+			<div style={{ overflowX: 'scroll', overflowY: 'auto' }}>
+				<Image.Magnifier ref={this.imageMagnifierRef} />
+				{images.map(v => <Image link={v} style={{ float: 'left' }} />)}
 			</div>,
 			<ExpandableItem link={link}
 				f="prop" render={propRender}
@@ -312,4 +312,4 @@ export default class Product extends Component {
 		);
 	}
 }
-		//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
