@@ -3,6 +3,7 @@ import { LRUMap } from 'lru_map';
 import { Component } from 'preact';
 import { imgReq, imgUrl, imgKey, bfetch } from '../../backend';
 import { nullLink } from '../../const';
+import { randomInteger } from '../../lib/util';
 import root from '../../lib/root';
 import { webpRuntimeInitialized, webp2png } from '../../lib/webp';
 import style from './style.scss';
@@ -184,7 +185,7 @@ class Image extends Component {
 		m.class = [
 			style.media,
 			imageClass,
-			imageClass === 'picld' ? style.spin : ''
+			imageClass === 'picld' ? style['spin' + randomInteger(0, 7)] : ''
 		].concat(
 			Array.isArray(m.class) ? [...m.class] : [m.class]
 		).join(' ').trim();

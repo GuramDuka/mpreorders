@@ -44,7 +44,7 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 	@include media-height;
 }
 
-@keyframes r {
+@keyframes r0 {
 	0%    { transform: rotate(0deg);   }
 	12.5% { transform: rotate(45deg);  }
 	25%   { transform: rotate(90deg);  }
@@ -56,8 +56,132 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 	100%  { transform: rotate(360deg); }
 }
 
-.spin {
-	animation: r 10s step-end infinite;
+@keyframes r1 {
+	0%    { transform: rotate(45deg);  }
+	12.5% { transform: rotate(90deg);  }
+	25%   { transform: rotate(135deg); }
+	37.5% { transform: rotate(180deg); }
+	50%   { transform: rotate(225deg); }
+	62.5% { transform: rotate(270deg); }
+	75%   { transform: rotate(315deg); }
+	87.5% { transform: rotate(360deg); }
+	100%  { transform: rotate(0deg);   }
+}
+
+@keyframes r2 {
+	0%    { transform: rotate(90deg);  }
+	12.5% { transform: rotate(135deg); }
+	25%   { transform: rotate(180deg); }
+	37.5% { transform: rotate(225deg); }
+	50%   { transform: rotate(270deg); }
+	62.5% { transform: rotate(315deg); }
+	75%   { transform: rotate(360deg); }
+	87.5% { transform: rotate(0deg);   }
+	100%  { transform: rotate(45deg);  }
+}
+
+@keyframes r3 {
+	0%    { transform: rotate(135deg); }
+	12.5% { transform: rotate(180deg); }
+	25%   { transform: rotate(225deg); }
+	37.5% { transform: rotate(270deg); }
+	50%   { transform: rotate(315deg); }
+	62.5% { transform: rotate(360deg); }
+	75%   { transform: rotate(0deg);   }
+	87.5% { transform: rotate(45deg);  }
+	100%  { transform: rotate(90deg);  }
+}
+
+@keyframes r4 {
+	0%    { transform: rotate(180deg); }
+	12.5% { transform: rotate(225deg); }
+	25%   { transform: rotate(270deg); }
+	37.5% { transform: rotate(315deg); }
+	50%   { transform: rotate(360deg); }
+	62.5% { transform: rotate(0deg);   }
+	75%   { transform: rotate(45deg);  }
+	87.5% { transform: rotate(90deg);  }
+	100%  { transform: rotate(135deg); }
+}
+
+@keyframes r5 {
+	0%    { transform: rotate(225deg); }
+	12.5% { transform: rotate(270deg); }
+	25%   { transform: rotate(315deg); }
+	37.5% { transform: rotate(360deg); }
+	50%   { transform: rotate(0deg);   }
+	62.5% { transform: rotate(45deg);  }
+	75%   { transform: rotate(90deg);  }
+	87.5% { transform: rotate(135deg); }
+	100%  { transform: rotate(180deg); }
+}
+
+@keyframes r6 {
+	0%    { transform: rotate(270deg); }
+	12.5% { transform: rotate(315deg); }
+	25%   { transform: rotate(360deg); }
+	37.5% { transform: rotate(0deg);   }
+	50%   { transform: rotate(45deg);  }
+	62.5% { transform: rotate(90deg);  }
+	75%   { transform: rotate(135deg); }
+	87.5% { transform: rotate(180deg); }
+	100%  { transform: rotate(225deg); }
+}
+
+@keyframes r7 {
+	0%    { transform: rotate(315deg); }
+	12.5% { transform: rotate(360deg); }
+	25%   { transform: rotate(0deg);   }
+	37.5% { transform: rotate(45deg);  }
+	50%   { transform: rotate(90deg);  }
+	62.5% { transform: rotate(135deg); }
+	75%   { transform: rotate(180deg); }
+	87.5% { transform: rotate(225deg); }
+	100%  { transform: rotate(270deg); }
+}
+
+/*@keyframes r8 {
+	0%    { transform: rotate(360deg); }
+	12.5% { transform: rotate(0deg);   }
+	25%   { transform: rotate(45deg);  }
+	37.5% { transform: rotate(90deg);  }
+	50%   { transform: rotate(135deg); }
+	62.5% { transform: rotate(180deg); }
+	75%   { transform: rotate(225deg); }
+	87.5% { transform: rotate(270deg); }
+	100%  { transform: rotate(315deg); }
+}*/
+
+.spin0 {
+	animation: r0 8s step-end infinite;
+}
+
+.spin1 {
+	animation: r1 8s step-end infinite;
+}
+
+.spin2 {
+	animation: r2 8s step-end infinite;
+}
+
+.spin3 {
+	animation: r3 8s step-end infinite;
+}
+
+.spin4 {
+	animation: r4 8s step-end infinite;
+}
+
+.spin5 {
+	animation: r5 8s step-end infinite;
+}
+
+.spin6 {
+	animation: r6 8s step-end infinite;
+}
+
+.spin7 {
+	animation: r7 8s step-end infinite;
 }
 
 .dn {

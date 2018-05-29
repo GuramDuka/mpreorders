@@ -17,3 +17,14 @@ console.log(JSON.stringify(s));
 let obj = { first: 'Jane', last: 'Doe' };
 let { first: f, last: l } = obj;
 console.log(f, l);
+
+s = [];
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+while (s.length !== 10)
+	s[s.length] = getRandomInt(0, 7);
+
+console.log(s);
