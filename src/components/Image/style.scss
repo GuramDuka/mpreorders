@@ -93,7 +93,6 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 	}
 }*/
 
-@import "@material/elevation/mixins";
 @import "@material/theme/mixins";
 
 .magnifier {
@@ -106,4 +105,8 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 	border-radius: 2px;
 
 	@include mdc-theme-prop(background-color, background);
+}
+
+.magnifierImage {
+	height: 100%;
 }

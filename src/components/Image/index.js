@@ -26,9 +26,9 @@ class Image extends Component {
 		const c = new LRUMap(40 * 30);
 		c.shift = function () {
 			let entry = LRUMap.prototype.shift.call(this);
-			const [ key ] = entry;
+			const [key] = entry;
 			const e = root.document.getElementById(key);
-			
+
 			if (e)
 				e.remove();
 
@@ -57,8 +57,8 @@ class Image extends Component {
 			cache.id = Image.__cacheId;
 			cache.refCount = 1;
 			root.document.head.appendChild(cache);
-			cache.sheet.insertRule(`.nopic { background-image: url(/assets/nopic.svg) }`, 0);
-			cache.sheet.insertRule(`.picld { background-image: url(/assets/loading-process.svg) }`, 0);
+			cache.sheet.insertRule(`.nopic { background-image: url(/assets/nopic.svg) }`);
+			cache.sheet.insertRule(`.picld { background-image: url(/assets/loading-process.svg) }`);
 		}
 
 		this.mount(this.props);
@@ -84,11 +84,7 @@ class Image extends Component {
 
 	mount(props) {
 		this.mounted = true;
-
-		if (Image.isWebPSupported)
-			this.waitStyleComputed(props);
-		else
-			this.setState({ imageClass: undefined }, this.waitStyleComputed);
+		this.setState({ imageClass: undefined }, this.waitStyleComputed);
 	}
 
 	windowOnResize(e) {
@@ -215,11 +211,12 @@ class Magnifier extends Component {
 		].join(' ').trim();
 
 		return (
-			<Image lossless noresize
-				class={s}
-				onClick={this.close}
-				link={link}
-			/>);
+			<div class={s}>
+				<Image class={style.magnifierImage} lossless noresize
+					onClick={this.close}
+					link={link}
+				/>
+			</div>);
 	}
 }
 //------------------------------------------------------------------------------
