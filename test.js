@@ -28,3 +28,5 @@ while (s.length !== 10)
 	s[s.length] = getRandomInt(0, 7);
 
 console.log(s);
+
+console.log(~~true, ~~false);

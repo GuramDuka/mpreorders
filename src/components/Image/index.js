@@ -3,7 +3,7 @@ import { LRUMap } from 'lru_map';
 import { Component } from 'preact';
 import { imgReq, imgUrl, imgKey, bfetch } from '../../backend';
 import { nullLink } from '../../const';
-import { randomInteger } from '../../lib/util';
+import { randomInteger, prevent } from '../../lib/util';
 import root from '../../lib/root';
 import { webpRuntimeInitialized, webp2png } from '../../lib/webp';
 import style from './style.scss';
@@ -24,7 +24,7 @@ class Image extends Component {
 	static __id = 0
 	static __cacheId = '$__image_cache__#'
 	static __cacheLRU = (() => {
-		const c = new LRUMap(40 * 30);
+		const c = new LRUMap(40 * 3);
 		c.shift = function () {
 			let entry = LRUMap.prototype.shift.call(this);
 			const [key] = entry;
@@ -77,7 +77,7 @@ class Image extends Component {
 		delete this.mounted;
 		root.removeEventListener('resize', this.windowOnResize);
 
-		let cache = root.document.getElementById(Image.__cacheId);
+		const cache = root.document.getElementById(Image.__cacheId);
 
 		if (--cache.refCount === 0)
 			cache.remove();
@@ -184,6 +184,7 @@ class Image extends Component {
 		m.id = this.ids;
 		m.class = [
 			style.media,
+			m.inline ? 'mdc-display-inline' : '',
 			imageClass,
 			imageClass === 'picld' ? style['spin' + randomInteger(0, 7)] : ''
 		].concat(
@@ -203,7 +204,10 @@ class Magnifier extends Component {
 		{ link: link }
 	)
 
-	close = e => this.setState({ link: undefined });
+	close = e => {
+		this.setState({ link: undefined });
+		return prevent(e);
+	}
 
 	render(props, { link }) {
 		const s = [

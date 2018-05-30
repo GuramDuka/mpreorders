@@ -53,13 +53,19 @@ $cell-border: 1px solid gray;
 	}
 }
 
-@import "../../../lib/breakpoints/breakpoints.scss";
+.taj {
+	text-align: justify;
+}
+
+@import "../../../lib/css/breakpoints.scss";
+@import "../../../lib/css/container.scss";
+  
+.container {
+	@extend :global(.mdc-horizontal-scroll-container);
+	@include media-height;
+}
 
 .media {
-	background-position: center center;
-	background-repeat: no-repeat;
-	background-size: contain;
-	float: left;
-
-	@include media-wh;
+	@include media-width;
+	height: 100%;
 }

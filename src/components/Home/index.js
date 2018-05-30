@@ -1,7 +1,11 @@
 //------------------------------------------------------------------------------
 import Component from '../Component';
-import Card from 'preact-material-components/Card';
-import 'preact-material-components/Card/style.css';
+import Divider from '../Divider';
+import '../Divider/style.scss';
+import categoriesLoader from '../Categories/loader';
+import { goCategory } from '../Categories/link';
+import Button from 'preact-material-components/Button';
+import 'preact-material-components/Button/style.css';
 import style from './style.scss';
 import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import disp from '../../lib/store';
@@ -13,27 +17,42 @@ import disp from '../../lib/store';
 export default class Home extends Component {
 	storePaths = new Map()
 
-	didMount() {
-		disp(store => store.setIn(headerTitleStorePath, 'Главная').
-			deleteIn(headerSearchStorePath));
+	mount() {
+		disp(
+			store => store.deleteIn(headerTitleStorePath).
+				deleteIn(headerSearchStorePath),
+			() => categoriesLoader.call(this, 'categoriesList')
+		);
 	}
 
-	render() {
+	transformCategories(categoriesList) {
+		const list = [];
+
+		for (const v of categoriesList.rows)
+			list.push(v, undefined);
+
+		list.pop();
+
+		return list;
+	}
+
+	render(props, { categoriesList }) {
+		if (categoriesList)
+			categoriesList = this.transformCategories(categoriesList);
+
 		return (
 			<div class={style.home}>
-				<h1>Home route</h1>
-				<Card>
-					<div class={style.cardHeader}>
-						<h2 class="mdc-typography--title">Home card</h2>
-						<div class="mdc-typography--caption">Welcome to home route</div>
-					</div>
-					<div class={style.cardBody}>
-						Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-					</div>
-					<Card.Actions>
-						<Card.ActionButton>OKAY</Card.ActionButton>
-					</Card.Actions>
-				</Card>{/*
+				{categoriesList ? <Divider horizontal /> : undefined}
+				{categoriesList ? <div class={style.container}>
+					{categoriesList.map((v, i, a) => v ?
+						<Button {...goCategory(v.link)}>
+							{v.name}
+						</Button>
+						: <Divider inline vertical />
+					)}
+				</div> : undefined}
+				{categoriesList ? <Divider horizontal /> : undefined}
+				{/*
 				<FaBeer size={24} />
 				<LogIn style={{ verticalAlign: 'middle' }} color="black" />
 				<LogOut style={{ verticalAlign: 'middle' }} color="black" />

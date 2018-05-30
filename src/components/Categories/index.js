@@ -11,8 +11,9 @@ import Component from '../Component';
 import disp from '../../lib/store';
 import { headerTitleStorePath, headerSearchStorePath } from '../../const';
 import loader from './loader';
+import { goCategory } from './link';
 import style from './style.scss';
-import { prevent, plinkRoute } from '../../lib/util';
+import { prevent } from '../../lib/util';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
@@ -25,11 +26,6 @@ export default class Categories extends Component {
 			() => loader.call(this)
 		);
 	}
-
-	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
-
-	goCategory = (link, page = 1, pageSize = 40) =>
-		this.linkTo('/category/' + link + '/' + page + ',' + pageSize);
 
 	handleCategoriesCheckList = link => e => {
 		let { checked } = this.state;
@@ -56,7 +52,7 @@ export default class Categories extends Component {
 				/>
 				<Button unelevated
 					disabled={checked[link] && checkedKeys.length > 1}
-					{...this.goCategory(link)}
+					{...goCategory(link)}
 				>
 					{name}
 				</Button>
@@ -66,7 +62,7 @@ export default class Categories extends Component {
 			items.push((
 				<List.Item>
 					<Button unelevated
-						{...this.goCategory(checkedKeys.join(','))}
+						{...goCategory(checkedKeys.join(','))}
 					>
 						Открыть выбранные
 					</Button>

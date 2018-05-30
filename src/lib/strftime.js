@@ -8,7 +8,7 @@ function _xPad(x, pad, r) {
 	for (; parseInt(x, 10) < r && r > 1; r /= 10)
 		x = pad.toString() + x;
 	return x.toString();
-};
+}
 //------------------------------------------------------------------------------
 const _formats = {
 	a: d => lcTime.a[d.getDay()],
@@ -126,6 +126,28 @@ function replaceAggregate(m0, m1) {
 	return (f === 'locale' ? lcTime[m1] : f);
 }
 //------------------------------------------------------------------------------
+function doFormat(m0, m1) {
+	const { timestamp } = doFormat;
+	const _date = (typeof timestamp === 'undefined')
+		? new Date()
+		: (timestamp instanceof Date)
+			? new Date(timestamp)
+			: new Date(timestamp * 1000);
+	const f = _formats[m1];
+
+	if (typeof f === 'string')
+		return _date[f]();
+
+	if (typeof f === 'function')
+		return f(_date);
+
+	if (typeof f === 'object' && typeof f[0] === 'string')
+		return _xPad(_date[f[0]](), f[1]);
+
+	// Shouldn't reach here
+	return m1;
+}
+//------------------------------------------------------------------------------
 export default function strftime(fmt, timestamp) {
 	//       discuss at: http://locutus.io/php/strftime/
 	//      original by: Blues (http://tech.bluesmoon.info/)
@@ -150,27 +172,9 @@ export default function strftime(fmt, timestamp) {
 	while (fmt.match(/%[cDFhnrRtTxX]/))
 		fmt = fmt.replace(/%([cDFhnrRtTxX])/g, replaceAggregate);
 
+	doFormat.timestamp = timestamp;
 	// Now replace formats - we need a closure so that the date object gets passed through
-	const str = fmt.replace(/%([aAbBCdegGHIjklmMpPsSuUVwWyYzZ%])/g, (m0, m1) => {
-		const _date = (typeof timestamp === 'undefined')
-			? new Date()
-			: (timestamp instanceof Date)
-				? new Date(timestamp)
-				: new Date(timestamp * 1000);
-		const f = _formats[m1];
-
-		if (typeof f === 'string')
-			return _date[f]();
-
-		if (typeof f === 'function')
-			return f(_date);
-
-		if (typeof f === 'object' && typeof f[0] === 'string')
-			return _xPad(_date[f[0]](), f[1]);
-
-		// Shouldn't reach here
-		return m1;
-	});
+	const str = fmt.replace(/%([aAbBCdegGHIjklmMpPsSuUVwWyYzZ%])/g, doFormat);
 
 	return str;
 }

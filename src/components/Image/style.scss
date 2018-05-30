@@ -34,13 +34,13 @@ $mdc-toolbar-mobile-landscape-row-height: 0;
 }
 */
 
-@import "../../lib/breakpoints/breakpoints.scss";
+@import "../../lib/css/breakpoints.scss";
+@import "../../lib/css/display.scss";
 
 .media {
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-size: contain;
-	min-width: 50%;
 
 	@include media-height;
 }

@@ -1,0 +1,21 @@
+@import "preact-material-components/List/mdc-list.scss";
+
+$divider-color: if(
+    mdc-theme-tone($mdc-theme-background) == "dark",
+    $mdc-list-divider-color-on-dark-bg,
+    $mdc-list-divider-color-on-light-bg
+);
+
+:global(.mdc-vertical-divider) {
+	width: 0;
+	height: 100%;
+	margin: 0;
+	border-right-width: 1px;
+	border-right-style: solid;
+		
+	@include mdc-theme-prop(border-right-color, $divider-color);
+}
+
+:global(.mdc-horizontal-divider) {
+	@extend .mdc-list-divider;
+}

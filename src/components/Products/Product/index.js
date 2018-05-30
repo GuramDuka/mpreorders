@@ -6,6 +6,8 @@ import { Component as PreactComponent } from 'preact';
 import Component from '../../Component';
 import Image from '../../Image';
 import VerticalActionBar from '../../VerticalActionBar';
+import Divider from '../../Divider';
+import '../../Divider/style.scss';
 import disp from '../../../lib/store';
 import { headerSearchStorePath } from '../../../const';
 import { prevent, plinkRoute } from '../../../lib/util';
@@ -34,7 +36,9 @@ function propRender(data) {
 			a.push(<strong>; </strong>);
 	}
 
-	return a;
+	return a.length !== 0
+		? a
+		: <span>Свойства не заданы</span>;
 }
 //------------------------------------------------------------------------------
 function descRender(data) {
@@ -53,15 +57,17 @@ function descRender(data) {
 					}}
 				/>);
 		else
-			a.push(
-				<div style={{ textAlign: 'justify' }}>
-					{data.description}
-				</div>);
+			a.push(<div class={style.taj}>{data.description}</div>);
 
-	return a;
+	return a.length !== 0
+		? a
+		: <span>Описание не задано</span>;
 }
 //------------------------------------------------------------------------------
 function remsRender(data) {
+	if (data.rows.length === 0)
+		return <span>Нет остатков, временно отсутствует</span>;
+
 	return (
 		<table class={style.lightBorderTable}>
 			<tr>
@@ -97,6 +103,9 @@ function dateFormatter(date) {
 }
 //------------------------------------------------------------------------------
 function bprsRender(data) {
+	if (data.rows.length === 0)
+		return <span>Цены поставщиков не определены</span>;
+
 	return (
 		<table class={style.lightBorderTable}>
 			<thead />
@@ -119,6 +128,9 @@ function bprsRender(data) {
 }
 //------------------------------------------------------------------------------
 function sprsRender(data) {
+	if (data.rows.length === 0)
+		return <span>Базовые цены не определены</span>;
+
 	return (
 		<table class={style.lightBorderTable}>
 			<tr>
@@ -138,6 +150,9 @@ function sprsRender(data) {
 }
 //------------------------------------------------------------------------------
 function lprsRender(data) {
+	if (data.rows.length === 0)
+		return <span>Цены продажи не определены</span>;
+
 	return (
 		<table class={style.lightBorderTable}>
 			<tr>
@@ -213,6 +228,23 @@ export default class Product extends Component {
 	favoriteIcons = ['favorite_border', 'favorite']
 	inCartIcons = ['add_shopping_cart', 'remove_shopping_cart']
 
+	imageMagnifierRef = e => this.imageMagnifier = e
+	showImageMagnifier = link => e => {
+		this.imageMagnifier.show(link);
+		return prevent(e);
+	}
+
+	transformImages(images) {
+		const images2 = [];
+
+		for (const v of images)
+			images2.push(v, undefined);
+
+		images2.pop();
+
+		return images2;
+	}
+
 	render(props, { auth, data, isFavorite, isInCart }) {
 		if (data === undefined)
 			return undefined;
@@ -253,14 +285,19 @@ export default class Product extends Component {
 		if (price)
 			display += `, цена: ${price}`;
 
+		images = this.transformImages(images);
+
 		const items = [
-			<div>
-				{display}
-			</div>,
-			<div style={{ overflowX: 'scroll', overflowY: 'auto' }}>
+			<div>{display}</div>,
+			<Divider horizontal />,
+			<div class={style.container}>
 				<Image.Magnifier ref={this.imageMagnifierRef} />
-				{images.map(v => <Image link={v} style={{ float: 'left' }} />)}
+				{images.map((v, i, a) => v ?
+					<Image inline class={style.media} link={v} onClick={this.showImageMagnifier(v)} />
+					: <Divider inline vertical />
+				)}
 			</div>,
+			<Divider horizontal />,
 			<ExpandableItem link={link}
 				f="prop" render={propRender}
 				title="Свойства"

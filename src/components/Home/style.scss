@@ -2,16 +2,18 @@
 
 .home {
 	padding-top: $mdc-top-app-bar-row-height;
-	padding-right: 20px;
-	padding-left: 20px;
 	min-height: 100%;
 	width: 100%;
 }
 
-.cardHeader {
-	padding: 16px;
-}
+@import "preact-material-components/Button/_variables.scss";
+@import "../../lib/css/container.scss";
 
-.cardBody {
-	padding: 16px;
+.container {
+	@extend :global(.mdc-horizontal-scroll-container);
+	height: $mdc-button-height;
+
+	a {
+		vertical-align: top;
+	}
 }
