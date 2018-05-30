@@ -51,8 +51,8 @@ var Module = function (Module) {
 		var nodePath;
 		Module["read"] = function shell_read(filename, binary) {
 			var ret;
-			if (!nodeFS) nodeFS = 0;//require("fs");
-			if (!nodePath) nodePath = 0;//require("path");
+			if (!nodeFS) nodeFS = require("fs");
+			if (!nodePath) nodePath = require("path");
 			filename = nodePath["normalize"](filename);
 			ret = nodeFS["readFileSync"](filename);
 			return binary ? ret : ret.toString();
@@ -138,6 +138,8 @@ var Module = function (Module) {
 		Module["setWindowTitle"] = (function (title) {
 			document.title = title;
 		});
+	} else {
+		throw new Error("not compiled for this environment");
 	}
 	Module["print"] = typeof console !== "undefined" ? console.log.bind(console) :
 		typeof print !== "undefined" ? print : null;
@@ -1006,9 +1008,9 @@ var Module = function (Module) {
 	}
 	integrateWasmJS();
 	STATIC_BASE = GLOBAL_BASE;
-	STATICTOP = STATIC_BASE + 10240;
+	STATICTOP = STATIC_BASE + 9984;
 	__ATINIT__.push();
-	var STATIC_BUMP = 10240;
+	var STATIC_BUMP = 9984;
 	Module["STATIC_BASE"] = STATIC_BASE;
 	Module["STATIC_BUMP"] = STATIC_BUMP;
 	var tempDoublePtr = STATICTOP;
