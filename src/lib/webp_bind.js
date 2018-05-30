@@ -4,7 +4,6 @@
 //------------------------------------------------------------------------------
 var Module = function (Module) {
 	Module = Module || {};
-
 	var Module = typeof Module !== "undefined" ? Module : {};
 	var moduleOverrides = {};
 	var key;
@@ -15,9 +14,9 @@ var Module = function (Module) {
 	}
 	Module["arguments"] = [];
 	Module["thisProgram"] = "./this.program";
-	Module["quit"] = (function (status, toThrow) {
+	Module["quit"] = function (status, toThrow) {
 		throw toThrow;
-	});
+	};
 	Module["preRun"] = [];
 	Module["postRun"] = [];
 	var ENVIRONMENT_IS_WEB = false;
@@ -69,17 +68,17 @@ var Module = function (Module) {
 			Module["thisProgram"] = process["argv"][1].replace(/\\/g, "/");
 		}
 		Module["arguments"] = process["argv"].slice(2);
-		process["on"]("uncaughtException", (function (ex) {
+		process["on"]("uncaughtException", function (ex) {
 			if (!(ex instanceof ExitStatus)) {
 				throw ex;
 			}
-		}));
-		process["on"]("unhandledRejection", (function (reason, p) {
-			process["exit"](1);
-		}));
-		Module["inspect"] = (function () {
-			return "[Emscripten Module object]";
 		});
+		process["on"]("unhandledRejection", function (reason, p) {
+			process["exit"](1);
+		});
+		Module["inspect"] = function () {
+			return "[Emscripten Module object]";
+		};
 	} else if (ENVIRONMENT_IS_SHELL) {
 		if (typeof read != "undefined") {
 			Module["read"] = function shell_read(f) {
@@ -101,20 +100,20 @@ var Module = function (Module) {
 			Module["arguments"] = arguments;
 		}
 		if (typeof quit === "function") {
-			Module["quit"] = (function (status, toThrow) {
+			Module["quit"] = function (status, toThrow) {
 				quit(status);
-			});
+			};
 		}
 	} else if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
 		Module["read"] = function shell_read(url) {
-			var xhr = new XMLHttpRequest;
+			var xhr = new XMLHttpRequest();
 			xhr.open("GET", url, false);
 			xhr.send(null);
 			return xhr.responseText;
 		};
 		if (ENVIRONMENT_IS_WORKER) {
 			Module["readBinary"] = function readBinary(url) {
-				var xhr = new XMLHttpRequest;
+				var xhr = new XMLHttpRequest();
 				xhr.open("GET", url, false);
 				xhr.responseType = "arraybuffer";
 				xhr.send(null);
@@ -122,7 +121,7 @@ var Module = function (Module) {
 			};
 		}
 		Module["readAsync"] = function readAsync(url, onload, onerror) {
-			var xhr = new XMLHttpRequest;
+			var xhr = new XMLHttpRequest();
 			xhr.open("GET", url, true);
 			xhr.responseType = "arraybuffer";
 			xhr.onload = function xhr_onload() {
@@ -135,9 +134,9 @@ var Module = function (Module) {
 			xhr.onerror = onerror;
 			xhr.send(null);
 		};
-		Module["setWindowTitle"] = (function (title) {
+		Module["setWindowTitle"] = function (title) {
 			document.title = title;
-		});
+		};
 	} else {
 		throw new Error("not compiled for this environment");
 	}
@@ -188,16 +187,22 @@ var Module = function (Module) {
 		case "i1":
 		case "i8":
 			return 1;
+
 		case "i16":
 			return 2;
+
 		case "i32":
 			return 4;
+
 		case "i64":
 			return 8;
+
 		case "float":
 			return 4;
+
 		case "double":
 			return 8;
+
 		default:
 			{
 				if (type[type.length - 1] === "*") {
@@ -248,18 +253,18 @@ var Module = function (Module) {
 		return func;
 	}
 	var JSfuncs = {
-		"stackSave": (function () {
+		stackSave: function () {
 			stackSave();
-		}),
-		"stackRestore": (function () {
+		},
+		stackRestore: function () {
 			stackRestore();
-		}),
-		"arrayToC": (function (arr) {
+		},
+		arrayToC: function (arr) {
 			var ret = stackAlloc(arr.length);
 			writeArrayToMemory(arr, ret);
 			return ret;
-		}),
-		"stringToC": (function (str) {
+		},
+		stringToC: function (str) {
 			var ret = 0;
 			if (str !== null && str !== undefined && str !== 0) {
 				var len = (str.length << 2) + 1;
@@ -267,11 +272,11 @@ var Module = function (Module) {
 				stringToUTF8(str, ret, len);
 			}
 			return ret;
-		})
+		}
 	};
 	var toC = {
-		"string": JSfuncs["stringToC"],
-		"array": JSfuncs["arrayToC"]
+		string: JSfuncs["stringToC"],
+		array: JSfuncs["arrayToC"]
 	};
 
 	function ccall(ident, returnType, argTypes, args, opts) {
@@ -305,28 +310,35 @@ var Module = function (Module) {
 		case "i1":
 			HEAP8[ptr >> 0] = value;
 			break;
+
 		case "i8":
 			HEAP8[ptr >> 0] = value;
 			break;
+
 		case "i16":
 			HEAP16[ptr >> 1] = value;
 			break;
+
 		case "i32":
 			HEAP32[ptr >> 2] = value;
 			break;
+
 		case "i64":
 			tempI64 = [value >>> 0, (tempDouble = value, +Math_abs(tempDouble) >= 1 ?
-				tempDouble > 0 ? (Math_min(+Math_floor(tempDouble / 4294967296),
-					4294967295) | 0) >>> 0 : ~~+Math_ceil((tempDouble - +(~~tempDouble >>>
-					0)) / 4294967296) >>> 0 : 0)], HEAP32[ptr >> 2] = tempI64[0], HEAP32[ptr +
-				4 >> 2] = tempI64[1];
+					tempDouble > 0 ? (Math_min(+Math_floor(tempDouble / 4294967296),
+						4294967295) | 0) >>> 0 : ~~+Math_ceil((tempDouble - +(~~tempDouble >>>
+						0)) / 4294967296) >>> 0 : 0)],
+				HEAP32[ptr >> 2] = tempI64[0], HEAP32[ptr + 4 >> 2] = tempI64[1];
 			break;
+
 		case "float":
 			HEAPF32[ptr >> 2] = value;
 			break;
+
 		case "double":
 			HEAPF64[ptr >> 3] = value;
 			break;
+
 		default:
 			abort("invalid type for setValue: " + type);
 		}
@@ -338,18 +350,25 @@ var Module = function (Module) {
 		switch (type) {
 		case "i1":
 			return HEAP8[ptr >> 0];
+
 		case "i8":
 			return HEAP8[ptr >> 0];
+
 		case "i16":
 			return HEAP16[ptr >> 1];
+
 		case "i32":
 			return HEAP32[ptr >> 2];
+
 		case "i64":
 			return HEAP32[ptr >> 2];
+
 		case "float":
 			return HEAPF32[ptr >> 2];
+
 		case "double":
 			return HEAPF64[ptr >> 3];
+
 		default:
 			abort("invalid type for getValue: " + type);
 		}
@@ -522,14 +541,14 @@ var Module = function (Module) {
 
 	function demangleAll(text) {
 		var regex = /__Z[\w\d_]+/g;
-		return text.replace(regex, (function (x) {
+		return text.replace(regex, function (x) {
 			var y = demangle(x);
 			return x === y ? x : x + " [" + y + "]";
-		}));
+		});
 	}
 
 	function jsStackTrace() {
-		var err = new Error;
+		var err = new Error();
 		if (!err.stack) {
 			try {
 				throw new Error(0);
@@ -574,7 +593,7 @@ var Module = function (Module) {
 	STATIC_BASE = STATICTOP = STACK_BASE = STACKTOP = STACK_MAX = DYNAMIC_BASE =
 		DYNAMICTOP_PTR = 0;
 	staticSealed = false;
-	if (!Module["reallocBuffer"]) Module["reallocBuffer"] = (function (size) {
+	if (!Module["reallocBuffer"]) Module["reallocBuffer"] = function (size) {
 		var ret;
 		try {
 			if (ArrayBuffer.transfer) {
@@ -591,7 +610,7 @@ var Module = function (Module) {
 		var success = _emscripten_replace_memory(ret);
 		if (!success) return false;
 		return ret;
-	});
+	};
 
 	function enlargeMemory() {
 		var PAGE_MULTIPLE = Module["usingWasm"] ? WASM_PAGE_SIZE : ASMJS_PAGE_SIZE;
@@ -624,9 +643,9 @@ var Module = function (Module) {
 			ArrayBuffer.prototype, "byteLength").get);
 		byteLength(new ArrayBuffer(4));
 	} catch (e) {
-		byteLength = (function (buffer) {
+		byteLength = function (buffer) {
 			return buffer.byteLength;
-		});
+		};
 	}
 	var TOTAL_STACK = Module["TOTAL_STACK"] || 5242880;
 	var TOTAL_MEMORY = Module["TOTAL_MEMORY"] || 16777216;
@@ -639,7 +658,7 @@ var Module = function (Module) {
 		if (typeof WebAssembly === "object" && typeof WebAssembly.Memory ===
 			"function") {
 			Module["wasmMemory"] = new WebAssembly.Memory({
-				"initial": TOTAL_MEMORY / WASM_PAGE_SIZE
+				initial: TOTAL_MEMORY / WASM_PAGE_SIZE
 			});
 			buffer = Module["wasmMemory"].buffer;
 		} else {
@@ -813,17 +832,17 @@ var Module = function (Module) {
 		}
 		var wasmPageSize = 64 * 1024;
 		var info = {
-			"global": null,
-			"env": null,
-			"asm2wasm": {
-				"f64-rem": (function (x, y) {
+			global: null,
+			env: null,
+			asm2wasm: {
+				"f64-rem": function (x, y) {
 					return x % y;
-				}),
-				"debugger": (function () {
+				},
+				debugger: function () {
 					debugger;
-				})
+				}
 			},
-			"parent": Module
+			parent: Module
 		};
 		var exports = null;
 
@@ -865,18 +884,18 @@ var Module = function (Module) {
 				typeof fetch === "function") {
 				return fetch(wasmBinaryFile, {
 					credentials: "same-origin"
-				}).then((function (response) {
+				}).then(function (response) {
 					if (!response["ok"]) {
 						throw "failed to load wasm binary file at '" + wasmBinaryFile + "'";
 					}
 					return response["arrayBuffer"]();
-				})).catch((function () {
+				}).catch(function () {
 					return getBinary();
-				}));
+				});
 			}
-			return new Promise((function (resolve, reject) {
+			return new Promise(function (resolve, reject) {
 				resolve(getBinary());
-			}));
+			});
 		}
 
 		function doNativeWasm(global, env, providedBuffer) {
@@ -890,8 +909,8 @@ var Module = function (Module) {
 			}
 			env["memory"] = Module["wasmMemory"];
 			info["global"] = {
-				"NaN": NaN,
-				"Infinity": Infinity
+				NaN: NaN,
+				Infinity: Infinity
 			};
 			info["global.Math"] = Math;
 			info["env"] = env;
@@ -919,22 +938,22 @@ var Module = function (Module) {
 			}
 
 			function instantiateArrayBuffer(receiver) {
-				getBinaryPromise().then((function (binary) {
+				getBinaryPromise().then(function (binary) {
 					return WebAssembly.instantiate(binary, info);
-				})).then(receiver).catch((function (reason) {
+				}).then(receiver).catch(function (reason) {
 					Module["printErr"]("failed to asynchronously prepare wasm: " + reason);
 					abort(reason);
-				}));
+				});
 			}
 			if (!Module["wasmBinary"] && typeof WebAssembly.instantiateStreaming ===
 				"function" && !isDataURI(wasmBinaryFile) && typeof fetch === "function") {
 				WebAssembly.instantiateStreaming(fetch(wasmBinaryFile, {
 					credentials: "same-origin"
-				}), info).then(receiveInstantiatedSource).catch((function (reason) {
+				}), info).then(receiveInstantiatedSource).catch(function (reason) {
 					Module["printErr"]("wasm streaming compile failed: " + reason);
 					Module["printErr"]("falling back to ArrayBuffer instantiation");
 					instantiateArrayBuffer(receiveInstantiatedSource);
-				}));
+				});
 			} else {
 				instantiateArrayBuffer(receiveInstantiatedSource);
 			}
@@ -942,9 +961,8 @@ var Module = function (Module) {
 		}
 		Module["asmPreload"] = Module["asm"];
 		var asmjsReallocBuffer = Module["reallocBuffer"];
-		var wasmReallocBuffer = (function (size) {
-			var PAGE_MULTIPLE = Module["usingWasm"] ? WASM_PAGE_SIZE :
-				ASMJS_PAGE_SIZE;
+		var wasmReallocBuffer = function (size) {
+			var PAGE_MULTIPLE = Module["usingWasm"] ? WASM_PAGE_SIZE : ASMJS_PAGE_SIZE;
 			size = alignUp(size, PAGE_MULTIPLE);
 			var old = Module["buffer"];
 			var oldSize = old.byteLength;
@@ -960,16 +978,16 @@ var Module = function (Module) {
 					return null;
 				}
 			}
-		});
-		Module["reallocBuffer"] = (function (size) {
+		};
+		Module["reallocBuffer"] = function (size) {
 			if (finalMethod === "asmjs") {
 				return asmjsReallocBuffer(size);
 			} else {
 				return wasmReallocBuffer(size);
 			}
-		});
+		};
 		var finalMethod = "";
-		Module["asm"] = (function (global, env, providedBuffer) {
+		Module["asm"] = function (global, env, providedBuffer) {
 			env = fixImports(env);
 			if (!env["table"]) {
 				var TABLE_SIZE = Module["wasmTableSize"];
@@ -979,13 +997,13 @@ var Module = function (Module) {
 					"function") {
 					if (MAX_TABLE_SIZE !== undefined) {
 						env["table"] = new WebAssembly.Table({
-							"initial": TABLE_SIZE,
-							"maximum": MAX_TABLE_SIZE,
-							"element": "anyfunc"
+							initial: TABLE_SIZE,
+							maximum: MAX_TABLE_SIZE,
+							element: "anyfunc"
 						});
 					} else {
 						env["table"] = new WebAssembly.Table({
-							"initial": TABLE_SIZE,
+							initial: TABLE_SIZE,
 							element: "anyfunc"
 						});
 					}
@@ -1004,7 +1022,7 @@ var Module = function (Module) {
 			exports = doNativeWasm(global, env, providedBuffer);
 			assert(exports, "no binaryen method succeeded.");
 			return exports;
-		});
+		};
 	}
 	integrateWasmJS();
 	STATIC_BASE = GLOBAL_BASE;
@@ -1145,156 +1163,156 @@ var Module = function (Module) {
 	}
 	Module.asmGlobalArg = {};
 	Module.asmLibraryArg = {
-		"abort": abort,
-		"assert": assert,
-		"enlargeMemory": enlargeMemory,
-		"getTotalMemory": getTotalMemory,
-		"invoke_ii": invoke_ii,
-		"invoke_iii": invoke_iii,
-		"invoke_iiii": invoke_iiii,
-		"invoke_iiiiiii": invoke_iiiiiii,
-		"invoke_jiiii": invoke_jiiii,
-		"invoke_vi": invoke_vi,
-		"invoke_vii": invoke_vii,
-		"invoke_viii": invoke_viii,
-		"invoke_viiii": invoke_viiii,
-		"invoke_viiiii": invoke_viiiii,
-		"invoke_viiiiii": invoke_viiiiii,
-		"invoke_viiiiiiiii": invoke_viiiiiiiii,
-		"___setErrNo": ___setErrNo,
-		"_emscripten_memcpy_big": _emscripten_memcpy_big,
-		"DYNAMICTOP_PTR": DYNAMICTOP_PTR,
-		"tempDoublePtr": tempDoublePtr,
-		"ABORT": ABORT,
-		"STACKTOP": STACKTOP,
-		"STACK_MAX": STACK_MAX
+		abort: abort,
+		assert: assert,
+		enlargeMemory: enlargeMemory,
+		getTotalMemory: getTotalMemory,
+		invoke_ii: invoke_ii,
+		invoke_iii: invoke_iii,
+		invoke_iiii: invoke_iiii,
+		invoke_iiiiiii: invoke_iiiiiii,
+		invoke_jiiii: invoke_jiiii,
+		invoke_vi: invoke_vi,
+		invoke_vii: invoke_vii,
+		invoke_viii: invoke_viii,
+		invoke_viiii: invoke_viiii,
+		invoke_viiiii: invoke_viiiii,
+		invoke_viiiiii: invoke_viiiiii,
+		invoke_viiiiiiiii: invoke_viiiiiiiii,
+		___setErrNo: ___setErrNo,
+		_emscripten_memcpy_big: _emscripten_memcpy_big,
+		DYNAMICTOP_PTR: DYNAMICTOP_PTR,
+		tempDoublePtr: tempDoublePtr,
+		ABORT: ABORT,
+		STACKTOP: STACKTOP,
+		STACK_MAX: STACK_MAX
 	};
 	var asm = Module["asm"](Module.asmGlobalArg, Module.asmLibraryArg, buffer);
 	Module["asm"] = asm;
-	var _decode = Module["_decode"] = (function () {
+	var _decode = Module["_decode"] = function () {
 		return Module["asm"]["_decode"].apply(null, arguments);
-	});
-	var _emscripten_replace_memory = Module["_emscripten_replace_memory"] = (
+	};
+	var _emscripten_replace_memory = Module["_emscripten_replace_memory"] =
 		function () {
 			return Module["asm"]["_emscripten_replace_memory"].apply(null, arguments);
-		});
-	var _free = Module["_free"] = (function () {
+		};
+	var _free = Module["_free"] = function () {
 		return Module["asm"]["_free"].apply(null, arguments);
-	});
-	var _getInfo = Module["_getInfo"] = (function () {
+	};
+	var _getInfo = Module["_getInfo"] = function () {
 		return Module["asm"]["_getInfo"].apply(null, arguments);
-	});
-	var _llvm_bswap_i32 = Module["_llvm_bswap_i32"] = (function () {
+	};
+	var _llvm_bswap_i32 = Module["_llvm_bswap_i32"] = function () {
 		return Module["asm"]["_llvm_bswap_i32"].apply(null, arguments);
-	});
-	var _llvm_ctpop_i32 = Module["_llvm_ctpop_i32"] = (function () {
+	};
+	var _llvm_ctpop_i32 = Module["_llvm_ctpop_i32"] = function () {
 		return Module["asm"]["_llvm_ctpop_i32"].apply(null, arguments);
-	});
-	var _malloc = Module["_malloc"] = (function () {
+	};
+	var _malloc = Module["_malloc"] = function () {
 		return Module["asm"]["_malloc"].apply(null, arguments);
-	});
-	var _memcpy = Module["_memcpy"] = (function () {
+	};
+	var _memcpy = Module["_memcpy"] = function () {
 		return Module["asm"]["_memcpy"].apply(null, arguments);
-	});
-	var _memmove = Module["_memmove"] = (function () {
+	};
+	var _memmove = Module["_memmove"] = function () {
 		return Module["asm"]["_memmove"].apply(null, arguments);
-	});
-	var _memset = Module["_memset"] = (function () {
+	};
+	var _memset = Module["_memset"] = function () {
 		return Module["asm"]["_memset"].apply(null, arguments);
-	});
-	var _sbrk = Module["_sbrk"] = (function () {
+	};
+	var _sbrk = Module["_sbrk"] = function () {
 		return Module["asm"]["_sbrk"].apply(null, arguments);
-	});
-	var _svpng = Module["_svpng"] = (function () {
+	};
+	var _svpng = Module["_svpng"] = function () {
 		return Module["asm"]["_svpng"].apply(null, arguments);
-	});
-	var _version = Module["_version"] = (function () {
+	};
+	var _version = Module["_version"] = function () {
 		return Module["asm"]["_version"].apply(null, arguments);
-	});
-	var _webp2png = Module["_webp2png"] = (function () {
+	};
+	var _webp2png = Module["_webp2png"] = function () {
 		return Module["asm"]["_webp2png"].apply(null, arguments);
-	});
-	var establishStackSpace = Module["establishStackSpace"] = (function () {
+	};
+	var establishStackSpace = Module["establishStackSpace"] = function () {
 		return Module["asm"]["establishStackSpace"].apply(null, arguments);
-	});
-	var getTempRet0 = Module["getTempRet0"] = (function () {
+	};
+	var getTempRet0 = Module["getTempRet0"] = function () {
 		return Module["asm"]["getTempRet0"].apply(null, arguments);
-	});
-	var runPostSets = Module["runPostSets"] = (function () {
+	};
+	var runPostSets = Module["runPostSets"] = function () {
 		return Module["asm"]["runPostSets"].apply(null, arguments);
-	});
-	var setTempRet0 = Module["setTempRet0"] = (function () {
+	};
+	var setTempRet0 = Module["setTempRet0"] = function () {
 		return Module["asm"]["setTempRet0"].apply(null, arguments);
-	});
-	var setThrew = Module["setThrew"] = (function () {
+	};
+	var setThrew = Module["setThrew"] = function () {
 		return Module["asm"]["setThrew"].apply(null, arguments);
-	});
-	var stackAlloc = Module["stackAlloc"] = (function () {
+	};
+	var stackAlloc = Module["stackAlloc"] = function () {
 		return Module["asm"]["stackAlloc"].apply(null, arguments);
-	});
-	var stackRestore = Module["stackRestore"] = (function () {
+	};
+	var stackRestore = Module["stackRestore"] = function () {
 		return Module["asm"]["stackRestore"].apply(null, arguments);
-	});
-	var stackSave = Module["stackSave"] = (function () {
+	};
+	var stackSave = Module["stackSave"] = function () {
 		return Module["asm"]["stackSave"].apply(null, arguments);
-	});
-	var dynCall_ii = Module["dynCall_ii"] = (function () {
+	};
+	var dynCall_ii = Module["dynCall_ii"] = function () {
 		return Module["asm"]["dynCall_ii"].apply(null, arguments);
-	});
-	var dynCall_iii = Module["dynCall_iii"] = (function () {
+	};
+	var dynCall_iii = Module["dynCall_iii"] = function () {
 		return Module["asm"]["dynCall_iii"].apply(null, arguments);
-	});
-	var dynCall_iiii = Module["dynCall_iiii"] = (function () {
+	};
+	var dynCall_iiii = Module["dynCall_iiii"] = function () {
 		return Module["asm"]["dynCall_iiii"].apply(null, arguments);
-	});
-	var dynCall_iiiiiii = Module["dynCall_iiiiiii"] = (function () {
+	};
+	var dynCall_iiiiiii = Module["dynCall_iiiiiii"] = function () {
 		return Module["asm"]["dynCall_iiiiiii"].apply(null, arguments);
-	});
-	var dynCall_jiiii = Module["dynCall_jiiii"] = (function () {
+	};
+	var dynCall_jiiii = Module["dynCall_jiiii"] = function () {
 		return Module["asm"]["dynCall_jiiii"].apply(null, arguments);
-	});
-	var dynCall_vi = Module["dynCall_vi"] = (function () {
+	};
+	var dynCall_vi = Module["dynCall_vi"] = function () {
 		return Module["asm"]["dynCall_vi"].apply(null, arguments);
-	});
-	var dynCall_vii = Module["dynCall_vii"] = (function () {
+	};
+	var dynCall_vii = Module["dynCall_vii"] = function () {
 		return Module["asm"]["dynCall_vii"].apply(null, arguments);
-	});
-	var dynCall_viii = Module["dynCall_viii"] = (function () {
+	};
+	var dynCall_viii = Module["dynCall_viii"] = function () {
 		return Module["asm"]["dynCall_viii"].apply(null, arguments);
-	});
-	var dynCall_viiii = Module["dynCall_viiii"] = (function () {
+	};
+	var dynCall_viiii = Module["dynCall_viiii"] = function () {
 		return Module["asm"]["dynCall_viiii"].apply(null, arguments);
-	});
-	var dynCall_viiiii = Module["dynCall_viiiii"] = (function () {
+	};
+	var dynCall_viiiii = Module["dynCall_viiiii"] = function () {
 		return Module["asm"]["dynCall_viiiii"].apply(null, arguments);
-	});
-	var dynCall_viiiiii = Module["dynCall_viiiiii"] = (function () {
+	};
+	var dynCall_viiiiii = Module["dynCall_viiiiii"] = function () {
 		return Module["asm"]["dynCall_viiiiii"].apply(null, arguments);
-	});
-	var dynCall_viiiiiiiii = Module["dynCall_viiiiiiiii"] = (function () {
+	};
+	var dynCall_viiiiiiiii = Module["dynCall_viiiiiiiii"] = function () {
 		return Module["asm"]["dynCall_viiiiiiiii"].apply(null, arguments);
-	});
+	};
 	Module["asm"] = asm;
 	Module["getValue"] = getValue;
-	Module["then"] = (function (func) {
+	Module["then"] = function (func) {
 		if (Module["calledRun"]) {
 			func(Module);
 		} else {
 			var old = Module["onRuntimeInitialized"];
-			Module["onRuntimeInitialized"] = (function () {
+			Module["onRuntimeInitialized"] = function () {
 				if (old) old();
 				func(Module);
-			});
+			};
 		}
 		return Module;
-	});
+	};
 
 	function ExitStatus(status) {
 		this.name = "ExitStatus";
 		this.message = "Program terminated with exit(" + status + ")";
 		this.status = status;
 	}
-	ExitStatus.prototype = new Error;
+	ExitStatus.prototype = new Error();
 	ExitStatus.prototype.constructor = ExitStatus;
 	var initialStackTop;
 	dependenciesFulfilled = function runCaller() {
@@ -1322,12 +1340,12 @@ var Module = function (Module) {
 		}
 		if (Module["setStatus"]) {
 			Module["setStatus"]("Running...");
-			setTimeout((function () {
-				setTimeout((function () {
+			setTimeout(function () {
+				setTimeout(function () {
 					Module["setStatus"]("");
-				}), 1);
+				}, 1);
 				doRun();
-			}), 1);
+			}, 1);
 		} else {
 			doRun();
 		}
