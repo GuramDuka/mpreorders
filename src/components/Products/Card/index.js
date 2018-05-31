@@ -21,6 +21,10 @@ export default class ProductCard extends Component {
 		this.mount(props);
 	}
 
+	// regex replace comma without space after
+	static cr = /(,(?=\S)|:)/g
+	static sr = /(\s{2})/g
+
 	mount(props) {
 		const {
 			link,
@@ -35,15 +39,16 @@ export default class ProductCard extends Component {
 
 		this.goProduct = this.linkTo('/product/' + link);
 
-		// regex replace comma without space after
-		const cr = /(,(?=\S)|:)/g;
-		const sr = /(\s{2})/g;
+		const { cr, sr } = ProductCard;
 
 		this.code = `[${code}]`;
 		this.name = name.replace(cr, ', ').replace(sr, ' ').trim();
 		this.article = article.replace(cr, ', ').trim();
 		this.manufacturer = manufacturer.replace(cr, ', ').trim();
-		this.remainder = remainder !== 0 || reserve !== 0 ? remainder + (reserve ? ' (' + reserve + ')' : '') : '';
+		this.remainder = Number.isFinite(remainder) && remainder !== 0
+			? remainder.toString() : '';
+		this.remainder += Number.isFinite(reserve) && reserve !== 0
+			? ' (' + reserve + ')' : '';
 		this.price = price + '₽';
 
 		this.title = this.name;
@@ -52,19 +57,28 @@ export default class ProductCard extends Component {
 		for (const v of [
 			this.article,
 			this.manufacturer,
-			this.remainder,
+			this.remainder.trim(),
 			this.price
 		])
 			if (v.length !== 0)
 				subTitle += `, ${v}`;
 
 		this.subTitle = subTitle.substr(2);
+
+		this.titleStyle = [
+			'mdc-typography--title',
+			style.title,
+			props.mini ? style.mini : ''
+		].join(' ').trim();
+		
+		this.subTitleStyle = [
+			'mdc-typography--caption',
+			style.subTitle,
+			props.mini ? style.mini : ''
+		].join(' ').trim();
 	}
 
 	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
-
-	titleStyle = [style.title, 'mdc-typography--title'].join(' ')
-	subTitleStyle = [style.subTitle, 'mdc-typography--caption'].join(' ')
 
 	showImageMagnifier = e => {
 		const { showImageMagnifier, data } = this.props;

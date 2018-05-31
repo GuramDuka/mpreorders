@@ -11,7 +11,7 @@ export default function loader() {
 	const { category } = props;
 	const { order, filter, stock, image } = state;
 	const r = {
-		type: 'products',
+		target: 'products',
 		piece: pageSize,
 		index: (page - 1) * pageSize
 	};

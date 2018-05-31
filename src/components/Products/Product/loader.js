@@ -14,7 +14,7 @@ export default function loader() {
 				m: 'dict',
 				f: f ? f : 'object',
 				r: {
-					type: 'products',
+					target: 'products',
 					// eslint-disable-next-line
 					link: link
 				}

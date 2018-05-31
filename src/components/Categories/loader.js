@@ -5,9 +5,13 @@ import { successor, failer, starter } from '../load';
 //------------------------------------------------------------------------------
 export const storePrefix = 'category';
 //------------------------------------------------------------------------------
+const opts = {
+	r: { m: 'category', f: 'list', r: { target: 'products' } }
+};
+//------------------------------------------------------------------------------
 export default function loader(alias = 'list') {
 	return bfetch(
-		{ r: { m: 'category', f: 'list', r: { target: 'products' } } },
+		opts,
 		successor(result => {
 			result.rows.push({ link: zLink, name: 'Вне категорий' });
 			this.setState({ [alias]: result });

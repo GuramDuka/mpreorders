@@ -4,7 +4,6 @@ import LayoutGrid from 'preact-material-components/LayoutGrid';
 import 'preact-material-components/LayoutGrid/style.css';
 import Component from '../Component';
 import disp from '../../lib/store';
-import root from '../../lib/root';
 import { prevent, plinkRoute } from '../../lib/util';
 import { headerSearchStorePath } from '../../const';
 import loader, { storePrefix } from './loader';
@@ -91,16 +90,6 @@ export default class Category extends Component {
 	goNextStyle = [ProductCardStyle.m, style.fr].join(' ')
 
 	//goPrev = e => root.history.back()
-	goUp = e => {
-		root.scrollTo({
-			top: 0,
-			left: 0,
-			behavior: 'instant'
-		});
-		return prevent(e);
-	}
-
-	goUpStyle = [ProductCardStyle.m, style.fr, style.mr].join(' ')
 
 	imageMagnifierRef = e => this.imageMagnifier = e
 
@@ -127,9 +116,7 @@ export default class Category extends Component {
 					</LayoutGrid.Inner>
 				</LayoutGrid>
 				<VerticalActionBar popup fixed>
-					<VerticalActionBar.Fab onClick={this.goUp}>
-						arrow_upward
-					</VerticalActionBar.Fab>
+					<VerticalActionBar.ScrollUpFab />
 					{this.page < list.pages
 						? <VerticalActionBar.Fab {...this.goNext}>
 							arrow_forward

@@ -202,10 +202,34 @@ export function copy(src) {
 	return dst;
 }
 //------------------------------------------------------------------------------
+const digit0 = '0'.charCodeAt(0);
+const digit9 = '9'.charCodeAt(0);
+//------------------------------------------------------------------------------
 export function transform(raw, store) {
 	if (Array.isArray(raw)) {
-		for (let i = raw.length - 1; i >= 0; i--)
-			raw[i] = transform(raw[i]);
+		let c = 0;
+
+		for (let i = raw.length - 1; i >= 0; i--) {
+			const { alias } = raw[i] = transform(raw[i]);
+
+			if (alias) {
+				raw[alias] = raw[i];
+				c++;
+			}
+		}
+
+		if (c === raw.length) {
+			const r = {};
+
+			for (const k of Object.keys(raw)) {
+				c = k.charCodeAt(0);
+
+				if (c < digit0 || c > digit9)
+					r[k] = raw[k];
+			}
+
+			raw = r;
+		}
 	}
 	else {
 		const { cols } = raw;
