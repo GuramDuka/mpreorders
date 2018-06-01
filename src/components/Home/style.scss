@@ -3,7 +3,7 @@
 
 .home {
 	padding-top: $mdc-top-app-bar-row-height;
-	min-height: 100%;
+	//min-height: 100%;
 	width: 100%;
 }
 
@@ -12,10 +12,14 @@
 
 .container {
 	@extend :global(.mdc-horizontal-scroll-container);
-	height: $mdc-button-height;
+	min-height: $mdc-button-height;
 
 	a {
 		vertical-align: top;
+	}
+
+	div[vertical] {
+		min-height: $mdc-button-height;
 	}
 }
 
@@ -23,7 +27,11 @@
 	@include mdc-theme-prop(background-color, primary);
 	@include mdc-theme-prop(color, on-primary);
 	  
-	margin-top: 16px;
 	text-align: center;
 	text-transform: uppercase;
+	margin-top: 4px;
+}
+
+.invis {
+	visibility: hidden;
 }

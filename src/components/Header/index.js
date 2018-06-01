@@ -118,7 +118,8 @@ export default class Header extends Component {
 	goProfile = this.linkTo('/profile')
 	goLogin = this.linkTo('/login')
 	goCategories = this.linkTo('/categories')
-	goProducts = this.linkTo('/products')
+	//goProducts = this.linkTo('/products')
+	goFavorites = this.linkTo('/favorites')
 	goOrders = this.linkTo('/orders')
 	goCart = this.linkTo('/cart')
 
@@ -338,9 +339,13 @@ export default class Header extends Component {
 						<List.ItemGraphic>view_stream</List.ItemGraphic>
 						Категории
 					</Drawer.DrawerItem>
-					<Drawer.DrawerItem {...this.goProducts}>
+					{/*<Drawer.DrawerItem {...this.goProducts}>
 						<List.ItemGraphic>view_list</List.ItemGraphic>
 						Каталог
+					</Drawer.DrawerItem>*/}
+					<Drawer.DrawerItem {...this.goFavorites}>
+						<List.ItemGraphic>favorite</List.ItemGraphic>
+						Избранное
 					</Drawer.DrawerItem>
 					<Drawer.DrawerItem {...this.goOrders}>
 						<List.ItemGraphic>reorder</List.ItemGraphic>

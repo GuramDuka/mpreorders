@@ -28,7 +28,7 @@ export default class Home extends Component {
 			store => store.deleteIn(headerTitleStorePath).
 				deleteIn(headerSearchStorePath),
 			() => {
-				categoriesLoader.call(this, 'categoriesList');
+				categoriesLoader.call(this, 'catList');
 				loader.call(this, 0);
 				loader.call(this, 1);
 			}
@@ -46,48 +46,70 @@ export default class Home extends Component {
 		return list;
 	}
 
-	render(props, { categoriesList, topList, rndList }) {
-		if (categoriesList)
-			categoriesList = this.transformCategories(categoriesList);
+	render(props, { catList, topList, rndList }) {
+		if (catList) {
+			catList = this.transformCategories(catList);
+		}
+		else {
+			catList = [];
+			catList.style = style.invis;
+		}
+
+		if (!topList) {
+			topList = { rows: [] };
+			topList.style = style.invis;
+			topList.rows.length = 10;
+			topList.rows.fill({});
+		}
+
+		if (!rndList) {
+			rndList = { rows: [] };
+			rndList.style = style.invis;
+			rndList.rows.length = 20;
+			rndList.rows.fill({});
+		}
+
+		const cats = (
+			<div class={[style.container, catList.style].join(' ')}>
+				<Divider class={catList.style} horizontal />
+				{catList.map((v, i, a) => v ?
+					<Button {...goCategory(v.link)}>
+						{v.name}
+					</Button>
+					: <Divider inline vertical />
+				)}
+				<Divider class={catList.style} horizontal />
+			</div>);
 
 		return (
 			<div class={style.home}>
-				{categoriesList ? <Divider horizontal /> : undefined}
-				{categoriesList ? <div class={style.container}>
-					{categoriesList.map((v, i, a) => v ?
-						<Button {...goCategory(v.link)}>
-							{v.name}
-						</Button>
-						: <Divider inline vertical />
-					)}
-				</div> : undefined}
-				{categoriesList ? <Divider horizontal /> : undefined}
-				{topList ? <div class={style.hbar}>
+				{cats}
+				<div class={[style.hbar, topList.style].join(' ')}>
 					<Divider horizontal />
 					<div>ТОП 10</div>
 					<Divider horizontal />
-				</div> : undefined}
-				{topList ? <LayoutGrid>
+				</div>
+				<LayoutGrid class={topList.style}>
 					<LayoutGrid.Inner>
 						{topList.rows.map(row => (
 							<LayoutGrid.Cell cols="2">
 								<ProductCard mini data={row} />
 							</LayoutGrid.Cell>))}
 					</LayoutGrid.Inner>
-				</LayoutGrid> : undefined}
-				{rndList ? <div class={style.hbar}>
+				</LayoutGrid>
+				<div class={[style.hbar, rndList.style].join(' ')}>
 					<Divider horizontal />
-					<div>СЛУЧАЙНЫЕ</div>
+					<div>СЕЗОННЫЕ</div>
 					<Divider horizontal />
-				</div> : undefined}
-				{rndList ? <LayoutGrid>
+				</div>
+				<LayoutGrid class={rndList.style}>
 					<LayoutGrid.Inner>
 						{rndList.rows.map(row => (
 							<LayoutGrid.Cell cols="2">
 								<ProductCard mini data={row} />
 							</LayoutGrid.Cell>))}
 					</LayoutGrid.Inner>
-				</LayoutGrid> : undefined}
+				</LayoutGrid>
 				<VerticalActionBar popup fixed>
 					<VerticalActionBar.ScrollUpFab />
 				</VerticalActionBar>

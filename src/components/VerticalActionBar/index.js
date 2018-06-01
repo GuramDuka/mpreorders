@@ -92,27 +92,20 @@ class VerticalActionBar extends Component {
 	}
 
 	render(props, state) {
-		// const actionsFabs = isPopup
-		// 	? props.actions.map(v => (
-		// 		<li>
-		// 			<Fab mini primary {...v.action}>
-		// 				<Fab.Icon>
-		// 					{Array.isArray(v.icon)
-		// 						? v.icon[v.iconIndex]
-		// 						: v.icon}
-		// 				</Fab.Icon>
-		// 			</Fab>
-		// 		</li>))
-		// 	: undefined;
-
 		const popuper = props.fixed ? undefined : (
-			<VerticalActionBarFab secondary onClick={this.handleClickPopup}>
+			<VerticalActionBarFab
+				class={style.vis}
+				secondary
+				onClick={this.handleClickPopup}
+			>
 				{state.isPopup ? 'remove' : 'add'}
 			</VerticalActionBarFab>);
 
 		return (
-			<ul {...props} id={this.id} class={style.bar}>
-				{state.isPopup ? props.children : undefined}
+			<ul {...props} id={this.id}
+				class={state.isPopup ? style.bar : style.barInvis}
+			>
+				{props.children}
 				{popuper}
 			</ul>);
 	}
@@ -130,7 +123,7 @@ class VerticalActionBarScrollUpFab extends Component {
 		return prevent(e);
 	}
 
-	render(props) {
+	render() {
 		return (
 			<VerticalActionBarFab onClick={VerticalActionBarScrollUpFab.goUp}>
 				arrow_upward

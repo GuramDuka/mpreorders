@@ -245,6 +245,10 @@ export default class Product extends Component {
 		return images2;
 	}
 
+	inCartClick = e => {
+		return prevent(e);
+	}
+
 	render(props, { auth, data, isFavorite, isInCart }) {
 		if (data === undefined)
 			return undefined;
@@ -341,7 +345,9 @@ export default class Product extends Component {
 					<VerticalActionBar.Fab>
 						{this.favoriteIcons[isFavorite ? 1 : 0]}
 					</VerticalActionBar.Fab>
-					<VerticalActionBar.Fab>
+					<VerticalActionBar.Fab
+						onClick={this.inCartClick}
+					>
 						{this.inCartIcons[isInCart ? 1 : 0]}
 					</VerticalActionBar.Fab>
 				</VerticalActionBar>

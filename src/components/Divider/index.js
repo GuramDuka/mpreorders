@@ -23,12 +23,14 @@ export default class Divider extends Component {
 			Divider.__classes[~~horizontal | (~~vertical << 1)],
 			inline ? 'mdc-display-inline' : ''
 		].concat(
-			Array.isArray(props.class) ? [...props.class] : [props.class]
+			...(Array.isArray() ? props.class : [props.class])
 		).join(' ').trim();
 	}
 
 	render(props) {
-		return this.class ? <div {...props} class={this.class} /> : undefined;
+		return this.class
+			? <div {...props} class={this.class} />
+			: undefined;
 	}
 }
 //------------------------------------------------------------------------------

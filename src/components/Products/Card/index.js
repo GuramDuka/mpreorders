@@ -26,9 +26,8 @@ export default class ProductCard extends Component {
 	static sr = /(\s{2})/g
 
 	mount(props) {
-		const {
+		let {
 			link,
-			code,
 			name,
 			article,
 			manufacturer,
@@ -41,24 +40,23 @@ export default class ProductCard extends Component {
 
 		const { cr, sr } = ProductCard;
 
-		this.code = `[${code}]`;
-		this.name = name.replace(cr, ', ').replace(sr, ' ').trim();
-		this.article = article.replace(cr, ', ').trim();
-		this.manufacturer = manufacturer.replace(cr, ', ').trim();
-		this.remainder = Number.isFinite(remainder) && remainder !== 0
+		name = name ? name.replace(cr, ', ').replace(sr, ' ').trim() : '';
+		article = article ? article.replace(cr, ', ').trim() : '';
+		manufacturer = manufacturer ? manufacturer.replace(cr, ', ').trim() : '';
+		remainder = Number.isFinite(remainder) && remainder !== 0
 			? remainder.toString() : '';
-		this.remainder += Number.isFinite(reserve) && reserve !== 0
+		remainder += Number.isFinite(reserve) && reserve !== 0
 			? ' (' + reserve + ')' : '';
-		this.price = price + '₽';
+		price = price ? price + '₽' : '';
 
-		this.title = this.name;
+		this.title = name;
 		let subTitle = '';
 
 		for (const v of [
-			this.article,
-			this.manufacturer,
-			this.remainder.trim(),
-			this.price
+			article,
+			manufacturer,
+			remainder.trim(),
+			price
 		])
 			if (v.length !== 0)
 				subTitle += `, ${v}`;

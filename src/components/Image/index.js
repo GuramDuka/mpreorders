@@ -8,13 +8,29 @@ import root from '../../lib/root';
 import { webpRuntimeInitialized, webp2png } from '../../lib/webp';
 import style from './style.scss';
 //------------------------------------------------------------------------------
+function createElement(tag) {
+	return root.document
+		? root.document.createElement(tag)
+		: {};
+}
+//------------------------------------------------------------------------------
+function headAppendChild(element) {
+	return root.document
+		? root.document.head.appendChild(element)
+		: element;
+}
+//------------------------------------------------------------------------------
+function getElementById(key) {
+	return root.document
+		? root.document.getElementById(key)
+		: undefined;
+}
+//------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
 class Image extends Component {
 	static isWebPSupported = (() => {
-		const canvas = root.document
-			? root.document.createElement('canvas')
-			: {};
+		const canvas = createElement('canvas');
 		canvas.width = canvas.height = 1;
 		return canvas.toDataURL
 			? canvas.toDataURL('image/webp').indexOf('image/webp') === 5
@@ -28,7 +44,7 @@ class Image extends Component {
 		c.shift = function () {
 			let entry = LRUMap.prototype.shift.call(this);
 			const [key] = entry;
-			const e = root.document.getElementById(key);
+			const e = getElementById(key);
 
 			if (e)
 				e.remove();
@@ -48,18 +64,21 @@ class Image extends Component {
 	}
 
 	componentWillMount() {
-		let cache = root.document.getElementById(Image.__cacheId);
+		let cache = getElementById(Image.__cacheId);
 
 		if (cache) {
 			cache.refCount++;
 		}
 		else {
-			cache = root.document.createElement('style');
+			cache = createElement('style');
 			cache.id = Image.__cacheId;
 			cache.refCount = 1;
-			root.document.head.appendChild(cache);
-			cache.sheet.insertRule(`.nopic { background-image: url(/assets/nopic.svg) }`);
-			cache.sheet.insertRule(`.picld { background-image: url(/assets/loading-process.svg) }`);
+			headAppendChild(cache);
+
+			if (cache.sheet) {
+				cache.sheet.insertRule(`.nopic { background-image: url(/assets/nopic.svg) }`);
+				cache.sheet.insertRule(`.picld { background-image: url(/assets/loading-process.svg) }`);
+			}
 		}
 
 		this.mount(this.props);
@@ -77,7 +96,7 @@ class Image extends Component {
 		delete this.mounted;
 		root.removeEventListener('resize', this.windowOnResize);
 
-		const cache = root.document.getElementById(Image.__cacheId);
+		const cache = getElementById(Image.__cacheId);
 
 		if (--cache.refCount === 0)
 			cache.remove();
@@ -93,7 +112,7 @@ class Image extends Component {
 	}
 
 	// findCacheEntry(key) {
-	// 	return root.document.getElementById(key);
+	// 	return getElementById(key);
 	// 	// return root.document.evaluate(
 	// 	// 	`style[@key='${key}']`,
 	// 	// 	root.document.head,
@@ -103,16 +122,20 @@ class Image extends Component {
 	// }
 
 	insertCacheEntry(key, url) {
-		let entry = Image.__cacheLRU.get(key);
+		const { __cacheLRU } = Image;
+		let entry = __cacheLRU.get(key);
 
 		if (!entry) {
-			entry = root.document.createElement('style');
+			entry = createElement('style');
 			entry.id = key;
-			root.document.head.appendChild(entry);
-			//const index = cache.sheet.cssRules.length;
-			entry.sheet.insertRule(`.${key} { background-image: url(${url}); }`);
+			headAppendChild(entry);
 
-			Image.__cacheLRU.set(key, true);
+			if (entry.sheet) {
+				//const index = cache.sheet.cssRules.length;
+				entry.sheet.insertRule(`.${key} { background-image: url(${url}); }`);
+			}
+
+			__cacheLRU.set(key, true);
 		}
 
 		this.setState({ imageClass: key });
@@ -126,7 +149,7 @@ class Image extends Component {
 			if (!webpRuntimeInitialized(this.waitStyleComputed))
 				return;
 
-		const image = root.document.getElementById(this.ids);
+		const image = getElementById(this.ids);
 		let loop = true;
 
 		if (image) {
@@ -188,7 +211,7 @@ class Image extends Component {
 			imageClass,
 			imageClass === 'picld' ? style['spin' + randomInteger(0, 7)] : ''
 		].concat(
-			Array.isArray(m.class) ? [...m.class] : [m.class]
+			...(Array.isArray(m.class) ? m.class : [m.class])
 		).join(' ').trim();
 
 		return (
