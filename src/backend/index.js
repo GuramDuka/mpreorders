@@ -144,12 +144,33 @@ export function bfetch(opts, success, fail, start) {
 	opts.url = BACKEND_URL;
 
 	if (opts.method === 'GET') {
+		// find and remove expired urls
+		{
+			const now = (new Date()).getTime();
+			let modified = false;
+
+			for (const k of Object.keys(mustRefreshUrls))
+				if (mustRefreshUrls[k] <= now) {
+					delete mustRefreshUrls[k];
+					modified = true;
+				}
+
+			if (modified) {
+				if (Object.keys(mustRefreshUrls).length === 0)
+					root.localStorage.removeItem(mustRefreshUrlsItemName);
+				else
+					root.localStorage.setItem(
+						mustRefreshUrlsItemName,
+						stringify(mustRefreshUrls));
+			}
+		}
+	
 		opts.url += '?' + serializeURIParams(r);
 		// special handling for data updated in previous requests, need fetch fresh data
 		let endOfLife = mustRefreshUrls[opts.url];
 
 		if (endOfLife !== undefined)
-			opts.u = '&u=' + randomInteger();
+			opts.u = '&u=' + endOfLife;
 	}
 	else if (opts.method === 'PUT')
 		opts.body = JSON.stringify(r.r);
@@ -217,38 +238,17 @@ export function bfetch(opts, success, fail, start) {
 
 		const eol = opts.responseHeaders.get('End-Of-Life');
 
-		if (eol) {
+		if (eol)
 			result.endOfLife = new Date(eol);
-
-			if (opts.u) {
-				const now = new Date();
-				let modified = false;
-
-				for (const k of Object.keys(mustRefreshUrls))
-					if (mustRefreshUrls[k] <= now || k === opts.url) {
-						delete mustRefreshUrls[k];
-						modified = true;
-					}
-
-				if (modified) {
-					if (Object.keys(mustRefreshUrls).length === 0)
-						root.localStorage.removeItem(mustRefreshUrlsItemName);
-					else
-						root.localStorage.setItem(
-							mustRefreshUrlsItemName,
-							stringify(mustRefreshUrls));
-				}
-			}
-		}
 
 		if (opts.refreshUrls) {
 			if (Array.isArray(opts.refreshUrls))
 				for (const a of opts.refreshUrls)
 					for (const k of Object.keys(a))
-						mustRefreshUrls[k] = a[k];
+						mustRefreshUrls[k] = a[k].getTime();
 			else
 				for (const k of Object.keys(opts.refreshUrls))
-					mustRefreshUrls[k] = opts.refreshUrls[k];
+					mustRefreshUrls[k] = opts.refreshUrls[k].getTime();
 
 			root.localStorage.setItem(
 				mustRefreshUrlsItemName,

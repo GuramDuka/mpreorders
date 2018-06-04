@@ -373,26 +373,20 @@ export default class Product extends Component {
 		if (state.inCart !== undefined)
 			inCart = state.inCart;
 
-		const outlined = 'mdc-card--outlined';
-
 		const vab = auth && auth.authorized ? (
 			<VerticalActionBar>
 				<VerticalActionBar.Fab
 					onClick={this.inFavoritesClick}
 				>
-					<VerticalActionBar.Fab.Icon
-						class={~~inFavorites ? undefined : outlined}
-					>
-						favorite
+					<VerticalActionBar.Fab.Icon>
+						{inFavorites ? 'favorite' : 'favorite_bordered'}
 					</VerticalActionBar.Fab.Icon>
 				</VerticalActionBar.Fab>
 				<VerticalActionBar.Fab
 					onClick={this.inCartClick}
 				>
-					<VerticalActionBar.Fab.Icon
-						class={~~inCart ? undefined : outlined}
-					>
-						shopping_cart
+					<VerticalActionBar.Fab.Icon>
+						{inCart ? 'shopping_cart' : 'add_shopping_cart'}
 					</VerticalActionBar.Fab.Icon>
 				</VerticalActionBar.Fab>
 			</VerticalActionBar>) : undefined;

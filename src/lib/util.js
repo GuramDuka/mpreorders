@@ -332,7 +332,7 @@ export function serializeURIParams(params) {
 			parts.push(parseValue(key, v));
 	}
 
-	return parts;
+	return parts.join('&');
 }
 //------------------------------------------------------------------------------
 export function prevent(e) {
