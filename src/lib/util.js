@@ -357,7 +357,7 @@ export function plinkRoute(path) {
 	return e => pRoute(e, path);
 }
 //------------------------------------------------------------------------------
-export function randomInteger(min, max) {
+export function randomInteger(min = 0, max = Number.MAX_SAFE_INTEGER) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 //------------------------------------------------------------------------------

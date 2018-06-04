@@ -20,14 +20,34 @@ class VerticalActionBarInner extends Component {
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
+class VerticalActionBarFabIcon extends Component {
+	render(props) {
+		return (
+			<Fab.Icon {...props}>
+				{props.children}
+			</Fab.Icon>);
+	}
+}
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
 class VerticalActionBarFab extends Component {
+	componentWillMount() {
+		this.componentWillReceiveProps(this.props);
+	}
+
+	componentWillReceiveProps(props) {
+		this.iconProps = {};
+
+		for (const k of Object.keys(props))
+			if (k.startsWith('icon'))
+				this.iconProps[k.substr(4)] = props[k];
+	}
+
 	render(props) {
 		return (
 			<VerticalActionBarInner>
 				<Fab {...props} mini primary>
-					<Fab.Icon>
-						{props.children}
-					</Fab.Icon>
+					{props.children}
 				</Fab>
 			</VerticalActionBarInner>
 		);
@@ -47,17 +67,17 @@ class VerticalActionBar extends Component {
 	}
 
 	componentWillMount() {
-		this.setState(
-			{ isPopup: this.props.popup },
-			this.stateChangeCallback
-		);
+		this.componentWillReceiveProps(this.props);
 	}
 
 	componentWillReceiveProps(props) {
-		this.setState(
-			{ isPopup: props.popup },
-			this.stateChangeCallback
-		);
+		const { state } = this;
+
+		if (props.popup !== state.popup)
+			this.setState(
+				{ isPopup: props.popup },
+				this.stateChangeCallback
+			);
 	}
 
 	handleOutsideClick(e) {
@@ -98,7 +118,9 @@ class VerticalActionBar extends Component {
 				secondary
 				onClick={this.handleClickPopup}
 			>
-				{state.isPopup ? 'remove' : 'add'}
+				<VerticalActionBarFabIcon>
+					{state.isPopup ? 'remove' : 'add'}
+				</VerticalActionBarFabIcon>
 			</VerticalActionBarFab>);
 
 		return (
@@ -126,7 +148,9 @@ class VerticalActionBarScrollUpFab extends Component {
 	render() {
 		return (
 			<VerticalActionBarFab onClick={VerticalActionBarScrollUpFab.goUp}>
-				arrow_upward
+				<VerticalActionBarFabIcon>
+					arrow_upward
+				</VerticalActionBarFabIcon>
 			</VerticalActionBarFab>
 		);
 	}
@@ -134,6 +158,7 @@ class VerticalActionBarScrollUpFab extends Component {
 //------------------------------------------------------------------------------
 VerticalActionBar.Inner = VerticalActionBarInner;
 VerticalActionBar.Fab = VerticalActionBarFab;
+VerticalActionBar.Fab.Icon = VerticalActionBarFabIcon;
 VerticalActionBar.ScrollUpFab = VerticalActionBarScrollUpFab;
 //------------------------------------------------------------------------------
 export default VerticalActionBar;

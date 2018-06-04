@@ -29,7 +29,7 @@
     "node-sass": "^4.9.0",
     "preact-cli": "^2.2.1",
     "preact-cli-sw-precache": "^1.0.3",
-    "sass-loader": "^7.0.1",
+    "sass-loader": "^7.0.2",
     "webpack-dotenv-plugin": "^2.0.2"
   },
   "dependencies": {

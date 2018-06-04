@@ -2,6 +2,8 @@
 import DOMPurify from 'dompurify';
 import List from 'preact-material-components/List';
 import 'preact-material-components/List/style.css';
+import Snackbar from 'preact-material-components/Snackbar';
+import 'preact-material-components/Snackbar/style.css';
 import { Component as PreactComponent } from 'preact';
 import Component from '../../Component';
 import Image from '../../Image';
@@ -12,7 +14,7 @@ import disp from '../../../lib/store';
 import { headerSearchStorePath } from '../../../const';
 import { prevent, plinkRoute } from '../../../lib/util';
 import strftime from '../../../lib/strftime';
-import loader from './loader';
+import { pull, push } from './loader';
 import style from './style.scss';
 //------------------------------------------------------------------------------
 function propRender(data) {
@@ -176,7 +178,7 @@ function lprsRender(data) {
 class ExpandableItem extends PreactComponent {
 	onExpand = () => {
 		if (this.state.isExpanded)
-			loader.call(this);
+			pull.call(this);
 	}
 
 	onClick = e => {
@@ -219,14 +221,11 @@ export default class Product extends Component {
 	mount() {
 		disp(
 			store => store.deleteIn(headerSearchStorePath),
-			() => loader.call(this)
+			() => pull.call(this)
 		);
 	}
 
 	linkTo = path => ({ href: path, onClick: plinkRoute(path) })
-
-	favoriteIcons = ['favorite_border', 'favorite']
-	inCartIcons = ['add_shopping_cart', 'remove_shopping_cart']
 
 	imageMagnifierRef = e => this.imageMagnifier = e
 	showImageMagnifier = link => e => {
@@ -245,11 +244,41 @@ export default class Product extends Component {
 		return images2;
 	}
 
-	inCartClick = e => {
+	inFavoritesClick = e => {
+		const { state } = this;
+		let { inFavorites } = state.data.rows[0];
+
+		if (state.inFavorites !== undefined)
+			inFavorites = state.inFavorites;
+
+		push.call(this, { favorite: !inFavorites });
 		return prevent(e);
 	}
 
-	render(props, { auth, data, isFavorite, isInCart }) {
+	inCartClick = e => {
+		const { state } = this;
+		let { inCart } = state.data.rows[0];
+
+		if (state.inCart !== undefined)
+			inCart = state.inCart;
+
+		push.call(this, { quantity: inCart ? 0 : 1 });
+		return prevent(e);
+	}
+
+	snackbarRef = e => this.snackbar = e;
+
+	showError(e) {
+		this.snackbar.MDComponent.show({ message: e });
+	}
+
+	// regex replace comma without space after
+	static cr = /(,(?=\S)|:)/g;
+	static sr = /(\s{2})/g;
+
+	render(props, state) {
+		const { auth, data } = state;
+
 		if (data === undefined)
 			return undefined;
 
@@ -262,12 +291,12 @@ export default class Product extends Component {
 			remainder,
 			reserve,
 			price,
-			images
+			images,
+			inFavorites,
+			inCart
 		} = data.rows[0];
 
-		// regex replace comma without space after
-		const cr = /(,(?=\S)|:)/g;
-		const sr = /(\s{2})/g;
+		const { cr, sr } = Product;
 
 		name = name.replace(cr, ', ').replace(sr, ' ').trim();
 		article = article.replace(cr, ', ').trim();
@@ -316,41 +345,63 @@ export default class Product extends Component {
 
 		if (auth && auth.authorized && auth.employee)
 			items.push(
-				<ExpandableItem auth employee link={link}
+				<ExpandableItem auth link={link}
 					f="rems" render={remsRender}
 					title="Остатки"
 					meta="reorder"
 				/>,
-				<ExpandableItem auth employee link={link}
+				<ExpandableItem auth link={link}
 					f="bprs" render={bprsRender}
 					title="Базовые цены"
 					meta="monetization_on"
 				/>,
-				<ExpandableItem auth employee link={link}
+				<ExpandableItem auth link={link}
 					f="sprs" render={sprsRender}
 					title="Цены поставщиков"
 					meta="multiline_chart"
 				/>,
-				<ExpandableItem auth employee link={link}
+				<ExpandableItem auth link={link}
 					f="lprs" render={lprsRender}
 					title="Цены продажи"
 					meta="score"
 				/>
 			);
 
+		if (state.inFavorites !== undefined)
+			inFavorites = state.inFavorites;
+
+		if (state.inCart !== undefined)
+			inCart = state.inCart;
+
+		const outlined = 'mdc-card--outlined';
+
+		const vab = auth && auth.authorized ? (
+			<VerticalActionBar>
+				<VerticalActionBar.Fab
+					onClick={this.inFavoritesClick}
+				>
+					<VerticalActionBar.Fab.Icon
+						class={~~inFavorites ? undefined : outlined}
+					>
+						favorite
+					</VerticalActionBar.Fab.Icon>
+				</VerticalActionBar.Fab>
+				<VerticalActionBar.Fab
+					onClick={this.inCartClick}
+				>
+					<VerticalActionBar.Fab.Icon
+						class={~~inCart ? undefined : outlined}
+					>
+						shopping_cart
+					</VerticalActionBar.Fab.Icon>
+				</VerticalActionBar.Fab>
+			</VerticalActionBar>) : undefined;
+
 		return (
 			<div class={style.product}>
+				<Snackbar ref={this.snackbarRef} class={style.snackbar} />
 				{items}
-				<VerticalActionBar>
-					<VerticalActionBar.Fab>
-						{this.favoriteIcons[isFavorite ? 1 : 0]}
-					</VerticalActionBar.Fab>
-					<VerticalActionBar.Fab
-						onClick={this.inCartClick}
-					>
-						{this.inCartIcons[isInCart ? 1 : 0]}
-					</VerticalActionBar.Fab>
-				</VerticalActionBar>
+				{vab}
 			</div>
 		);
 	}

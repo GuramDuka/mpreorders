@@ -4,31 +4,60 @@ import { successor, failer, starter } from '../../load';
 import disp from '../../../lib/store';
 import { headerTitleStorePath } from '../../../const';
 //------------------------------------------------------------------------------
-export default function loader() {
-	const { props } = this;
-	const { auth, employee, f, link } = props;
+export function pull() {
+	const { props, state } = this;
+	const { auth, f, link } = props;
+	const opts = {
+		r: {
+			m: 'dict',
+			f: f ? f : 'object',
+			r: {
+				target: 'products',
+				// eslint-disable-next-line
+				link: link
+			}
+		},
+		a: auth || (state.auth && state.auth.authorized),
+		e: auth
+	};
 
 	return bfetch(
-		{
-			r: {
-				m: 'dict',
-				f: f ? f : 'object',
-				r: {
-					target: 'products',
-					// eslint-disable-next-line
-					link: link
-				}
-			},
-			a: !!auth,
-			e: !!employee
-		},
-		successor(result => this.setState(
-			{ data: result },
-			f ? undefined :
-				() => disp(store => store.cmpSetIn(
-					headerTitleStorePath, result.rows[0].name))
-		)),
+		opts,
+		successor(result => {
+			this.refreshUrls = { [opts.url]: result.endOfLife };
+			this.setState(
+				{ data: result },
+				f ? undefined :
+					() => disp(store => store.cmpSetIn(
+						headerTitleStorePath, result.rows[0].name))
+			);
+		}),
 		failer(),
+		starter()
+	);
+}
+//------------------------------------------------------------------------------
+export function push(r) {
+	const { props } = this;
+	const opts = {
+		refreshUrls: this.refreshUrls,
+		method: 'PUT',
+		r: {
+			m: 'dict',
+			f: 'push',
+			r: {
+				target: 'products',
+				link: props.link,
+				...r
+			}
+		},
+		a: true
+	};
+
+	return bfetch(
+		opts,
+		successor(result => this.setState(result)),
+		failer(error => this.showError(error.message)),
 		starter()
 	);
 }

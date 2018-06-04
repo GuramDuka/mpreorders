@@ -1,7 +1,9 @@
 //------------------------------------------------------------------------------
 //import AbortController from 'abortcontroller-polyfill';
-import { copy, serializeURIParams } from '../lib/util';
+import root from '../lib/root';
+import { serializeURIParams, randomInteger } from '../lib/util';
 import disp, { getStore } from '../lib/store';
+import { stringify, destringify } from '../lib/json';
 //------------------------------------------------------------------------------
 // nginx proxy configuration
 // proxy_cache_path /var/cache/nginx/ram use_temp_path=off keys_zone=ram:4M inactive=1d max_size=1024M;
@@ -67,9 +69,33 @@ import disp, { getStore } from '../lib/store';
 const BACKEND_URL = 'https://shintorg48.ru/mpreorders/api/backend';
 export default BACKEND_URL;
 //------------------------------------------------------------------------------
-export function bfetch(opts_, success, fail, start) {
-	const opts = copy(opts_);
+const mustRefreshUrlsItemName = 'must-refresh-urls';
+const mustRefreshUrls = (() => {
+	const u = root.localStorage
+		&& root.localStorage.getItem(mustRefreshUrlsItemName);
 
+	if (u)
+		return destringify(u);
+
+	return {};
+})();
+//------------------------------------------------------------------------------
+const ma0 = /max-age/gi;
+const ma1 = /max-age|[= ]/gi;
+//------------------------------------------------------------------------------
+function getMaxAge(opts) {
+	let xMaxAge = opts.responseHeaders.get('cache-control');
+
+	if (xMaxAge) {
+		xMaxAge = xMaxAge && xMaxAge.split(',').find(v => v.match(ma0));
+		xMaxAge = xMaxAge && xMaxAge.replace(ma1, '');
+		xMaxAge = ~~xMaxAge; // fast convert string to integer
+	}
+
+	return xMaxAge;
+}
+//------------------------------------------------------------------------------
+export function bfetch(opts, success, fail, start) {
 	if (opts.method === undefined)
 		opts.method = 'GET';
 
@@ -82,67 +108,64 @@ export function bfetch(opts_, success, fail, start) {
 	if (opts.cache === undefined)
 		opts.cache = 'default';
 
+	const r = {};
+
+	// antipattern, but only as an exception and it is the fastest method
+	const store = getStore();
+
+	// send auth data
+	const auth = store.getIn('auth');
+	const authorized = auth && auth.authorized && !opts.noauth;
+
+	// need for caching authorized request separate from regular not authorized
+	if (opts.r)
+		r.r = opts.r;
+
+	if (authorized && opts.a === true)
+		r.a = true;
+	else if (authorized && opts.a === '')
+		r.a = auth.link;
+
+	if (authorized && auth.employee && opts.e === true)
+		r.e = true;
+	else if (authorized && auth.employee && opts.e === '')
+		r.e = auth.employee;
+
 	let headers = opts.headers;
-	const r = opts.r !== undefined ? { ...opts.r } : undefined;
 
-	if (!opts.noauth) {
-		// send auth data
-		// antipattern, but only as an exception and it is the fastest method
-		const auth = getStore().getIn('auth');
-
-		if (auth && auth.authorized) {
-			// need for caching authorized request separate from regular not authorized
-			if (!opts.r)
-				opts.r = {};
-
-			if (opts.a === true)
-				r.a = true;
-			else if (opts.a === '')
-				r.a = auth.link;
-
-			if (auth.employee) {
-				if (opts.e === true)
-					r.e = true;
-				else if (opts.e === '' && auth.employee)
-					r.e = auth.employee;
-			}
-
-			if (r.a || r.e) {
-				headers = headers ? headers : new Headers();
-				headers.append('X-Access-Data', auth.link + ', ' + auth.hash);
-			}
-		}
+	if (r.a || r.e) {
+		headers = headers ? headers : new Headers();
+		headers.append('X-Access-Data', auth.link + ', ' + auth.hash);
 	}
 
-	if (r !== undefined && opts.rmod)
+	if (opts.rmod)
 		opts.rmod(r);
 
-	let url = BACKEND_URL;
+	opts.url = BACKEND_URL;
 
-	if (r !== undefined) {
-		if (opts.method === 'GET')
-			url += '?' + serializeURIParams({ r });
-		else if (opts.method === 'PUT')
-			opts.body = JSON.stringify(r);
+	if (opts.method === 'GET') {
+		opts.url += '?' + serializeURIParams(r);
+		// special handling for data updated in previous requests, need fetch fresh data
+		let endOfLife = mustRefreshUrls[opts.url];
+
+		if (endOfLife !== undefined)
+			opts.u = '&u=' + randomInteger();
 	}
-
-	// headers = headers ? headers : new Headers();
-	// headers.append('Cache-Control', 'no-cache, must-revalidate');
+	else if (opts.method === 'PUT')
+		opts.body = JSON.stringify(r.r);
 
 	if (headers && !headers.entries().next().done)
 		opts.headers = headers;
 
-	const data = {};
-	const retv = {};
 	try {
 		// eslint-disable-next-line
-		eval('retv.controller = new AbortController()');
+		eval('opts.controller = new AbortController()');
 	}
 	catch (e) {
-		retv.controller = { abort: () => true };
+		opts.controller = { abort: () => true };
 	}
-	opts.signal = retv.controller.signal;
-	retv.promise = fetch(url, opts).then(response => {
+	//opts.signal = opts.controller.signal;
+	opts.promise = fetch(opts.url + (opts.u ? opts.u : ''), opts).then(response => {
 		const contentType = response.headers.get('content-type');
 
 		// check if access denied
@@ -167,7 +190,7 @@ export function bfetch(opts_, success, fail, start) {
 				disp(store => store.deleteIn('auth.authorized', 2));
 		}
 
-		data.headers = response.headers;
+		opts.responseHeaders = response.headers;
 
 		if (contentType) {
 			if (contentType.includes('application/json'))
@@ -190,20 +213,52 @@ export function bfetch(opts_, success, fail, start) {
 				|| result.constructor === ArrayBuffer || result instanceof ArrayBuffer))
 			throw new TypeError('Oops, we haven\'t got data! ' + result);
 
-		result.date = new Date(data.headers.get('date'));
+		result.date = new Date(opts.responseHeaders.get('date'));
 
-		const eol = data.headers.get('EndOfLifeTime');
+		const eol = opts.responseHeaders.get('End-Of-Life');
 
-		if (eol)
-			result.endOfLifeTime = new Date(eol);
+		if (eol) {
+			result.endOfLife = new Date(eol);
 
-		let xMaxAge = data.headers.get('cache-control');
+			if (opts.u) {
+				const now = new Date();
+				let modified = false;
 
-		if (xMaxAge) {
-			xMaxAge = xMaxAge && xMaxAge.split(',').find(v => v.match(/max-age/gi));
-			xMaxAge = xMaxAge && xMaxAge.replace(/max-age|[= ]/gi, '');
-			result.maxAge = ~~xMaxAge; // fast convert string to integer
+				for (const k of Object.keys(mustRefreshUrls))
+					if (mustRefreshUrls[k] <= now || k === opts.url) {
+						delete mustRefreshUrls[k];
+						modified = true;
+					}
+
+				if (modified) {
+					if (Object.keys(mustRefreshUrls).length === 0)
+						root.localStorage.removeItem(mustRefreshUrlsItemName);
+					else
+						root.localStorage.setItem(
+							mustRefreshUrlsItemName,
+							stringify(mustRefreshUrls));
+				}
+			}
 		}
+
+		if (opts.refreshUrls) {
+			if (Array.isArray(opts.refreshUrls))
+				for (const a of opts.refreshUrls)
+					for (const k of Object.keys(a))
+						mustRefreshUrls[k] = a[k];
+			else
+				for (const k of Object.keys(opts.refreshUrls))
+					mustRefreshUrls[k] = opts.refreshUrls[k];
+
+			root.localStorage.setItem(
+				mustRefreshUrlsItemName,
+				stringify(mustRefreshUrls));
+		}
+	
+		const xMaxAge = getMaxAge(opts);
+
+		if (xMaxAge)
+			result.maxAge = xMaxAge;
 
 		success && success(result, opts);
 	}).catch(error => {
@@ -212,11 +267,11 @@ export function bfetch(opts_, success, fail, start) {
 
 	start && start(opts);
 
-	return retv;
+	return opts.promise;
 }
 //------------------------------------------------------------------------------
 export function imgReq(...args) {
-	const [ arg0 ] = args;
+	const [arg0] = args;
 	const r = { m: 'image' };
 
 	if (arg0.constructor === Object || arg0 instanceof Object) {
@@ -225,14 +280,14 @@ export function imgReq(...args) {
 				r[k] = arg0[k];
 	}
 	else
-		[ r.u, r.w, r.h ] = args;
-		
+		[r.u, r.w, r.h] = args;
+
 	// eslint-disable-next-line
 	return { r: r };
 }
 //------------------------------------------------------------------------------
 export function imgUrl(...args) {
-	const [ arg0 ] = args;
+	const [arg0] = args;
 	const s = BACKEND_URL + '?';
 	const r = {};
 
@@ -241,7 +296,7 @@ export function imgUrl(...args) {
 			r[k] = arg0[k];
 	}
 	else
-		[ r.u, r.w, r.h ] = args;
+		[r.u, r.w, r.h] = args;
 
 	return s + serializeURIParams(imgReq(r));
 }
