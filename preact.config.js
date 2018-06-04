@@ -69,6 +69,6 @@ export default function (config, env, helpers) {
 		cfg.performance.maxAssetSize = 2000000;
 		cfg.performance.maxEntrypointSize = 2000000;
 	}
-
+	//
 	return cfg;
 }
