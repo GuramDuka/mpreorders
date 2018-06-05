@@ -7,7 +7,7 @@ import 'preact-material-components/Snackbar/style.css';
 import { Component as PreactComponent } from 'preact';
 import Component from '../../Component';
 import Image from '../../Image';
-import VerticalActionBar from '../../VerticalActionBar';
+import Vab from '../../VerticalActionBar';
 import Divider from '../../Divider';
 import '../../Divider/style.scss';
 import disp from '../../../lib/store';
@@ -374,22 +374,24 @@ export default class Product extends Component {
 			inCart = state.inCart;
 
 		const vab = auth && auth.authorized ? (
-			<VerticalActionBar>
-				<VerticalActionBar.Fab
+			<Vab disabled={state.vabDisabled}>
+				<Vab.Fab mini
+					disabled={state.vabDisabled}
 					onClick={this.inFavoritesClick}
 				>
-					<VerticalActionBar.Fab.Icon>
+					<Vab.Fab.Icon>
 						{inFavorites ? 'favorite' : 'favorite_bordered'}
-					</VerticalActionBar.Fab.Icon>
-				</VerticalActionBar.Fab>
-				<VerticalActionBar.Fab
+					</Vab.Fab.Icon>
+				</Vab.Fab>
+				<Vab.Fab mini
+					disabled={state.vabDisabled}
 					onClick={this.inCartClick}
 				>
-					<VerticalActionBar.Fab.Icon>
+					<Vab.Fab.Icon>
 						{inCart ? 'shopping_cart' : 'add_shopping_cart'}
-					</VerticalActionBar.Fab.Icon>
-				</VerticalActionBar.Fab>
-			</VerticalActionBar>) : undefined;
+					</Vab.Fab.Icon>
+				</Vab.Fab>
+			</Vab>) : undefined;
 
 		return (
 			<div class={style.product}>

@@ -4,7 +4,7 @@ import 'preact-material-components/Button/style.css';
 import LayoutGrid from 'preact-material-components/LayoutGrid';
 import 'preact-material-components/LayoutGrid/style.css';
 import Component from '../Component';
-import VerticalActionBar from '../VerticalActionBar';
+import Vab from '../VerticalActionBar';
 import ProductCard from '../Products/Card';
 import '../Products/Card/style.scss';
 import Divider from '../Divider';
@@ -71,14 +71,14 @@ export default class Home extends Component {
 
 		const cats = (
 			<div class={[style.container, catList.style].join(' ')}>
-				<Divider class={catList.style} horizontal />
+				<Divider horizontal />
 				{catList.map((v, i, a) => v ?
 					<Button {...goCategory(v.link)}>
 						{v.name}
 					</Button>
 					: <Divider inline vertical />
 				)}
-				<Divider class={catList.style} horizontal />
+				<Divider horizontal />
 			</div>);
 
 		return (
@@ -110,9 +110,9 @@ export default class Home extends Component {
 							</LayoutGrid.Cell>))}
 					</LayoutGrid.Inner>
 				</LayoutGrid>
-				<VerticalActionBar popup fixed>
-					<VerticalActionBar.ScrollUpFab />
-				</VerticalActionBar>
+				<Vab fixed>
+					<Vab.ScrollUp />
+				</Vab>
 				{/*
 				<FaBeer size={24} />
 				<LogIn style={{ verticalAlign: 'middle' }} color="black" />

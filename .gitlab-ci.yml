@@ -1,0 +1,60 @@
+image: node
+
+cache:
+  key: cache_yarn
+  paths:
+  - .cache_yarn
+
+stages:
+  - install
+  - build
+  - test
+  - deploy
+
+install_functions:
+  stage: install
+  only:
+	- staging
+	- production
+  script:
+	- npm install -g firebase-tools
+	- npm install -g preact-cli
+	- npm install
+
+install_client:
+  stage: install
+  only:
+    - staging
+    - production
+  script:
+    - echo "install_client"
+
+build_client:
+  stage: build
+  only:
+    - staging
+    - production
+  script:
+    - echo "build_client"
+
+test_client:
+  stage: test
+  only:
+    - staging
+    - production
+  script:
+    - echo "test_client"
+
+deploy_all_staging:
+  stage: deploy
+  only:
+    - staging
+  script:
+    - echo "deploy_all"
+
+deploy_all_production:
+  stage: deploy
+  only:
+    - production
+  script:
+    - echo "deploy_all"

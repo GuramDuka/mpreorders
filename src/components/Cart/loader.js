@@ -1,8 +1,6 @@
 //------------------------------------------------------------------------------
-import { bfetch } from '../../../backend';
-import { successor, failer, starter } from '../../load';
-import disp from '../../../lib/store';
-import { headerTitleStorePath } from '../../../const';
+import { bfetch } from '../../backend';
+import { successor, failer, starter } from '../load';
 //------------------------------------------------------------------------------
 export function pull() {
 	const { props, state } = this;
@@ -25,12 +23,7 @@ export function pull() {
 		opts,
 		successor(result => {
 			this.refreshUrls = { [opts.url]: result.endOfLife };
-			this.setState(
-				{ data: result },
-				f ? undefined :
-					() => disp(store => store.cmpSetIn(
-						headerTitleStorePath, result.rows[0].name))
-			);
+			this.setState({ data: result });
 		}),
 		failer(),
 		starter()
@@ -43,9 +36,10 @@ export function push(r) {
 		refreshUrls: this.refreshUrls,
 		method: 'PUT',
 		r: {
-			m: 'cart',
+			m: 'dict',
 			f: 'push',
 			r: {
+				target: 'products',
 				link: props.link,
 				...r
 			}
@@ -55,16 +49,9 @@ export function push(r) {
 
 	return bfetch(
 		opts,
-		successor(result =>
-			this.setState({ vabDisabled: false, ...result })
-		),
-		failer(error =>
-			this.setState(
-				{ vabDisabled: false },
-				() => this.showError(error.message)
-			)
-		),
-		starter(opts => this.setState({ vabDisabled: true }))
+		successor(result => this.setState(result)),
+		failer(error => this.showError(error.message)),
+		starter()
 	);
 }
 //------------------------------------------------------------------------------

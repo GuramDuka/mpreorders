@@ -5,6 +5,7 @@ import { Component } from 'preact';
 import { Router } from 'preact-router';
 import Header from '../Header';
 import Home from '../../routes/Home';//import Home from 'async!../routes/Home';
+import Cart from '../../routes/Cart';//import Cart from 'async!../routes/Cart';
 import Profile from '../../routes/Profile';//import Profile from 'async!../routes/Profile';
 import Login from '../../routes/Profile/Login';
 import Registration from '../../routes/Profile/Registration';
@@ -36,6 +37,7 @@ export default class App extends Component {
 				<Header />
 				<Router onChange={this.handleRoute}>
 					<Home path="/" />
+					<Cart path="/cart/" />
 					<Profile path="/profile/" />
 					<Login path="/login/" />
 					<Registration path="/registration/" />

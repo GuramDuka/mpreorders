@@ -14,11 +14,11 @@
 	@extend :global(.mdc-horizontal-scroll-container);
 	min-height: $mdc-button-height;
 
-	a {
+	> :global(.mdc-button) {
 		vertical-align: top;
 	}
 
-	div[vertical] {
+	> :global(.mdc-divider--vertical) {
 		min-height: $mdc-button-height;
 	}
 }

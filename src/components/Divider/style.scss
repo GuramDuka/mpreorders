@@ -6,7 +6,7 @@ $divider-color: if(
     $mdc-list-divider-color-on-light-bg
 );
 
-:global(.mdc-vertical-divider) {
+:global(.mdc-divider--vertical) {
 	width: 0;
 	height: 100%;
 	margin: 0;
@@ -16,6 +16,10 @@ $divider-color: if(
 	@include mdc-theme-prop(border-right-color, $divider-color);
 }
 
-:global(.mdc-horizontal-divider) {
+:global(.mdc-divider--horizontal) {
 	@extend .mdc-list-divider;
+}
+
+:global(.mdc-divider--inline) {
+	display: inline-block;
 }

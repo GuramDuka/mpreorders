@@ -1,18 +1,12 @@
 //------------------------------------------------------------------------------
-import MaterialComponent from 'preact-material-components/MaterialComponent';
-import './style.scss';
+import { Component } from 'preact';
+import Cart from '../../components/Cart';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-export default class Divider extends MaterialComponent {
-	constructor() {
-		super();
-		this.componentName = 'divider';
-		this._mdcProps = ['horizontal', 'vertical', 'inline'];
-	}
-
-	materialDom(props) {
-		return <div ref={this.setControlRef} {...props} />;
+export default class CartRoute extends Component {
+	render(props) {
+		return <Cart {...props} />;
 	}
 }
 //------------------------------------------------------------------------------

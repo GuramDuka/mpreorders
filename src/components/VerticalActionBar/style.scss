@@ -1,5 +1,5 @@
 .bar {
-	list-style-type: none;
+	//list-style-type: none;
 	padding: 0;
 	margin: 0;
 	width: auto;
@@ -15,17 +15,48 @@
 			right: 1rem;
 		}
 	}
-		
-	li {
-		margin-top: 4px;
+	
+	@media(min-width: 1024px) {
+		.bar {
+			bottom: 1rem;
+			right: 1rem;
+		}
+	}
+
+	> * {
+		display: block;
+		margin-bottom: 2px;
+		text-align: center;
+	}
+
+	> *:last-child {
+		margin-bottom: 0;
+	}
+
+	> a {
+		text-align: center;
+	}
+	
+	> a:global(.mdc-fab) > i {
+		margin-top: 16px;
+	}
+
+	> a:global(.mdc-fab--mini) > i {
+		margin-top: 8px;
 	}
 }
 
-.barInvis {
-	@extend .bar;
+.invis {
 	visibility: hidden;
 }
 
 .vis {
 	visibility: visible;
+}
+
+:global(.mdc-fab--disabled) {
+	background-color: white;
+	color: rgba(0, 0, 0, 0.37);
+	cursor: default;
+	pointer-events: none;
 }

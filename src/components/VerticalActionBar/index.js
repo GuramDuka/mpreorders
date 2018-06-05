@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 import { Component } from 'preact';
-import Fab from 'preact-material-components/Fab';
+import generateThemeClass from 'preact-material-components/themeUtils/generateThemeClass';
+import MFab from 'preact-material-components/Fab';
 import 'preact-material-components/Fab/style.css';
 import { prevent } from '../../lib/util';
 import root from '../../lib/root';
@@ -8,62 +9,47 @@ import style from './style.scss';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-class VerticalActionBarInner extends Component {
-	render(props) {
+class Fab extends MFab {
+	constructor() {
+		super();
+		this._mdcProps.push('disabled');
+	}
+
+	materialDom(props) {
+		const classNames = [];
+
+		for (const themeProp of this.themeProps)
+			if (themeProp in props && props[themeProp] !== false)
+				classNames.push(generateThemeClass(themeProp));
+
+		if (props.disabled)
+			classNames.push(style.disabled);
+
+		const classNameString = classNames.join(' ');
+		const ButtonElement = props.href ? 'a' : 'button';
+
 		return (
-			<li {...props}>
+			<ButtonElement
+				ref={this.setControlRef}
+				{...props}
+				className={classNameString}
+			>
 				{props.children}
-			</li>
+			</ButtonElement>
 		);
 	}
 }
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-class VerticalActionBarFabIcon extends Component {
-	render(props) {
-		return (
-			<Fab.Icon {...props}>
-				{props.children}
-			</Fab.Icon>);
-	}
-}
-////////////////////////////////////////////////////////////////////////////////
-//------------------------------------------------------------------------------
-class VerticalActionBarFab extends Component {
-	componentWillMount() {
-		this.componentWillReceiveProps(this.props);
-	}
-
-	componentWillReceiveProps(props) {
-		this.iconProps = {};
-
-		for (const k of Object.keys(props))
-			if (k.startsWith('icon'))
-				this.iconProps[k.substr(4)] = props[k];
-	}
-
-	render(props) {
-		return (
-			<VerticalActionBarInner>
-				<Fab {...props} mini primary>
-					{props.children}
-				</Fab>
-			</VerticalActionBarInner>
-		);
-	}
-}
-//------------------------------------------------------------------------------
-////////////////////////////////////////////////////////////////////////////////
-//------------------------------------------------------------------------------
-class VerticalActionBar extends Component {
+class Vab extends Component {
 	static __id = 0
 
 	constructor() {
 		super();
 
 		this.handleOutsideClick = this.handleOutsideClick.bind(this);
-		this.id = '$__vab__#' + (++VerticalActionBar.__id);
+		this.id = '$__vab__#' + (++Vab.__id);
 	}
 
 	componentWillMount() {
@@ -71,15 +57,17 @@ class VerticalActionBar extends Component {
 	}
 
 	componentWillReceiveProps(props) {
-		const { state } = this;
+		if (this.state.isPopup)
+			this.handlePopupStateChange(false);
 
-		if (props.popup !== state.popup)
-			this.setState(
-				{ isPopup: props.popup },
-				this.stateChangeCallback
-			);
+		this.stateChangeCallback();
 	}
 
+	stateChangeCallback = () => {
+		if (!this.props.fixed)
+			this.handlePopupStateChange(this.state.isPopup);
+	}
+	
 	handleOutsideClick(e) {
 		const { id } = this;
 		// ignore clicks on the component itself
@@ -106,36 +94,34 @@ class VerticalActionBar extends Component {
 		return prevent(e);
 	}
 
-	stateChangeCallback = () => {
-		if (!this.props.fixed)
-			this.handlePopupStateChange(this.state.isPopup);
-	}
-
 	render(props, state) {
 		const popuper = props.fixed ? undefined : (
-			<VerticalActionBarFab
+			<Fab
 				class={style.vis}
-				secondary
+				mini secondary disabled={props.disabled}
 				onClick={this.handleClickPopup}
 			>
-				<VerticalActionBarFabIcon>
+				<Fab.Icon>
 					{state.isPopup ? 'remove' : 'add'}
-				</VerticalActionBarFabIcon>
-			</VerticalActionBarFab>);
+				</Fab.Icon>
+			</Fab>);
+
+		const className = [
+			style.bar,
+			props.fixed || state.isPopup ? undefined : style.invis
+		].join(' ');
 
 		return (
-			<ul {...props} id={this.id}
-				class={state.isPopup ? style.bar : style.barInvis}
-			>
+			<div {...props} id={this.id} className={className}>
 				{props.children}
 				{popuper}
-			</ul>);
+			</div>);
 	}
 }
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-class VerticalActionBarScrollUpFab extends Component {
+class ScrollUp extends Component {
 	static goUp = e => {
 		root.scrollTo({
 			top: 0,
@@ -145,21 +131,20 @@ class VerticalActionBarScrollUpFab extends Component {
 		return prevent(e);
 	}
 
-	render() {
+	render(props) {
 		return (
-			<VerticalActionBarFab onClick={VerticalActionBarScrollUpFab.goUp}>
-				<VerticalActionBarFabIcon>
+			<Fab mini {...props} onClick={ScrollUp.goUp}>
+				<Fab.Icon>
 					arrow_upward
-				</VerticalActionBarFabIcon>
-			</VerticalActionBarFab>
+				</Fab.Icon>
+			</Fab>
 		);
 	}
 }
 //------------------------------------------------------------------------------
-VerticalActionBar.Inner = VerticalActionBarInner;
-VerticalActionBar.Fab = VerticalActionBarFab;
-VerticalActionBar.Fab.Icon = VerticalActionBarFabIcon;
-VerticalActionBar.ScrollUpFab = VerticalActionBarScrollUpFab;
+Vab.Fab = Fab;
+Vab.Fab.Icon = MFab.Icon;
+Vab.ScrollUp = ScrollUp;
 //------------------------------------------------------------------------------
-export default VerticalActionBar;
+export default Vab;
 //------------------------------------------------------------------------------

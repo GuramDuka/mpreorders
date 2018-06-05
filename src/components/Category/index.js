@@ -10,7 +10,7 @@ import loader, { storePrefix } from './loader';
 import style from './style.scss';
 import ProductCard from '../Products/Card';
 import ProductCardStyle from '../Products/Card/style.scss';
-import VerticalActionBar from '../VerticalActionBar';
+import Vab from '../VerticalActionBar';
 import Image from '../Image';
 //------------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,14 +115,16 @@ export default class Category extends Component {
 							</LayoutGrid.Cell>))}
 					</LayoutGrid.Inner>
 				</LayoutGrid>
-				<VerticalActionBar popup fixed>
-					<VerticalActionBar.ScrollUpFab />
+				<Vab fixed>
+					<Vab.ScrollUp />
 					{this.page < list.pages
-						? <VerticalActionBar.Fab {...this.goNext}>
-							arrow_forward
-						</VerticalActionBar.Fab>
+						? <Vab.Fab mini {...this.goNext}>
+							<Vab.Fab.Icon>
+								arrow_forward
+							</Vab.Fab.Icon>
+						</Vab.Fab>
 						: undefined}
-				</VerticalActionBar>
+				</Vab>
 			</div>);
 	}
 }
